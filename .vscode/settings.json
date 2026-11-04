@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[java]": {
+    "editor.formatOnSave": false
+  },
+  "eslint.workingDirectories": ["frontend"],
+  "tailwindCSS.experimental.configFile": "frontend/src/styles.css",
+  "files.eol": "\n",
+  "java.configuration.updateBuildConfiguration": "automatic"
+}

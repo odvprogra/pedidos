@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: pedidos-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pedidos}
+    username: ${DB_USER:pedidos}
+    password: ${DB_PASSWORD:pedidos}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: ${PORT:8080}

@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw spotless:apply)",
+      "Bash(./mvnw verify)",
+      "Bash(./mvnw test *)",
+      "Bash(./mvnw -q *)",
+      "Bash(npm run lint)",
+      "Bash(npm run format)",
+      "Bash(npm run format:check)",
+      "Bash(npm run build)",
+      "Bash(npm test *)",
+      "Bash(npx ng test *)",
+      "Bash(npx prettier *)",
+      "Bash(npx eslint *)",
+      "Bash(docker info *)",
+      "Bash(docker compose up -d)",
+      "Bash(docker compose ps)"
+    ],
+    "deny": [
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git commit --no-verify *)",
+      "Bash(git push origin main)",
+      "Read(./.env)",
+      "Read(./**/.env)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-frontend.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

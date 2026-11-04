@@ -1,0 +1,540 @@
+# Ejemplo de referencia: módulo `restaurant`
+
+Código verificado con `./mvnw verify` (Spotless, ArchUnit y tests en verde). Es la forma canónica de cada pieza; al crear algo nuevo se copia la estructura y se cambian nombres y reglas.
+
+## Dominio: modelo
+
+`backend/src/main/java/com/nur/pedidos/restaurant/domain/model/Restaurant.java`
+
+```java
+package com.nur.pedidos.restaurant.domain.model;
+
+import com.nur.pedidos.shared.domain.exception.DomainException;
+import lombok.Getter;
+
+@Getter
+public class Restaurant {
+
+    private final Long id;
+    private final String name;
+    private final String address;
+    private boolean active;
+
+    public Restaurant(Long id, String name, String address, boolean active) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.active = active;
+    }
+
+    public static Restaurant register(String name, String address) {
+        if (name == null || name.isBlank()) {
+            throw new DomainException("restaurant.name_required", "El nombre del restaurante es obligatorio");
+        }
+        return new Restaurant(null, name.trim(), address.trim(), true);
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+}
+```
+
+## Dominio: puerto
+
+`backend/src/main/java/com/nur/pedidos/restaurant/domain/port/RestaurantRepository.java`
+
+```java
+package com.nur.pedidos.restaurant.domain.port;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import java.util.Optional;
+
+public interface RestaurantRepository {
+
+    Restaurant save(Restaurant restaurant);
+
+    Optional<Restaurant> findById(Long id);
+}
+```
+
+## Dominio: excepción
+
+`backend/src/main/java/com/nur/pedidos/restaurant/domain/exception/RestaurantNotFoundException.java`
+
+```java
+package com.nur.pedidos.restaurant.domain.exception;
+
+import com.nur.pedidos.shared.domain.exception.NotFoundException;
+
+public class RestaurantNotFoundException extends NotFoundException {
+
+    public RestaurantNotFoundException(Long id) {
+        super("restaurant.not_found", "No existe el restaurante " + id);
+    }
+}
+```
+
+## Aplicación: command
+
+`backend/src/main/java/com/nur/pedidos/restaurant/application/RegisterRestaurantCommand.java`
+
+```java
+package com.nur.pedidos.restaurant.application;
+
+public record RegisterRestaurantCommand(String name, String address) {}
+```
+
+## Aplicación: caso de uso que escribe
+
+`backend/src/main/java/com/nur/pedidos/restaurant/application/RegisterRestaurantUseCase.java`
+
+```java
+package com.nur.pedidos.restaurant.application;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class RegisterRestaurantUseCase {
+
+    private final RestaurantRepository restaurantRepository;
+
+    @Transactional
+    public Restaurant execute(RegisterRestaurantCommand command) {
+        Restaurant restaurant = Restaurant.register(command.name(), command.address());
+        return restaurantRepository.save(restaurant);
+    }
+}
+```
+
+## Aplicación: caso de uso que lee
+
+`backend/src/main/java/com/nur/pedidos/restaurant/application/GetRestaurantUseCase.java`
+
+```java
+package com.nur.pedidos.restaurant.application;
+
+import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class GetRestaurantUseCase {
+
+    private final RestaurantRepository restaurantRepository;
+
+    @Transactional(readOnly = true)
+    public Restaurant execute(Long id) {
+        return restaurantRepository.findById(id).orElseThrow(() -> new RestaurantNotFoundException(id));
+    }
+}
+```
+
+## Persistencia: entidad JPA
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/persistence/RestaurantEntity.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.persistence;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "restaurants")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+class RestaurantEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 120)
+    private String name;
+
+    @Column(nullable = false, length = 200)
+    private String address;
+
+    @Column(nullable = false)
+    private boolean active;
+
+    static RestaurantEntity fromDomain(Restaurant restaurant) {
+        RestaurantEntity entity = new RestaurantEntity();
+        entity.setId(restaurant.getId());
+        entity.setName(restaurant.getName());
+        entity.setAddress(restaurant.getAddress());
+        entity.setActive(restaurant.isActive());
+        return entity;
+    }
+
+    Restaurant toDomain() {
+        return new Restaurant(id, name, address, active);
+    }
+}
+```
+
+## Persistencia: repositorio Spring Data
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/persistence/RestaurantJpaRepository.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.persistence;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+interface RestaurantJpaRepository extends JpaRepository<RestaurantEntity, Long> {}
+```
+
+## Persistencia: adaptador del puerto
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/persistence/RestaurantPersistenceAdapter.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.persistence;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+class RestaurantPersistenceAdapter implements RestaurantRepository {
+
+    private final RestaurantJpaRepository jpaRepository;
+
+    @Override
+    public Restaurant save(Restaurant restaurant) {
+        return jpaRepository.save(RestaurantEntity.fromDomain(restaurant)).toDomain();
+    }
+
+    @Override
+    public Optional<Restaurant> findById(Long id) {
+        return jpaRepository.findById(id).map(RestaurantEntity::toDomain);
+    }
+}
+```
+
+## Web: request
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RegisterRestaurantRequest.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.web;
+
+import com.nur.pedidos.restaurant.application.RegisterRestaurantCommand;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+record RegisterRestaurantRequest(
+        @NotBlank @Size(max = 120) String name,
+        @NotBlank @Size(max = 200) String address) {
+
+    RegisterRestaurantCommand toCommand() {
+        return new RegisterRestaurantCommand(name, address);
+    }
+}
+```
+
+## Web: response
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RestaurantResponse.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.web;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+
+record RestaurantResponse(Long id, String name, String address, boolean active) {
+
+    static RestaurantResponse from(Restaurant restaurant) {
+        return new RestaurantResponse(
+                restaurant.getId(), restaurant.getName(), restaurant.getAddress(), restaurant.isActive());
+    }
+}
+```
+
+## Web: controller
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RestaurantController.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.web;
+
+import com.nur.pedidos.restaurant.application.GetRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.RegisterRestaurantUseCase;
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import jakarta.validation.Valid;
+import java.net.URI;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/restaurants")
+@RequiredArgsConstructor
+class RestaurantController {
+
+    private final RegisterRestaurantUseCase registerRestaurant;
+    private final GetRestaurantUseCase getRestaurant;
+
+    @PostMapping
+    ResponseEntity<RestaurantResponse> register(@Valid @RequestBody RegisterRestaurantRequest request) {
+        Restaurant restaurant = registerRestaurant.execute(request.toCommand());
+        URI location = URI.create("/api/v1/restaurants/" + restaurant.getId());
+        return ResponseEntity.created(location).body(RestaurantResponse.from(restaurant));
+    }
+
+    @GetMapping("/{id}")
+    RestaurantResponse get(@PathVariable Long id) {
+        return RestaurantResponse.from(getRestaurant.execute(id));
+    }
+}
+```
+
+## Test de dominio
+
+`backend/src/test/java/com/nur/pedidos/restaurant/domain/model/RestaurantTest.java`
+
+```java
+package com.nur.pedidos.restaurant.domain.model;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.nur.pedidos.shared.domain.exception.DomainException;
+import org.junit.jupiter.api.Test;
+
+class RestaurantTest {
+
+    @Test
+    void registersAnActiveRestaurantWithTrimmedName() {
+        Restaurant restaurant = Restaurant.register("  La Casona  ", "Calle Sucre 245");
+
+        assertThat(restaurant.getName()).isEqualTo("La Casona");
+        assertThat(restaurant.isActive()).isTrue();
+    }
+
+    @Test
+    void rejectsABlankName() {
+        assertThatThrownBy(() -> Restaurant.register(" ", "Calle Sucre 245"))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("restaurant.name_required");
+    }
+}
+```
+
+## Fake del puerto para tests de aplicación
+
+`backend/src/test/java/com/nur/pedidos/restaurant/application/InMemoryRestaurantRepository.java`
+
+```java
+package com.nur.pedidos.restaurant.application;
+
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+class InMemoryRestaurantRepository implements RestaurantRepository {
+
+    private final Map<Long, Restaurant> restaurants = new HashMap<>();
+    private long sequence;
+
+    @Override
+    public Restaurant save(Restaurant restaurant) {
+        Long id = restaurant.getId() != null ? restaurant.getId() : ++sequence;
+        Restaurant saved = new Restaurant(id, restaurant.getName(), restaurant.getAddress(), restaurant.isActive());
+        restaurants.put(id, saved);
+        return saved;
+    }
+
+    @Override
+    public Optional<Restaurant> findById(Long id) {
+        return Optional.ofNullable(restaurants.get(id));
+    }
+}
+```
+
+## Test de caso de uso
+
+`backend/src/test/java/com/nur/pedidos/restaurant/application/GetRestaurantUseCaseTest.java`
+
+```java
+package com.nur.pedidos.restaurant.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import org.junit.jupiter.api.Test;
+
+class GetRestaurantUseCaseTest {
+
+    private final InMemoryRestaurantRepository restaurantRepository = new InMemoryRestaurantRepository();
+    private final GetRestaurantUseCase getRestaurant = new GetRestaurantUseCase(restaurantRepository);
+
+    @Test
+    void returnsTheRestaurantWhenItExists() {
+        Restaurant saved = restaurantRepository.save(Restaurant.register("La Casona", "Calle Sucre 245"));
+
+        Restaurant found = getRestaurant.execute(saved.getId());
+
+        assertThat(found.getName()).isEqualTo("La Casona");
+    }
+
+    @Test
+    void failsWhenTheRestaurantDoesNotExist() {
+        assertThatThrownBy(() -> getRestaurant.execute(99L)).isInstanceOf(RestaurantNotFoundException.class);
+    }
+}
+```
+
+## Test del controller (slice web)
+
+`backend/src/test/java/com/nur/pedidos/restaurant/infrastructure/web/RestaurantControllerTest.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import com.nur.pedidos.restaurant.application.GetRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.RegisterRestaurantUseCase;
+import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;
+
+@WebMvcTest(RestaurantController.class)
+class RestaurantControllerTest {
+
+    @Autowired
+    private MockMvcTester mvc;
+
+    @MockitoBean
+    private RegisterRestaurantUseCase registerRestaurant;
+
+    @MockitoBean
+    private GetRestaurantUseCase getRestaurant;
+
+    @Test
+    void registersARestaurantAndReturnsItsLocation() {
+        when(registerRestaurant.execute(any())).thenReturn(new Restaurant(1L, "La Casona", "Calle Sucre 245", true));
+
+        var response = mvc.post()
+                .uri("/api/v1/restaurants")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "La Casona", "address": "Calle Sucre 245"}
+                        """);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.CREATED)
+                .hasHeader("Location", "/api/v1/restaurants/1")
+                .bodyJson()
+                .extractingPath("$.name")
+                .isEqualTo("La Casona");
+    }
+
+    @Test
+    void rejectsAnInvalidRequestWithProblemDetails() {
+        var response = mvc.post()
+                .uri("/api/v1/restaurants")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "", "address": "Calle Sucre 245"}
+                        """);
+
+        assertThat(response).hasStatus(HttpStatus.BAD_REQUEST).bodyJson().satisfies(json -> {
+            assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
+            assertThat(json).extractingPath("$.errors[0].field").isEqualTo("name");
+        });
+    }
+
+    @Test
+    void returnsNotFoundWhenTheRestaurantDoesNotExist() {
+        when(getRestaurant.execute(99L)).thenThrow(new RestaurantNotFoundException(99L));
+
+        assertThat(mvc.get().uri("/api/v1/restaurants/99"))
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("restaurant.not_found");
+    }
+}
+```
+
+## Test de persistencia (PostgreSQL real con Testcontainers)
+
+`backend/src/test/java/com/nur/pedidos/restaurant/infrastructure/persistence/RestaurantPersistenceAdapterTest.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.persistence;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.nur.pedidos.TestcontainersConfiguration;
+import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
+
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import({TestcontainersConfiguration.class, RestaurantPersistenceAdapter.class})
+class RestaurantPersistenceAdapterTest {
+
+    @Autowired
+    private RestaurantPersistenceAdapter adapter;
+
+    @Test
+    void savesAndLoadsARestaurant() {
+        Restaurant saved = adapter.save(Restaurant.register("La Casona", "Calle Sucre 245"));
+
+        assertThat(saved.getId()).isNotNull();
+        assertThat(adapter.findById(saved.getId()))
+                .get()
+                .extracting(Restaurant::getName, Restaurant::isActive)
+                .containsExactly("La Casona", true);
+    }
+}
+```

@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand: #dc1f45;
+  --color-brand-strong: #b8173a;
+  --color-brand-soft: #ffe4ea;
+  --color-accent: #ffd23f;
+
+  --color-canvas: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-ink: #1f2328;
+  --color-muted: #6b7280;
+  --color-line: #e5e7eb;
+
+  --color-success: #166534;
+  --color-success-soft: #dcfce7;
+  --color-danger: #991b1b;
+  --color-danger-soft: #fee2e2;
+}
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink antialiased;
+  }
+}

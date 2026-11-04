@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: pedidos-db
+    environment:
+      POSTGRES_DB: pedidos
+      POSTGRES_USER: pedidos
+      POSTGRES_PASSWORD: pedidos
+    ports:
+      - '5432:5432'
+    volumes:
+      - pedidos-data:/var/lib/postgresql/data
+
+volumes:
+  pedidos-data:

@@ -32,7 +32,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Lombok: solo `@Getter`. Nunca `@Data`, `@Setter` ni `@Builder` en el dominio.
 - Las reglas rotas se lanzan como `DomainException` con un código estable
   (`"order.empty"`, `"restaurant.name_required"`). Se crea una subclase propia solo cuando el error
-  se repite o necesita un estado HTTP distinto (por ejemplo, extender `NotFoundException`).
+  se repite o necesita un estado HTTP distinto: extiende `NotFoundException` (404), y con la
+  autenticación también `ConflictException` (409), `ForbiddenException` (403) o
+  `UnauthenticatedException` (401), todas en `shared.domain.exception`.
 
 ## Aplicación
 
@@ -53,6 +55,19 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Requests con Bean Validation (`@NotBlank`, `@Size`, `@Positive`) y un método `toCommand()`.
   Responses con `static XxxResponse from(Xxx)`.
 - Los controllers no tienen lógica: convierten, llaman al caso de uso y responden.
+
+## Seguridad
+
+Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
+
+- Cada método de controller que exige un rol lo declara con `@PreAuthorize("hasRole('OWNER')")`.
+  Las rutas públicas se agregan en `SecurityConfig`; todo lo demás exige sesión.
+- El usuario llega al controller con `@AuthenticationPrincipal CurrentUser user`, y su id viaja en
+  el command (`UpdateMenuCommand(ownerId, ...)`). Los casos de uso y el dominio nunca leen el
+  contexto de seguridad.
+- La pertenencia la valida el caso de uso. Si no se cumple, lanza una subclase de
+  `ForbiddenException` con el código `<modulo>.not_owner`.
+- Las contraseñas solo existen como hash: nunca aparecen en logs, responses ni `toString`.
 
 ## Datos
 

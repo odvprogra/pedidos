@@ -39,6 +39,10 @@ En Windows con PowerShell se usa `.\mvnw.cmd`. Los tests del backend necesitan D
   adaptadores. Un caso de uso por clase. Las reglas las verifica `ArchitectureTest`.
 - **Frontend:** una carpeta por feature en `src/app/features/`; una feature nunca importa de otra.
   Lo compartido va a `shared/ui` o `core`. Las reglas las verifica ESLint.
+- **Autenticación:** cookie de sesión de Spring Security con las sesiones en PostgreSQL. Cada
+  cuenta tiene un rol fijo (`CUSTOMER`, `OWNER` o `ADMIN`). El rol se exige con `@PreAuthorize` en
+  el controller y la pertenencia la valida el caso de uso. Detalle en
+  [ADR-0008](docs/adr/0008-autenticacion-con-sesion-y-roles.md).
 
 Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 
@@ -48,7 +52,7 @@ Detalle en [docs/arquitectura.md](docs/arquitectura.md).
    o se extrae. El código no debe parecer generado.
 2. **Código en inglés; documentación y textos de la interfaz en español.** Términos fijos:
    restaurante `restaurant`, catálogo `catalog`, producto `product`, pedido `order`, cliente
-   `customer`, dueño `owner`.
+   `customer`, dueño `owner`, administrador `admin`, cuenta `account`.
 3. **El modelo de datos todavía se está diseñando.** Si una tarea necesita una entidad, campo o
    relación que no existe, propón el modelo y espera confirmación antes de crearlo.
 4. **No se desactiva ninguna verificación** (`@Disabled`, `it.skip`, `eslint-disable`,

@@ -41,6 +41,17 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Los errores del backend llegan como Problem Details; se muestra el `detail` y los `errors[]` se
   asocian a los campos del formulario.
 
+## Sesión
+
+Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
+
+- El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
+  copia.
+- Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`.
+- No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`.
+- No se desactiva la protección XSRF del `HttpClient` (`withNoXsrfProtection`).
+- Las pantallas de ingreso (`/ingresar`) y registro (`/registro`) son de la feature `auth`.
+
 ## Templates
 
 - Control flow nuevo: `@if`, `@for` (siempre con `track` por id), `@switch`.

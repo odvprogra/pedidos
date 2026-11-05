@@ -154,6 +154,52 @@ class AuthFlowTest {
     }
 
     @Test
+    void closesEveryOpenSessionOfASuspendedAccount() {
+        String csrfToken = fetchCsrfToken();
+        EntityExchangeResult<AccountBody> registration = register("sara@correo.com", csrfToken);
+        Long accountId = registration.getResponseBody().id();
+        String firstSession = sessionOf(registration);
+        String secondSession = sessionOf(logIn("sara@correo.com", PASSWORD, csrfToken));
+        String adminSession = sessionOf(logIn(ADMIN_EMAIL, ADMIN_PASSWORD, csrfToken));
+        assertThat(openSessionsOf(accountId)).isEqualTo(2);
+
+        moderate("suspend", accountId, adminSession, csrfToken).expectStatus().isNoContent();
+
+        assertThat(openSessionsOf(accountId)).isZero();
+        me(firstSession)
+                .expectStatus()
+                .isUnauthorized()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("unauthenticated");
+        me(secondSession).expectStatus().isUnauthorized();
+        me(adminSession).expectStatus().isOk();
+        attemptLogIn("sara@correo.com", PASSWORD, csrfToken)
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("identity.account_suspended");
+    }
+
+    @Test
+    void letsAReactivatedAccountLogInAgain() {
+        String csrfToken = fetchCsrfToken();
+        Long accountId =
+                register("tomas@correo.com", csrfToken).getResponseBody().id();
+        String adminSession = sessionOf(logIn(ADMIN_EMAIL, ADMIN_PASSWORD, csrfToken));
+        moderate("suspend", accountId, adminSession, csrfToken).expectStatus().isNoContent();
+
+        moderate("reactivate", accountId, adminSession, csrfToken)
+                .expectStatus()
+                .isNoContent();
+
+        EntityExchangeResult<AccountBody> login = logIn("tomas@correo.com", PASSWORD, csrfToken);
+        assertThat(login.getResponseBody().id()).isEqualTo(accountId);
+        me(sessionOf(login)).expectStatus().isOk();
+    }
+
+    @Test
     void rejectsARegistrationWithoutTheCsrfHeader() {
         String csrfToken = fetchCsrfToken();
 
@@ -203,17 +249,34 @@ class AuthFlowTest {
     }
 
     private EntityExchangeResult<AccountBody> logIn(String email, String password, String csrfToken) {
+        return attemptLogIn(email, password, csrfToken)
+                .expectStatus()
+                .isOk()
+                .expectBody(AccountBody.class)
+                .returnResult();
+    }
+
+    private RestTestClient.ResponseSpec attemptLogIn(String email, String password, String csrfToken) {
         return client.post()
                 .uri("/api/v1/auth/login")
                 .cookie("XSRF-TOKEN", csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new CredentialsBody(email, password))
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(AccountBody.class)
-                .returnResult();
+                .exchange();
+    }
+
+    private RestTestClient.ResponseSpec moderate(String action, Long accountId, String adminSession, String csrfToken) {
+        return client.post()
+                .uri("/api/v1/accounts/{id}/{action}", accountId, action)
+                .cookie("SESSION", adminSession)
+                .cookie("XSRF-TOKEN", csrfToken)
+                .header("X-XSRF-TOKEN", csrfToken)
+                .exchange();
+    }
+
+    private RestTestClient.ResponseSpec me(String session) {
+        return client.get().uri("/api/v1/auth/me").cookie("SESSION", session).exchange();
     }
 
     private static String sessionOf(EntityExchangeResult<?> result) {

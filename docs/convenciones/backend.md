@@ -15,6 +15,7 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 | Entidad JPA             | `infrastructure.persistence` | `RestaurantEntity`                                |
 | Repositorio Spring Data | `infrastructure.persistence` | `RestaurantJpaRepository`                         |
 | Adaptador del puerto    | `infrastructure.persistence` | `RestaurantPersistenceAdapter`                    |
+| Adaptador con seguridad | `infrastructure.security`    | `BcryptPasswordHasher`                            |
 | Controller              | `infrastructure.web`         | `RestaurantController`                            |
 | Request / Response      | `infrastructure.web`         | `RegisterRestaurantRequest`, `RestaurantResponse` |
 

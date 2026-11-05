@@ -10,6 +10,7 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | `application`                | Unitario     | JUnit + fakes en memoria de los puertos          | Sin Spring. Se escribe un fake, no se mockea el puerto |
 | `infrastructure.persistence` | Integración  | `@DataJpaTest` + Testcontainers                  | PostgreSQL real con el esquema de Flyway, nunca H2     |
 | `infrastructure.web`         | Slice        | `@WebMvcTest` + `MockMvcTester` + `@MockitoBean` | Estados HTTP, validación, permisos y Problem Details   |
+| `infrastructure.security`    | Unitario     | JUnit + AssertJ                                  | Sin Spring, con la librería real (BCrypt)              |
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
 

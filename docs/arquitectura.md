@@ -34,7 +34,7 @@ com.nur.pedidos
 │   ├── application/        Un caso de uso por clase + commands
 │   └── infrastructure/
 │       ├── persistence/    @Entity, repositorios Spring Data y adaptadores de los puertos
-│       ├── security/       Adaptadores de seguridad: el hash y las sesiones, que delegan en shared
+│       ├── security/       El hash de contraseñas y el adaptador de sesiones, que delega en shared
 │       ├── startup/        Lo que corre al arrancar la aplicación (el primer admin)
 │       └── web/            Controllers, requests y responses
 └── shared/

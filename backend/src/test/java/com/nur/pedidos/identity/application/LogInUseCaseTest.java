@@ -39,6 +39,15 @@ class LogInUseCaseTest {
     }
 
     @Test
+    void checksThePasswordEvenWhenTheEmailIsUnknown() {
+        accountRepository.save(register());
+
+        assertThatThrownBy(() -> logIn.execute(new LogInCommand("luis@correo.com", "secreta123")))
+                .isInstanceOf(InvalidCredentialsException.class);
+        assertThat(passwordHasher.checkedPasswords()).isOne();
+    }
+
+    @Test
     void rejectsTheWrongPassword() {
         accountRepository.save(register());
 

@@ -68,7 +68,8 @@ guarda credenciales.
   contraseña de menos de 8 caracteres (`identity.password_too_short`) o de más de 72 bytes
   (`identity.password_too_long`). El correo se valida después de quitarle los espacios.
 - Un login fallido responde lo mismo si el correo no existe que si la contraseña no coincide: `401`
-  con `identity.invalid_credentials`. Una cuenta suspendida recibe `403` con
+  con `identity.invalid_credentials`. En los dos casos se compara una contraseña con BCrypt, así que
+  también tarda lo mismo. Una cuenta suspendida recibe `403` con
   `identity.account_suspended` solo si la contraseña es correcta, y un correo ya registrado, `409`
   con `identity.email_taken`.
 - Registrarse o iniciar sesión con una sesión abierta la reemplaza por una nueva.

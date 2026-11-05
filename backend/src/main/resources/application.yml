@@ -8,7 +8,9 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+  flyway:
+    validate-migration-naming: true
 
 server:
   port: ${PORT:8080}

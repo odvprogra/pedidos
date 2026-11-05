@@ -20,16 +20,14 @@ public class CreateAdminUseCase {
 
     @Transactional
     public void execute(CreateAdminCommand command) {
+        if (accountRepository.existsByRole(Role.ADMIN)) {
+            return;
+        }
         Account admin = Account.createAdmin(command.email(), command.password(), passwordHasher, clock.instant());
-        accountRepository
-                .findByEmail(admin.getEmail())
-                .ifPresentOrElse(CreateAdminUseCase::requireAdmin, () -> accountRepository.save(admin));
-    }
-
-    private static void requireAdmin(Account existing) {
-        if (existing.getRole() != Role.ADMIN) {
+        if (accountRepository.existsByEmail(admin.getEmail())) {
             throw new DomainException(
                     "identity.admin_email_taken", "El correo del administrador ya es de un cliente o un dueño");
         }
+        accountRepository.save(admin);
     }
 }

@@ -1,6 +1,7 @@
 package com.nur.pedidos.identity.infrastructure.persistence;
 
 import com.nur.pedidos.identity.domain.model.Account;
+import com.nur.pedidos.identity.domain.model.Role;
 import com.nur.pedidos.identity.domain.port.AccountRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,10 @@ class AccountPersistenceAdapter implements AccountRepository {
     @Override
     public boolean existsByEmail(String email) {
         return jpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByRole(Role role) {
+        return jpaRepository.existsByRole(role);
     }
 }

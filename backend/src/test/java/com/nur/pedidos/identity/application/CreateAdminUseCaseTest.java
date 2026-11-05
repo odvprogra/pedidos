@@ -24,7 +24,7 @@ class CreateAdminUseCaseTest {
             new CreateAdminUseCase(accountRepository, passwordHasher, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
-    void createsTheAdminWhenNoAccountHasTheEmail() {
+    void createsTheAdminWhenThereIsNoAdminYet() {
         createAdmin.execute(new CreateAdminCommand(" Admin@Pedidos.com ", "secreta123"));
 
         assertThat(accountRepository.count()).isEqualTo(1);
@@ -47,6 +47,16 @@ class CreateAdminUseCaseTest {
                 .isEqualTo("hashed:secreta123");
     }
 
+    @Test
+    void doesNotCreateASecondAdminForANewEmail() {
+        createAdmin.execute(new CreateAdminCommand("admin@pedidos.com", "secreta123"));
+
+        createAdmin.execute(new CreateAdminCommand("otro.admin@pedidos.com", "secreta123"));
+
+        assertThat(accountRepository.count()).isEqualTo(1);
+        assertThat(accountRepository.findByEmail("otro.admin@pedidos.com")).isEmpty();
+    }
+
     @ParameterizedTest
     @EnumSource(names = {"CUSTOMER", "OWNER"})
     void refusesAnEmailThatBelongsToAnotherRole(Role role) {
@@ -65,7 +75,7 @@ class CreateAdminUseCaseTest {
     }
 
     @Test
-    void savesNothingWhenTheConfigurationBreaksARule() {
+    void savesNothingWhenTheAdminBreaksARule() {
         assertThatThrownBy(() -> createAdmin.execute(new CreateAdminCommand("admin@pedidos.com", "corta")))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")

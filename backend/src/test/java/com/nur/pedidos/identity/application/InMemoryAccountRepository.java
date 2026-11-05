@@ -1,6 +1,7 @@
 package com.nur.pedidos.identity.application;
 
 import com.nur.pedidos.identity.domain.model.Account;
+import com.nur.pedidos.identity.domain.model.Role;
 import com.nur.pedidos.identity.domain.port.AccountRepository;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,11 @@ class InMemoryAccountRepository implements AccountRepository {
     @Override
     public boolean existsByEmail(String email) {
         return findByEmail(email).isPresent();
+    }
+
+    @Override
+    public boolean existsByRole(Role role) {
+        return accounts.values().stream().anyMatch(account -> account.getRole() == role);
     }
 
     int count() {

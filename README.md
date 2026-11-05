@@ -86,11 +86,11 @@ El backend lee estas variables de entorno, con valores por defecto para desarrol
 | `ADMIN_EMAIL`    | vacío                                      |
 | `ADMIN_PASSWORD` | vacío                                      |
 
-Al arrancar, el backend crea la cuenta de administrador ("Administrador") con `ADMIN_EMAIL` y
-`ADMIN_PASSWORD` si no hay una cuenta con ese correo:
+Al arrancar, si todavía no hay ninguna cuenta de administrador, el backend la crea ("Administrador")
+con `ADMIN_EMAIL` y `ADMIN_PASSWORD`:
 
-- Si la cuenta ya existe como admin, no la toca. Cambiar `ADMIN_PASSWORD` después no cambia la
-  contraseña.
+- Si ya hay un admin, no hace nada: cambiar las variables después no crea otro admin ni cambia la
+  contraseña. Así nunca queda un admin de más, que no se podría suspender.
 - Si falta una de las dos, el correo no es válido o es de un cliente o un dueño, o la contraseña no
   cumple las reglas (de 8 caracteres a 72 bytes), el backend no arranca y muestra el motivo.
 - Sin las dos variables arranca sin admin y lo avisa en el log. En desarrollo:

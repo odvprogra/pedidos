@@ -70,6 +70,14 @@ class AccountPersistenceAdapterTest {
     }
 
     @Test
+    void tellsWhetherSomeAccountHasARole() {
+        adapter.save(register("ana@correo.com"));
+
+        assertThat(adapter.existsByRole(Role.CUSTOMER)).isTrue();
+        assertThat(adapter.existsByRole(Role.ADMIN)).isFalse();
+    }
+
+    @Test
     void keepsTheSuspensionOfAnAccount() {
         Account account = adapter.save(register("ana@correo.com"));
         account.suspend();

@@ -7,11 +7,13 @@ import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import lombok.Getter;
 
 @Getter
 public class Account {
 
+    private static final Pattern EMAIL_FORMAT = Pattern.compile("[^@\\s]+@[^@\\s]+\\.[^@\\s]+");
     private static final int MIN_PASSWORD_LENGTH = 8;
     private static final int MAX_PASSWORD_BYTES = 72;
 
@@ -75,8 +77,12 @@ public class Account {
         if (email == null || email.isBlank()) {
             throw new DomainException("identity.email_required", "El correo es obligatorio");
         }
+        String normalizedEmail = normalizeEmail(email);
+        if (!EMAIL_FORMAT.matcher(normalizedEmail).matches()) {
+            throw new DomainException("identity.invalid_email", "El correo no tiene un formato válido");
+        }
         requireValidPassword(password);
-        return new Account(null, name.strip(), normalizeEmail(email), passwordHasher.hash(password), role, false, now);
+        return new Account(null, name.strip(), normalizedEmail, passwordHasher.hash(password), role, false, now);
     }
 
     private static void requireValidPassword(String password) {

@@ -79,6 +79,15 @@ class AccountTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"ana", "ana@", "@correo.com", "ana@correo", "ana rojas@correo.com", "ana@@correo.com"})
+    void rejectsAnEmailWithoutAValidFormat(String email) {
+        assertThatThrownBy(() -> register("Ana Rojas", email, PASSWORD, Role.CUSTOMER))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("identity.invalid_email");
+    }
+
+    @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"1234567", "ññññ"})
     void rejectsAPasswordWithFewerThanEightCharacters(String password) {

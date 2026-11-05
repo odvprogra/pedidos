@@ -21,4 +21,11 @@ class AccountCommandsTest {
 
         assertThat(command.toString()).contains("ana@correo.com").doesNotContain("secreta123");
     }
+
+    @Test
+    void keepsThePasswordOutOfTheAdminText() {
+        CreateAdminCommand command = new CreateAdminCommand("admin@pedidos.com", "secreta123");
+
+        assertThat(command.toString()).contains("admin@pedidos.com").doesNotContain("secreta123");
+    }
 }

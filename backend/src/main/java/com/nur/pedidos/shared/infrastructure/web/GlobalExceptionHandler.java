@@ -1,13 +1,17 @@
 package com.nur.pedidos.shared.infrastructure.web;
 
+import com.nur.pedidos.shared.domain.exception.ConflictException;
 import com.nur.pedidos.shared.domain.exception.DomainException;
+import com.nur.pedidos.shared.domain.exception.ForbiddenException;
 import com.nur.pedidos.shared.domain.exception.NotFoundException;
+import com.nur.pedidos.shared.domain.exception.UnauthenticatedException;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,9 +23,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final String VALIDATION_FAILED = "validation_failed";
 
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ProblemDetail handleUnauthenticated(UnauthenticatedException ex) {
+        return toProblem(HttpStatus.UNAUTHORIZED, ex);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ProblemDetail handleForbidden(ForbiddenException ex) {
+        return toProblem(HttpStatus.FORBIDDEN, ex);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ProblemDetail handleNotFound(NotFoundException ex) {
         return toProblem(HttpStatus.NOT_FOUND, ex);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ProblemDetail handleConflict(ConflictException ex) {
+        return toProblem(HttpStatus.CONFLICT, ex);
     }
 
     @ExceptionHandler(DomainException.class)
@@ -40,6 +59,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setDetail("Datos inválidos");
         problem.setProperty("code", VALIDATION_FAILED);
         problem.setProperty("errors", errors);
+        return handleExceptionInternal(ex, problem, headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "El cuerpo de la petición no es válido");
+        problem.setProperty("code", VALIDATION_FAILED);
+        problem.setProperty("errors", List.of());
         return handleExceptionInternal(ex, problem, headers, status, request);
     }
 

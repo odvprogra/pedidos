@@ -46,7 +46,8 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 ## 2. Caso de uso
 
 1. Una clase `<Verbo><Sustantivo>UseCase` en `application` con un solo método público `execute`.
-2. `@Service`, `@RequiredArgsConstructor`, `@Transactional` (`readOnly = true` si solo lee).
+2. `@Service`, `@RequiredArgsConstructor`, `@Transactional` (`readOnly = true` si solo lee). El
+   constructor se escribe a mano solo si prepara un valor al construirse (`LogInUseCase`).
 3. Entrada: un `record` `<Verbo><Sustantivo>Command` o tipos simples. Salida: modelo de dominio.
 4. Si el recurso es de un usuario, el command trae su id (`ownerId`, `customerId`) y el caso de uso
    valida la pertenencia. Si no se cumple, lanza una subclase de `ForbiddenException` con
@@ -73,8 +74,9 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
    llama al caso de uso, responde.
 2. Request como `record` con Bean Validation y `toCommand()`. Response como `record` con
    `static from(...)`.
-3. Crear responde `201` con `Location`; eliminar responde `204`. Los errores los convierte
-   `GlobalExceptionHandler`; no se capturan excepciones en el controller.
+3. Crear responde `201` con `Location`; eliminar y las acciones (`POST /{id}/cancel`) responden
+   `204`, o `200` si devuelven el recurso. Los errores los convierte `GlobalExceptionHandler`; no se
+   capturan excepciones en el controller.
 4. Cada método declara quién lo puede usar con `@PreAuthorize("hasRole('OWNER')")`. Las rutas
    públicas se agregan en `SecurityConfig` y no llevan `@PreAuthorize`.
 5. El usuario llega con `@AuthenticationPrincipal CurrentUser user` y `user.id()` pasa al command
@@ -82,13 +84,14 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 
 ## 5. Tests
 
-| Pieza       | Test                                                                                          |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| Modelo      | Unitario puro: cada regla, el camino feliz y cada forma de romperla                           |
-| Caso de uso | Unitario con un fake en memoria del puerto (`InMemoryXxxRepository`), incluida la pertenencia |
-| Controller  | `@WebMvcTest` + `@Import(SecurityConfig.class)` + `MockMvcTester`: ver abajo                  |
-| Adaptador   | `@DataJpaTest` + Testcontainers: guardar, buscar y cada consulta propia                       |
-| Migración   | En el test del adaptador: cada restricción que respalda una regla                             |
+| Pieza             | Test                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| Modelo            | Unitario puro: cada regla, el camino feliz y cada forma de romperla                            |
+| Caso de uso       | Unitario con un fake en memoria del puerto (`InMemoryXxxRepository`), incluida la pertenencia  |
+| Controller        | `@WebMvcTest` + `@Import(SecurityConfig.class)` + `MockMvcTester`: ver abajo                   |
+| Adaptador         | `@DataJpaTest` + Testcontainers: guardar, buscar y cada consulta propia                        |
+| Migración         | En el test del adaptador: cada restricción que respalda una regla                              |
+| Tarea al arrancar | Unitario con un mock del caso de uso: qué hace con cada configuración (`FirstAdminRunnerTest`) |
 
 En el test del controller, cada endpoint protegido tiene sin sesión (`401` con `unauthenticated`),
 el rol incorrecto (`403` con `access_denied`, con `@ParameterizedTest`) y el rol correcto, además de

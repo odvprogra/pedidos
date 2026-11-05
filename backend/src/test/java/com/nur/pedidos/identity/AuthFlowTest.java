@@ -42,7 +42,7 @@ class AuthFlowTest {
     }
 
     @Test
-    void registersUsesTheSessionAndLogsOut() {
+    void registersReadsTheCurrentAccountAndLogsOut() {
         String csrfToken = fetchCsrfToken();
 
         EntityExchangeResult<AccountBody> registration = client.post()
@@ -94,12 +94,15 @@ class AuthFlowTest {
     }
 
     @Test
-    void logsInAgainWithANewSession() {
+    void replacesTheOpenSessionWhenLoggingInAgain() {
         String csrfToken = fetchCsrfToken();
-        String firstSession = sessionOf(register("luis@correo.com", csrfToken));
+        EntityExchangeResult<AccountBody> registration = register("luis@correo.com", csrfToken);
+        String firstSession = sessionOf(registration);
+        Long accountId = registration.getResponseBody().id();
 
         EntityExchangeResult<AccountBody> login = client.post()
                 .uri("/api/v1/auth/login")
+                .cookie("SESSION", firstSession)
                 .cookie("XSRF-TOKEN", csrfToken)
                 .header("X-XSRF-TOKEN", csrfToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -109,11 +112,20 @@ class AuthFlowTest {
                 .exchange()
                 .expectStatus()
                 .isOk()
+                .expectCookie()
+                .exists("SESSION")
                 .expectBody(AccountBody.class)
                 .returnResult();
         String secondSession = sessionOf(login);
 
         assertThat(secondSession).isNotEqualTo(firstSession);
+        assertThat(openSessionsOf(accountId)).isOne();
+        client.get()
+                .uri("/api/v1/auth/me")
+                .cookie("SESSION", firstSession)
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
         client.get()
                 .uri("/api/v1/auth/me")
                 .cookie("SESSION", secondSession)

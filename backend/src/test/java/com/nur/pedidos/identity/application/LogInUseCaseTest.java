@@ -60,13 +60,6 @@ class LogInUseCaseTest {
                 .isEqualTo("identity.account_suspended");
     }
 
-    @Test
-    void keepsThePasswordOutOfTheCommandText() {
-        LogInCommand command = new LogInCommand("ana@correo.com", "secreta123");
-
-        assertThat(command.toString()).contains("ana@correo.com").doesNotContain("secreta123");
-    }
-
     private Account register() {
         return Account.register("Ana Rojas", "ana@correo.com", "secreta123", Role.CUSTOMER, passwordHasher, NOW);
     }

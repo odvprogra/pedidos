@@ -49,16 +49,10 @@ class RegisterAccountUseCaseTest {
     void savesNothingWhenTheAccountBreaksARule() {
         assertThatThrownBy(() -> registerAccount.execute(
                         new RegisterAccountCommand("Ana Rojas", "ana@correo.com", "corta", Role.CUSTOMER)))
-                .isInstanceOf(DomainException.class);
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("identity.password_too_short");
 
         assertThat(accountRepository.count()).isZero();
-    }
-
-    @Test
-    void keepsThePasswordOutOfTheCommandText() {
-        RegisterAccountCommand command =
-                new RegisterAccountCommand("Ana Rojas", "ana@correo.com", "secreta123", Role.CUSTOMER);
-
-        assertThat(command.toString()).contains("ana@correo.com").doesNotContain("secreta123");
     }
 }

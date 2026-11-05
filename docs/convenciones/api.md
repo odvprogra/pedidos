@@ -61,14 +61,21 @@ guarda credenciales.
 { "id": 7, "name": "Ana Rojas", "email": "ana@correo.com", "role": "CUSTOMER" }
 ```
 
-- El registro recibe nombre, correo, contraseña y rol, y acepta los roles `CUSTOMER` y `OWNER`. Las
-  cuentas `ADMIN` solo se crean por configuración.
+- El registro recibe nombre, correo, contraseña y rol, y acepta los roles `CUSTOMER` y `OWNER`; otro
+  rol responde `400`. Las cuentas `ADMIN` solo se crean por configuración.
+- Las reglas de la cuenta responden `422`: correo sin formato válido (`identity.invalid_email`),
+  contraseña de menos de 8 caracteres (`identity.password_too_short`) o de más de 72 bytes
+  (`identity.password_too_long`). El correo se valida después de quitarle los espacios.
 - Un login fallido responde lo mismo si el correo no existe que si la contraseña no coincide: `401`
   con `identity.invalid_credentials`. Una cuenta suspendida recibe `403` con
-  `identity.account_suspended`, y un correo ya registrado, `409` con `identity.email_taken`.
+  `identity.account_suspended` solo si la contraseña es correcta, y un correo ya registrado, `409`
+  con `identity.email_taken`.
+- Registrarse o iniciar sesión con una sesión abierta la reemplaza por una nueva.
+- Cerrar sesión sin sesión responde `401` con `unauthenticated`.
 - Toda petición que modifica (`POST`, `PUT`, `PATCH`, `DELETE`), incluidos el registro y el login,
   lleva el header `X-XSRF-TOKEN` con el valor de la cookie `XSRF-TOKEN`. El `HttpClient` de Angular
-  lo hace solo.
+  lo hace solo. La primera respuesta del backend, aunque sea un `401`, ya trae esa cookie, así que
+  basta con que la app pida `/api/v1/auth/me` al arrancar.
 - Cada endpoint declara quién lo puede usar. `GET /api/health` y las rutas de registro e inicio de
   sesión son públicas.
 

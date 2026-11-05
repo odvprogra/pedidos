@@ -34,12 +34,14 @@ com.nur.pedidos
 │   ├── application/        Un caso de uso por clase + commands
 │   └── infrastructure/
 │       ├── persistence/    @Entity, repositorios Spring Data y adaptadores de los puertos
+│       ├── security/       Adaptadores que usan Spring Security sin tocar la sesión (hash)
 │       └── web/            Controllers, requests y responses
 └── shared/
-    ├── domain/exception/   DomainException, NotFoundException
+    ├── domain/exception/   DomainException y sus subclases por estado HTTP (404, 409, 403, 401)
     └── infrastructure/
         ├── web/            GlobalExceptionHandler, HealthController
-        └── security/       SecurityConfig, CurrentUser, respuestas 401 y 403
+        ├── security/       SecurityConfig, CurrentUser, SecuritySessions, respuestas 401 y 403
+        └── time/           El Clock del que sale la hora actual
 ```
 
 ### Recorrido de una petición
@@ -72,8 +74,7 @@ Están verificadas por `ArchitectureTest` (ArchUnit). Si una falla, `./mvnw veri
 9. Los `@Service` de `application` terminan en `UseCase`.
 
 Con la autenticación ([ADR-0008](adr/0008-autenticacion-con-sesion-y-roles.md)) se suman tres
-reglas. Entran en `ArchitectureTest` junto con Spring Security, en la primera feature de
-`identity`:
+reglas:
 
 10. `application` no depende de Spring Security.
 11. `@PreAuthorize` solo se usa en `infrastructure.web`.

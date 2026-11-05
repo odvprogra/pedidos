@@ -4,7 +4,8 @@ Las tablas de cada módulo, sus restricciones y las reglas de negocio que depend
 decisión y sus alternativas están en [ADR-0009](adr/0009-modelo-de-datos-y-migraciones-con-flyway.md);
 cómo se escriben las migraciones, en [backend.md](convenciones/backend.md#migraciones).
 
-Ninguna tabla existe todavía. Cada una entra con la migración de la feature que la usa.
+Cada tabla entra con la migración de la feature que la usa. Las de `identity` ya existen
+(`V1__create_accounts.sql`); las demás todavía no.
 
 ## Vista general
 

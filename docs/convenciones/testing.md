@@ -34,7 +34,9 @@ niveles:
   escribe con `@ParameterizedTest`. El usuario se simula con el helper
   `TestSessions.sessionOf(rol, id)` de los tests de `shared`, que arma el mismo `CurrentUser` que la
   app: `.with(sessionOf("OWNER", 7L))`. Las peticiones que modifican agregan `.with(csrf())`, y un
-  test de `AuthController` verifica que sin el token se responde `403` con `csrf_invalid`.
+  test de `AuthController` verifica que sin el token se responde `403` con `csrf_invalid`. La cookie
+  `XSRF-TOKEN` no se prueba en el slice: `csrf()` cambia el repositorio de tokens del contexto
+  cacheado, y desde ahí ningún test de ese contexto la recibe. La prueba el flujo completo.
 - **Flujo completo:** un `@SpringBootTest` con Testcontainers usa la cookie real y Spring Session.
   Recorre registro, `/me`, logout (después responde 401) y suspensión (la sesión que estaba abierta
   responde 401 en la próxima petición).

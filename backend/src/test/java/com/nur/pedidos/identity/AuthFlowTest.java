@@ -13,12 +13,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"ADMIN_EMAIL=admin@pedidos.com", "ADMIN_PASSWORD=admin-secreta"})
 @AutoConfigureRestTestClient
 @Import(TestcontainersConfiguration.class)
 class AuthFlowTest {
 
     private static final String PASSWORD = "secreta123";
+    private static final String ADMIN_EMAIL = "admin@pedidos.com";
+    private static final String ADMIN_PASSWORD = "admin-secreta";
 
     @Autowired
     private RestTestClient client;
@@ -137,6 +141,19 @@ class AuthFlowTest {
     }
 
     @Test
+    void logsInAsTheAdminCreatedAtStartup() {
+        String csrfToken = fetchCsrfToken();
+
+        EntityExchangeResult<AccountBody> login = logIn(ADMIN_EMAIL, ADMIN_PASSWORD, csrfToken);
+
+        assertThat(login.getResponseBody())
+                .extracting(AccountBody::name, AccountBody::email, AccountBody::role)
+                .containsExactly("Administrador", ADMIN_EMAIL, "ADMIN");
+        assertThat(jdbcTemplate.queryForObject("select count(*) from accounts where role = 'ADMIN'", Integer.class))
+                .isOne();
+    }
+
+    @Test
     void rejectsARegistrationWithoutTheCsrfHeader() {
         String csrfToken = fetchCsrfToken();
 
@@ -185,6 +202,20 @@ class AuthFlowTest {
                 .returnResult();
     }
 
+    private EntityExchangeResult<AccountBody> logIn(String email, String password, String csrfToken) {
+        return client.post()
+                .uri("/api/v1/auth/login")
+                .cookie("XSRF-TOKEN", csrfToken)
+                .header("X-XSRF-TOKEN", csrfToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CredentialsBody(email, password))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(AccountBody.class)
+                .returnResult();
+    }
+
     private static String sessionOf(EntityExchangeResult<?> result) {
         return result.getResponseCookies().getFirst("SESSION").getValue();
     }
@@ -195,6 +226,8 @@ class AuthFlowTest {
     }
 
     private record RegistrationBody(String name, String email, String password, String role) {}
+
+    private record CredentialsBody(String email, String password) {}
 
     private record AccountBody(Long id, String name, String email, String role) {}
 }

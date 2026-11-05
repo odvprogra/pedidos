@@ -17,6 +17,11 @@ spring:
     jdbc:
       initialize-schema: never
 
+pedidos:
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+
 server:
   port: ${PORT:8080}
   servlet:

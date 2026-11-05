@@ -43,6 +43,10 @@ En Windows con PowerShell se usa `.\mvnw.cmd`. Los tests del backend necesitan D
   cuenta tiene un rol fijo (`CUSTOMER`, `OWNER` o `ADMIN`). El rol se exige con `@PreAuthorize` en
   el controller y la pertenencia la valida el caso de uso. Detalle en
   [ADR-0008](docs/adr/0008-autenticacion-con-sesion-y-roles.md).
+- **Datos:** cada módulo es dueño de sus tablas; entre módulos solo se guardan ids, sin claves
+  foráneas. El esquema lo crean las migraciones de Flyway, una por feature, y Hibernate solo lo
+  valida. Detalle en [docs/modelo-de-datos.md](docs/modelo-de-datos.md) y
+  [ADR-0009](docs/adr/0009-modelo-de-datos-y-migraciones-con-flyway.md).
 
 Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 
@@ -53,8 +57,10 @@ Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 2. **Código en inglés; documentación y textos de la interfaz en español.** Términos fijos:
    restaurante `restaurant`, catálogo `catalog`, producto `product`, pedido `order`, cliente
    `customer`, dueño `owner`, administrador `admin`, cuenta `account`.
-3. **El modelo de datos todavía se está diseñando.** Si una tarea necesita una entidad, campo o
-   relación que no existe, propón el modelo y espera confirmación antes de crearlo.
+3. **El modelo de datos está en [docs/modelo-de-datos.md](docs/modelo-de-datos.md).** Si una tarea
+   necesita una tabla, campo o relación que no está ahí, propón el cambio y espera confirmación
+   antes de crearlo. Cada tabla entra con una migración de Flyway, y una migración que ya está en
+   `main` no se edita.
 4. **No se desactiva ninguna verificación** (`@Disabled`, `it.skip`, `eslint-disable`,
    `@SuppressWarnings`, bajar una regla de ArchUnit) para que algo pase. Si una regla estorba, se
    discute y se cambia con una ADR.
@@ -70,6 +76,7 @@ Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 | Tema                          | Archivo                                                        |
 | ----------------------------- | -------------------------------------------------------------- |
 | Arquitectura                  | [docs/arquitectura.md](docs/arquitectura.md)                   |
+| Modelo de datos               | [docs/modelo-de-datos.md](docs/modelo-de-datos.md)             |
 | Convenciones del backend      | [docs/convenciones/backend.md](docs/convenciones/backend.md)   |
 | Convenciones del frontend     | [docs/convenciones/frontend.md](docs/convenciones/frontend.md) |
 | Diseño de la API              | [docs/convenciones/api.md](docs/convenciones/api.md)           |

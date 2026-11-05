@@ -58,11 +58,11 @@ guarda credenciales.
 | Usuario actual | `GET /api/v1/auth/me`        | Con sesión | `200` + usuario                               |
 
 ```json
-{ "id": 7, "email": "ana@correo.com", "role": "CUSTOMER" }
+{ "id": 7, "name": "Ana Rojas", "email": "ana@correo.com", "role": "CUSTOMER" }
 ```
 
-- El registro acepta los roles `CUSTOMER` y `OWNER`. Las cuentas `ADMIN` solo se crean por
-  configuración.
+- El registro recibe nombre, correo, contraseña y rol, y acepta los roles `CUSTOMER` y `OWNER`. Las
+  cuentas `ADMIN` solo se crean por configuración.
 - Un login fallido responde lo mismo si el correo no existe que si la contraseña no coincide: `401`
   con `identity.invalid_credentials`. Una cuenta suspendida recibe `403` con
   `identity.account_suspended`, y un correo ya registrado, `409` con `identity.email_taken`.

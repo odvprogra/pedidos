@@ -8,7 +8,7 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | ---------------------------- | ------------ | ------------------------------------------------ | ------------------------------------------------------ |
 | `domain`                     | Unitario     | JUnit + AssertJ                                  | Sin Spring, sin mocks                                  |
 | `application`                | Unitario     | JUnit + fakes en memoria de los puertos          | Sin Spring. Se escribe un fake, no se mockea el puerto |
-| `infrastructure.persistence` | Integración  | `@DataJpaTest` + Testcontainers                  | PostgreSQL real, nunca H2                              |
+| `infrastructure.persistence` | Integración  | `@DataJpaTest` + Testcontainers                  | PostgreSQL real con el esquema de Flyway, nunca H2     |
 | `infrastructure.web`         | Slice        | `@WebMvcTest` + `MockMvcTester` + `@MockitoBean` | Estados HTTP, validación, permisos y Problem Details   |
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
@@ -41,6 +41,26 @@ niveles:
 
 Ningún test desactiva la seguridad (`addFilters = false` o excluir su autoconfiguración) para que
 algo pase.
+
+### Migraciones
+
+Las migraciones de Flyway ([ADR-0009](../adr/0009-modelo-de-datos-y-migraciones-con-flyway.md)) no
+tienen tests propios; las prueban los tests que ya usan Testcontainers:
+
+| Qué se verifica                                      | Dónde                                        | Cómo falla                              |
+| ---------------------------------------------------- | -------------------------------------------- | --------------------------------------- |
+| Todas las migraciones corren sobre una base vacía    | Todo test con Testcontainers                 | El contexto no levanta                  |
+| Cada entidad coincide con su tabla                   | `contextLoads`, por `ddl-auto: validate`     | `Schema validation: missing column ...` |
+| El nombre de cada archivo                            | Al arrancar, por `validate-migration-naming` | `Invalid SQL filenames found`           |
+| Las restricciones que sostienen una regla de negocio | `@DataJpaTest` del adaptador                 | `DataIntegrityViolationException`       |
+
+- `validate` revisa tablas, columnas y tipos, pero no los `check`, los únicos ni los nulos. Por eso
+  el test del adaptador guarda una fila que rompe la restricción y espera
+  `DataIntegrityViolationException`: el correo repetido en otra capitalización, el segundo
+  restaurante de un dueño, un precio en cero, una categoría repetida, una cantidad fuera de rango.
+  Solo las restricciones que respaldan una regla, no cada columna.
+- Los tests nunca crean el esquema con `ddl-auto: create` ni con scripts propios: usan el que dejan
+  las migraciones. Los datos de cada test se arman con el adaptador.
 
 ## Frontend
 

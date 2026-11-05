@@ -9,7 +9,7 @@ las reglas y reportas.
 
 ## Referencias
 
-- `docs/arquitectura.md`
+- `docs/arquitectura.md` y `docs/modelo-de-datos.md`
 - `docs/convenciones/backend.md`, `frontend.md`, `api.md`, `testing.md`
 - Las ADRs en `docs/adr/`
 
@@ -26,6 +26,8 @@ las reglas y reportas.
    - Errores sin `code` estable, excepciones capturadas y silenciadas, `null` donde va `Optional`.
    - Endpoints que no siguen `api.md` (rutas, estados HTTP, Problem Details, paginación).
    - Dinero con `double`, fechas sin zona horaria, IDs inventados.
+   - Tablas o columnas que no están en `docs/modelo-de-datos.md`, migraciones de `main` editadas,
+     claves foráneas o relaciones JPA entre módulos, restricciones sin su test de persistencia.
    - En el frontend: componentes de presentación que inyectan servicios de datos, estado duplicado,
      vistas sin alguno de los cuatro estados, colores fuera de los tokens.
    - Tests en la capa equivocada o que no prueban comportamiento.

@@ -48,7 +48,9 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
   copia.
 - Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`.
-- No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`.
+- No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`. Lo único
+  que va a `localStorage` es el carrito de `core/cart` (restaurante, productos y cantidades), que se
+  vacía al cerrar sesión ([modelo-de-datos.md](../modelo-de-datos.md#el-carrito)).
 - No se desactiva la protección XSRF del `HttpClient` (`withNoXsrfProtection`).
 - Las pantallas de ingreso (`/ingresar`) y registro (`/registro`) son de la feature `auth`.
 

@@ -86,6 +86,10 @@ datos de `catalog`, define un puerto propio (`order/domain/port/ProductCatalog`)
 `order/infrastructure` que llama a los casos de uso de `catalog`. Así cada módulo puede cambiar por
 dentro sin romper a los demás.
 
+En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
+guarda el id, sin clave foránea. Las tablas y las referencias están en
+[modelo-de-datos.md](modelo-de-datos.md).
+
 ### Autenticación y permisos
 
 La sesión vive en PostgreSQL (Spring Session) y el navegador solo guarda la cookie `SESSION`. Cada
@@ -116,7 +120,7 @@ predecible.
 
 ```text
 src/app/
-├── core/          Servicios únicos de toda la app: autenticación, interceptores, errores
+├── core/          Servicios únicos de toda la app: autenticación, carrito, interceptores, errores
 ├── shared/
 │   ├── ui/        Componentes visuales reutilizables sin lógica de negocio
 │   └── utils/     Funciones puras y pipes

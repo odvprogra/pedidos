@@ -13,9 +13,9 @@ Antes de escribir código lee `docs/arquitectura.md`, `docs/convenciones/backend
 
 - Identifica el módulo: `identity`, `restaurant`, `catalog`, `order` u otro. Si no existe, se crea
   con la estructura de abajo.
-- El modelo de datos todavía se está diseñando. Si la tarea necesita una entidad, un campo o una
-  relación que no existe, propón el modelo (campos, tipos, restricciones, relaciones) y espera
-  confirmación antes de escribir código.
+- Lee la sección del módulo en `docs/modelo-de-datos.md`: tablas, restricciones y reglas. Si la
+  tarea necesita una tabla, un campo o una relación que no está ahí, propón el cambio (campos,
+  tipos, restricciones, relaciones) y espera confirmación antes de escribir código.
 - Si la tarea toca otro módulo, revisa la sección "Comunicación entre módulos" de
   `docs/arquitectura.md`.
 
@@ -49,11 +49,16 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 
 ## 3. Persistencia
 
-1. `XxxEntity` (package-private) con `@Entity`, `@Table(name = "<plural_en_snake_case>")`, `@Getter`,
+1. Si la feature crea o cambia tablas, una migración `V<n>__<descripcion>.sql` en
+   `src/main/resources/db/migration` con el número libre siguiente. Nunca se edita una migración que
+   ya está en `main`. Reglas en la sección "Migraciones" de `docs/convenciones/backend.md`.
+2. `XxxEntity` (package-private) con `@Entity`, `@Table(name = "<plural_en_snake_case>")`, `@Getter`,
    `@Setter`, `@NoArgsConstructor(access = PROTECTED)`, y los métodos `fromDomain` y `toDomain`.
-2. `XxxJpaRepository extends JpaRepository<XxxEntity, Long>` (package-private).
-3. `XxxPersistenceAdapter` (`@Component`, package-private) implementa el puerto.
-4. Dinero `BigDecimal` con `precision = 12, scale = 2`; fechas `Instant`; relaciones `LAZY`.
+   Tiene que coincidir con la migración: `ddl-auto: validate` no deja arrancar si no coincide.
+3. `XxxJpaRepository extends JpaRepository<XxxEntity, Long>` (package-private).
+4. `XxxPersistenceAdapter` (`@Component`, package-private) implementa el puerto.
+5. Dinero `BigDecimal` con `precision = 12, scale = 2`; fechas `Instant`; enums
+   `@Enumerated(EnumType.STRING)`. Los ids de otros módulos son columnas `Long`, sin relación JPA.
 
 ## 4. Web
 
@@ -72,6 +77,7 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 | Caso de uso | Unitario con un fake en memoria del puerto (`InMemoryXxxRepository`)    |
 | Controller  | `@WebMvcTest` + `MockMvcTester`: éxito, validación (400) y 404/422      |
 | Adaptador   | `@DataJpaTest` + Testcontainers: guardar, buscar y cada consulta propia |
+| Migración   | En el test del adaptador: cada restricción que respalda una regla       |
 
 Nombres de métodos en inglés describiendo la conducta: `rejectsAnOrderWithoutItems`.
 
@@ -93,6 +99,7 @@ regla.
 - [ ] El dominio no importa nada de Spring, JPA ni Jackson
 - [ ] Un caso de uso por clase, terminado en `UseCase`
 - [ ] Ningún controller ni caso de uso recibe o devuelve entidades JPA
+- [ ] Las tablas nuevas tienen su migración y ninguna migración de `main` cambió
 - [ ] Los errores de negocio tienen un `code` estable
 - [ ] Tests en las cuatro capas que se tocaron
 - [ ] Sin comentarios en el código

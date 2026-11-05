@@ -27,7 +27,8 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 ├── application/
 └── infrastructure/
     ├── persistence/
-    ├── security/      Solo si un adaptador usa Spring Security sin tocar la sesión (un hash)
+    ├── security/      Solo para un hash o un adaptador que delega en shared.infrastructure.security
+    ├── startup/       Solo si algo corre al arrancar (un ApplicationRunner)
     └── web/
 ```
 

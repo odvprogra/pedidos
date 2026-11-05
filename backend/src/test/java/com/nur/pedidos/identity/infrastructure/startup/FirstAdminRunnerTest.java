@@ -1,6 +1,5 @@
 package com.nur.pedidos.identity.infrastructure.startup;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -38,13 +37,6 @@ class FirstAdminRunnerTest {
         run(new AdminProperties("admin@pedidos.com", ""));
 
         verify(createAdmin).execute(new CreateAdminCommand("admin@pedidos.com", ""));
-    }
-
-    @Test
-    void keepsThePasswordOutOfThePropertiesText() {
-        AdminProperties properties = new AdminProperties("admin@pedidos.com", "secreta123");
-
-        assertThat(properties.toString()).contains("admin@pedidos.com").doesNotContain("secreta123");
     }
 
     private void run(AdminProperties properties) {

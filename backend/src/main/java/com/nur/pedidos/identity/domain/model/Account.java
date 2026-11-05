@@ -41,7 +41,18 @@ public class Account {
         if (role == Role.ADMIN) {
             throw new DomainException("identity.role_not_allowed", "Solo se pueden registrar clientes y dueños");
         }
-        return create(name, email, password, role, passwordHasher, now);
+        if (name == null || name.isBlank()) {
+            throw new DomainException("identity.name_required", "El nombre es obligatorio");
+        }
+        if (email == null || email.isBlank()) {
+            throw new DomainException("identity.email_required", "El correo es obligatorio");
+        }
+        String normalizedEmail = normalizeEmail(email);
+        if (!EMAIL_FORMAT.matcher(normalizedEmail).matches()) {
+            throw new DomainException("identity.invalid_email", "El correo no tiene un formato válido");
+        }
+        requireValidPassword(password);
+        return new Account(null, name.strip(), normalizedEmail, passwordHasher.hash(password), role, false, now);
     }
 
     public static String normalizeEmail(String email) {
@@ -67,22 +78,6 @@ public class Account {
 
     public void reactivate() {
         this.suspended = false;
-    }
-
-    private static Account create(
-            String name, String email, String password, Role role, PasswordHasher passwordHasher, Instant now) {
-        if (name == null || name.isBlank()) {
-            throw new DomainException("identity.name_required", "El nombre es obligatorio");
-        }
-        if (email == null || email.isBlank()) {
-            throw new DomainException("identity.email_required", "El correo es obligatorio");
-        }
-        String normalizedEmail = normalizeEmail(email);
-        if (!EMAIL_FORMAT.matcher(normalizedEmail).matches()) {
-            throw new DomainException("identity.invalid_email", "El correo no tiene un formato válido");
-        }
-        requireValidPassword(password);
-        return new Account(null, name.strip(), normalizedEmail, passwordHasher.hash(password), role, false, now);
     }
 
     private static void requireValidPassword(String password) {

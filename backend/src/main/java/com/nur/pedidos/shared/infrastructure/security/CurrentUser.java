@@ -14,7 +14,7 @@ public record CurrentUser(Long id, String role) implements AuthenticatedPrincipa
         return String.valueOf(id);
     }
 
-    public Authentication toAuthentication() {
+    Authentication toAuthentication() {
         return UsernamePasswordAuthenticationToken.authenticated(
                 this, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
     }

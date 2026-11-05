@@ -130,7 +130,10 @@ class ArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
+                    "org.springframework.security.authentication..",
                     "org.springframework.security.core.context..",
+                    "org.springframework.security.core.session..",
+                    "org.springframework.security.web.authentication..",
                     "org.springframework.security.web.context..",
                     "org.springframework.session..")
             .orShould()

@@ -11,6 +11,8 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | `infrastructure.persistence` | Integración  | `@DataJpaTest` + Testcontainers                  | PostgreSQL real con el esquema de Flyway, nunca H2     |
 | `infrastructure.web`         | Slice        | `@WebMvcTest` + `MockMvcTester` + `@MockitoBean` | Estados HTTP, validación, permisos y Problem Details   |
 | `infrastructure.security`    | Unitario     | JUnit + AssertJ                                  | Sin Spring, con la librería real (BCrypt)              |
+| Sesiones (`SessionRevoker`)  | Integración  | `@JdbcTest` + Testcontainers                     | Spring Session JDBC real sobre el esquema de Flyway    |
+| `infrastructure.startup`     | Unitario     | JUnit + mock del caso de uso                     | Qué hace con cada configuración, sin Spring            |
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
 
@@ -40,7 +42,8 @@ niveles:
   cacheado, y desde ahí ningún test de ese contexto la recibe. La prueba el flujo completo.
 - **Flujo completo:** un `@SpringBootTest` con Testcontainers usa la cookie real y Spring Session.
   Recorre registro, `/me`, logout (después responde 401) y suspensión (la sesión que estaba abierta
-  responde 401 en la próxima petición).
+  responde 401 en la próxima petición). Arranca con `ADMIN_EMAIL` y `ADMIN_PASSWORD` en
+  `properties`, así el admin que suspende es el que creó el backend al arrancar.
 
 Ningún test desactiva la seguridad (`addFilters = false` o excluir su autoconfiguración) para que
 algo pase.

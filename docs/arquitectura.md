@@ -34,13 +34,14 @@ com.nur.pedidos
 │   ├── application/        Un caso de uso por clase + commands
 │   └── infrastructure/
 │       ├── persistence/    @Entity, repositorios Spring Data y adaptadores de los puertos
-│       ├── security/       Adaptadores que usan Spring Security sin tocar la sesión (hash)
+│       ├── security/       Adaptadores de seguridad: el hash y las sesiones, que delegan en shared
+│       ├── startup/        Lo que corre al arrancar la aplicación (el primer admin)
 │       └── web/            Controllers, requests y responses
 └── shared/
     ├── domain/exception/   DomainException y sus subclases por estado HTTP (404, 409, 403, 401)
     └── infrastructure/
         ├── web/            GlobalExceptionHandler, HealthController
-        ├── security/       SecurityConfig, CurrentUser, SecuritySessions, respuestas 401 y 403
+        ├── security/       SecurityConfig, CurrentUser, SecuritySessions, SessionRevoker, 401 y 403
         └── time/           El Clock del que sale la hora actual
 ```
 
@@ -109,6 +110,13 @@ pertenencia se prueba con fakes. `CurrentUser` está en `shared`, así que ning�
 `identity` para saber quién hace la petición. Si un módulo necesita datos de la cuenta, define un
 puerto propio hacia los casos de uso de `identity`, como en cualquier otra comunicación entre
 módulos.
+
+Suspender una cuenta borra todas sus sesiones. `SuspendAccountUseCase` usa el puerto
+`AccountSessions`, y su adaptador en `identity.infrastructure.security` delega en `SessionRevoker`,
+que busca las sesiones por `principal_name` con `FindByIndexNameSessionRepository` y las borra. Así
+`shared` no conoce a `identity` (regla 5) y solo `shared.infrastructure.security` toca las sesiones
+(regla 12). `SessionRevoker` es un `@Component` aparte de `SecuritySessions` porque los tests
+`@WebMvcTest` importan `SecurityConfig` sin un repositorio de sesiones.
 
 ### Cuándo el dominio tiene lógica
 

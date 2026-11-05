@@ -77,12 +77,24 @@ corre lo mismo en cada pull request.
 
 El backend lee estas variables de entorno, con valores por defecto para desarrollo local:
 
-| Variable      | Por defecto                                |
-| ------------- | ------------------------------------------ |
-| `DB_URL`      | `jdbc:postgresql://localhost:5432/pedidos` |
-| `DB_USER`     | `pedidos`                                  |
-| `DB_PASSWORD` | `pedidos`                                  |
-| `PORT`        | `8080`                                     |
+| Variable         | Por defecto                                |
+| ---------------- | ------------------------------------------ |
+| `DB_URL`         | `jdbc:postgresql://localhost:5432/pedidos` |
+| `DB_USER`        | `pedidos`                                  |
+| `DB_PASSWORD`    | `pedidos`                                  |
+| `PORT`           | `8080`                                     |
+| `ADMIN_EMAIL`    | vacío                                      |
+| `ADMIN_PASSWORD` | vacío                                      |
+
+Al arrancar, el backend crea la cuenta de administrador ("Administrador") con `ADMIN_EMAIL` y
+`ADMIN_PASSWORD` si no hay una cuenta con ese correo:
+
+- Si la cuenta ya existe como admin, no la toca. Cambiar `ADMIN_PASSWORD` después no cambia la
+  contraseña.
+- Si falta una de las dos, el correo no es válido o es de un cliente o un dueño, o la contraseña no
+  cumple las reglas (de 8 caracteres a 72 bytes), el backend no arranca y muestra el motivo.
+- Sin las dos variables arranca sin admin y lo avisa en el log. En desarrollo:
+  `ADMIN_EMAIL=admin@pedidos.com ADMIN_PASSWORD=<clave> ./mvnw spring-boot:run`.
 
 En desarrollo, Angular redirige las peticiones a `/api` hacia el backend usando
 `frontend/proxy.conf.json`.

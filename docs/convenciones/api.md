@@ -10,27 +10,28 @@
 
 ## Métodos y respuestas
 
-| Operación   | Método          | Respuesta                           |
-| ----------- | --------------- | ----------------------------------- |
-| Listar      | `GET`           | `200` con la lista o la página      |
-| Obtener uno | `GET`           | `200`                               |
-| Crear       | `POST`          | `201` + header `Location` + recurso |
-| Modificar   | `PUT` / `PATCH` | `200` con el recurso actualizado    |
-| Eliminar    | `DELETE`        | `204`                               |
+| Operación   | Método          | Respuesta                             |
+| ----------- | --------------- | ------------------------------------- |
+| Listar      | `GET`           | `200` con la lista o la página        |
+| Obtener uno | `GET`           | `200`                                 |
+| Crear       | `POST`          | `201` + header `Location` + recurso   |
+| Modificar   | `PUT` / `PATCH` | `200` con el recurso actualizado      |
+| Eliminar    | `DELETE`        | `204`                                 |
+| Acción      | `POST`          | `204`, o `200` si devuelve el recurso |
 
 ## Errores
 
 Todas las respuestas de error usan Problem Details ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457))
 con un campo `code` estable que el frontend puede usar para decidir qué mostrar.
 
-| Estado | Cuándo                                                                         | `code`                                            |
-| ------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
-| `400`  | El request no cumple el formato (Bean Validation)                              | `validation_failed`                               |
-| `401`  | No hay sesión, venció o el login no es válido                                  | `unauthenticated`, `identity.invalid_credentials` |
-| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF | `access_denied`, el del dominio, `csrf_invalid`   |
-| `404`  | El recurso no existe (`NotFoundException`)                                     | `<modulo>.not_found`                              |
-| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)           | el del dominio                                    |
-| `422`  | Se rompe una regla del negocio (`DomainException`)                             | el del dominio                                    |
+| Estado | Cuándo                                                                           | `code`                                            |
+| ------ | -------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                               |
+| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials` |
+| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`   |
+| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found`                              |
+| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                    |
+| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                    |
 
 ```json
 {
@@ -78,6 +79,24 @@ guarda credenciales.
   basta con que la app pida `/api/v1/auth/me` al arrancar.
 - Cada endpoint declara quién lo puede usar. `GET /api/health` y las rutas de registro e inicio de
   sesión son públicas.
+
+## Cuentas
+
+El admin suspende y reactiva cuentas de clientes y dueños. La cuenta del admin la crea el backend al
+arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la configuración en el `README.md`).
+
+| Operación        | Ruta                                    | Acceso | Respuesta |
+| ---------------- | --------------------------------------- | ------ | --------- |
+| Suspender cuenta | `POST /api/v1/accounts/{id}/suspend`    | Admin  | `204`     |
+| Reactivar cuenta | `POST /api/v1/accounts/{id}/reactivate` | Admin  | `204`     |
+
+- Suspender borra todas las sesiones de la cuenta. La próxima petición con cualquiera de ellas
+  responde `401` con `unauthenticated`, y el login, `403` con `identity.account_suspended`.
+- Una cuenta de administrador no se suspende, tampoco la propia: `422` con
+  `identity.admin_not_suspendable`, y sus sesiones siguen abiertas.
+- Un id que no existe responde `404` con `identity.not_found`.
+- Las dos acciones son idempotentes: suspender una cuenta suspendida o reactivar una activa responde
+  `204` y deja la cuenta como estaba.
 
 ## Paginación
 

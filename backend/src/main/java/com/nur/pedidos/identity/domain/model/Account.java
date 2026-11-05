@@ -16,6 +16,7 @@ public class Account {
     private static final Pattern EMAIL_FORMAT = Pattern.compile("[^@\\s]+@[^@\\s]+\\.[^@\\s]+");
     private static final int MIN_PASSWORD_LENGTH = 8;
     private static final int MAX_PASSWORD_BYTES = 72;
+    private static final String ADMIN_NAME = "Administrador";
 
     private final Long id;
     private final String name;
@@ -41,6 +42,15 @@ public class Account {
         if (role == Role.ADMIN) {
             throw new DomainException("identity.role_not_allowed", "Solo se pueden registrar clientes y dueños");
         }
+        return create(name, email, password, role, passwordHasher, now);
+    }
+
+    public static Account createAdmin(String email, String password, PasswordHasher passwordHasher, Instant now) {
+        return create(ADMIN_NAME, email, password, Role.ADMIN, passwordHasher, now);
+    }
+
+    private static Account create(
+            String name, String email, String password, Role role, PasswordHasher passwordHasher, Instant now) {
         if (name == null || name.isBlank()) {
             throw new DomainException("identity.name_required", "El nombre es obligatorio");
         }

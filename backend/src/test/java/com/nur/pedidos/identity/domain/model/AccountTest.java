@@ -12,6 +12,8 @@ import java.time.Instant;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -183,8 +185,48 @@ class AccountTest {
     }
 
     @Test
+    void createsAnActiveAdminNamedAdministrador() {
+        Account admin = Account.createAdmin("  Admin@Pedidos.com ", PASSWORD, passwordHasher, NOW);
+
+        assertThat(admin.getId()).isNull();
+        assertThat(admin.getName()).isEqualTo("Administrador");
+        assertThat(admin.getEmail()).isEqualTo("admin@pedidos.com");
+        assertThat(admin.getPasswordHash()).isEqualTo("hashed:secreta123");
+        assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+        assertThat(admin.isSuspended()).isFalse();
+        assertThat(admin.getCreatedAt()).isEqualTo(NOW);
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            nullValues = "null",
+            value = {"null, identity.email_required", "'  ', identity.email_required", "admin, identity.invalid_email"})
+    void rejectsAnAdminWithoutAValidEmail(String email, String code) {
+        assertThatThrownBy(() -> Account.createAdmin(email, PASSWORD, passwordHasher, NOW))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo(code);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidAdminPasswords")
+    void appliesThePasswordRulesToTheAdmin(String password, String code) {
+        assertThatThrownBy(() -> Account.createAdmin("admin@pedidos.com", password, passwordHasher, NOW))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo(code);
+    }
+
+    static Stream<Arguments> invalidAdminPasswords() {
+        return Stream.of(
+                Arguments.of(null, "identity.password_too_short"),
+                Arguments.of("corta", "identity.password_too_short"),
+                Arguments.of("a".repeat(73), "identity.password_too_long"));
+    }
+
+    @Test
     void refusesToSuspendAnAdmin() {
-        Account admin = new Account(1L, "Admin", "admin@pedidos.com", "hashed:x", Role.ADMIN, false, NOW);
+        Account admin = Account.createAdmin("admin@pedidos.com", PASSWORD, passwordHasher, NOW);
 
         assertThatThrownBy(admin::suspend)
                 .isInstanceOf(DomainException.class)

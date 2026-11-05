@@ -6,6 +6,7 @@ import com.nur.pedidos.shared.domain.exception.ForbiddenException;
 import com.nur.pedidos.shared.domain.exception.NotFoundException;
 import com.nur.pedidos.shared.domain.exception.UnauthenticatedException;
 import java.util.List;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -68,6 +69,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "El cuerpo de la petición no es válido");
         problem.setProperty("code", VALIDATION_FAILED);
         problem.setProperty("errors", List.of());
+        return handleExceptionInternal(ex, problem, headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+            TypeMismatchException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "Datos inválidos");
+        problem.setProperty("code", VALIDATION_FAILED);
+        problem.setProperty("errors", List.of(new FieldViolation(ex.getPropertyName(), "El valor no es válido")));
         return handleExceptionInternal(ex, problem, headers, status, request);
     }
 

@@ -27,6 +27,7 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 ├── application/
 └── infrastructure/
     ├── persistence/
+    ├── security/      Solo si un adaptador usa Spring Security sin tocar la sesión (un hash)
     └── web/
 ```
 
@@ -46,6 +47,11 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
 1. Una clase `<Verbo><Sustantivo>UseCase` en `application` con un solo método público `execute`.
 2. `@Service`, `@RequiredArgsConstructor`, `@Transactional` (`readOnly = true` si solo lee).
 3. Entrada: un `record` `<Verbo><Sustantivo>Command` o tipos simples. Salida: modelo de dominio.
+4. Si el recurso es de un usuario, el command trae su id (`ownerId`, `customerId`) y el caso de uso
+   valida la pertenencia. Si no se cumple, lanza una subclase de `ForbiddenException` con
+   `<modulo>.not_owner`. El caso de uso nunca lee el contexto de seguridad.
+5. La hora actual sale del `Clock` inyectado (`shared.infrastructure.time`), nunca de
+   `Instant.now()`.
 
 ## 3. Persistencia
 
@@ -68,16 +74,25 @@ backend/src/main/java/com/nur/pedidos/<modulo>/
    `static from(...)`.
 3. Crear responde `201` con `Location`; eliminar responde `204`. Los errores los convierte
    `GlobalExceptionHandler`; no se capturan excepciones en el controller.
+4. Cada método declara quién lo puede usar con `@PreAuthorize("hasRole('OWNER')")`. Las rutas
+   públicas se agregan en `SecurityConfig` y no llevan `@PreAuthorize`.
+5. El usuario llega con `@AuthenticationPrincipal CurrentUser user` y `user.id()` pasa al command
+   (`request.toCommand(user.id())`). El id nunca viene en el body.
 
 ## 5. Tests
 
-| Pieza       | Test                                                                    |
-| ----------- | ----------------------------------------------------------------------- |
-| Modelo      | Unitario puro: cada regla, el camino feliz y cada forma de romperla     |
-| Caso de uso | Unitario con un fake en memoria del puerto (`InMemoryXxxRepository`)    |
-| Controller  | `@WebMvcTest` + `MockMvcTester`: éxito, validación (400) y 404/422      |
-| Adaptador   | `@DataJpaTest` + Testcontainers: guardar, buscar y cada consulta propia |
-| Migración   | En el test del adaptador: cada restricción que respalda una regla       |
+| Pieza       | Test                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| Modelo      | Unitario puro: cada regla, el camino feliz y cada forma de romperla                           |
+| Caso de uso | Unitario con un fake en memoria del puerto (`InMemoryXxxRepository`), incluida la pertenencia |
+| Controller  | `@WebMvcTest` + `@Import(SecurityConfig.class)` + `MockMvcTester`: ver abajo                  |
+| Adaptador   | `@DataJpaTest` + Testcontainers: guardar, buscar y cada consulta propia                       |
+| Migración   | En el test del adaptador: cada restricción que respalda una regla                             |
+
+En el test del controller, cada endpoint protegido tiene sin sesión (`401` con `unauthenticated`),
+el rol incorrecto (`403` con `access_denied`, con `@ParameterizedTest`) y el rol correcto, además de
+la validación (400) y los 404/409/422. La sesión se simula con `.with(sessionOf("OWNER", 7L))` de
+`TestSessions`, y las peticiones que modifican agregan `.with(csrf())`.
 
 Nombres de métodos en inglés describiendo la conducta: `rejectsAnOrderWithoutItems`.
 
@@ -101,6 +116,7 @@ regla.
 - [ ] Ningún controller ni caso de uso recibe o devuelve entidades JPA
 - [ ] Las tablas nuevas tienen su migración y ninguna migración de `main` cambió
 - [ ] Los errores de negocio tienen un `code` estable
+- [ ] Cada endpoint declara su rol y tiene su matriz sin sesión, rol incorrecto y rol correcto
 - [ ] Tests en las cuatro capas que se tocaron
 - [ ] Sin comentarios en el código
 - [ ] `./mvnw verify` en verde

@@ -13,16 +13,24 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (request, next) => {
   return next(request).pipe(
     catchError((error: unknown) => {
       if (isUnauthorized(error) && !request.url.startsWith(`${AUTH_URL}/`)) {
-        const hadSession = session.account() !== null;
-        session.clear();
-        router.navigate([LOG_IN_PATH], {
-          queryParams: { returnUrl: router.url, sessionExpired: hadSession || null },
-        });
+        sendToLogIn(session, router);
       }
       return throwError(() => error);
     }),
   );
 };
+
+function sendToLogIn(session: SessionStore, router: Router): void {
+  const currentUrl = router.currentNavigation()?.extractedUrl.toString() ?? router.url;
+  if (currentUrl.startsWith(LOG_IN_PATH)) {
+    return;
+  }
+  const hadSession = session.account() !== null;
+  session.clear();
+  router.navigate([LOG_IN_PATH], {
+    queryParams: { returnUrl: currentUrl, sessionExpired: hadSession || null },
+  });
+}
 
 function isUnauthorized(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 401;

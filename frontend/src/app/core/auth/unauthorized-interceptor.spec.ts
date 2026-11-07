@@ -68,6 +68,27 @@ describe('unauthorizedInterceptor', () => {
     expect(router.url).toBe('/ingresar?returnUrl=%2Fpedidos');
   });
 
+  it('keeps the first redirect when several requests get a 401 at once', async () => {
+    session.signIn(ANA);
+    http.get('/api/v1/orders').subscribe({ error: () => undefined });
+    http.get('/api/v1/cart').subscribe({ error: () => undefined });
+
+    httpTesting.expectOne('/api/v1/orders').flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpTesting.expectOne('/api/v1/cart').flush({}, { status: 401, statusText: 'Unauthorized' });
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(router.url).toBe('/ingresar?returnUrl=%2Fpedidos&sessionExpired=true');
+  });
+
+  it('keeps the return url when a late 401 arrives on the log in page', async () => {
+    session.signIn(ANA);
+    await request('/api/v1/orders', 401);
+
+    await request('/api/v1/cart', 401);
+
+    expect(router.url).toBe('/ingresar?returnUrl=%2Fpedidos&sessionExpired=true');
+  });
+
   it.each(['/api/v1/auth/me', '/api/v1/auth/login', '/api/v1/auth/logout'])(
     'leaves the 401 of %s to the caller',
     async (url) => {

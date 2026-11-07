@@ -1,0 +1,12 @@
+<div class="grid gap-1.5">
+  <label class="text-sm font-semibold" [for]="fieldId()">{{ label() }}</label>
+  <ng-content />
+  <p
+    class="min-h-5 text-sm"
+    [id]="messageId()"
+    [class.text-danger]="error()"
+    [class.text-muted]="!error()"
+  >
+    {{ error() ?? hint() }}
+  </p>
+</div>

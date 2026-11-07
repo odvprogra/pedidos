@@ -43,11 +43,14 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
 - Una lista paginada recibe un `Page<T>` (`@core/http/page`) y usa `app-pagination`
   (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
-  queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva.
+  queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
+  llega, el foco va al título de la página; si falla, a "Reintentar".
 - Una acción que cambia algo y se puede deshacer se confirma dentro de la misma fila o tarjeta, sin
-  modal: el foco va a "Cancelar" al abrir la pregunta y vuelve al botón al cerrarla. El resultado
-  se anuncia arriba de la lista con `app-alert`: `tone="success"` (que usa `role="status"`) o el
-  tono de error.
+  modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el foco vuelve al botón.
+  El resultado se anuncia en un `app-alert dismissible` fijo bajo el header: `tone="success"` (que
+  usa `role="status"`) o el tono de error.
+- Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
+  (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 
 ## Sesión
 
@@ -56,8 +59,9 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
   copia.
 - Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`; las de ingreso y registro,
-  `guestGuard`. Cuando hay que mandar a alguien a "su inicio", se usa `homeFor(role)` de
-  `@core/auth/home-path`, nunca una ruta fija.
+  `guestGuard`. Después de ingresar, o cuando un guard saca a alguien de una ruta, se lo manda a su
+  inicio con `homeFor(role)` (`@core/auth/home-path`), nunca a una ruta fija. El logo del header
+  lleva siempre a la portada pública `/`.
 - Los nombres de los roles en la interfaz salen de `ROLE_LABELS` (`@core/auth/account`).
 - No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`. Lo único
   que va a `localStorage` es el carrito de `core/cart` (restaurante, productos y cantidades), que se

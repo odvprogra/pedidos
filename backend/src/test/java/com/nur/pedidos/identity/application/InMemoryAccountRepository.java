@@ -3,7 +3,10 @@ package com.nur.pedidos.identity.application;
 import com.nur.pedidos.identity.domain.model.Account;
 import com.nur.pedidos.identity.domain.model.Role;
 import com.nur.pedidos.identity.domain.port.AccountRepository;
+import com.nur.pedidos.shared.domain.model.PageResult;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,6 +33,16 @@ class InMemoryAccountRepository implements AccountRepository {
     @Override
     public Optional<Account> findById(Long id) {
         return Optional.ofNullable(accounts.get(id));
+    }
+
+    @Override
+    public PageResult<Account> findPageInRegistrationOrder(int page, int size) {
+        List<Account> items = accounts.values().stream()
+                .sorted(Comparator.comparing(Account::getId))
+                .skip((long) page * size)
+                .limit(size)
+                .toList();
+        return new PageResult<>(items, page, size, accounts.size());
     }
 
     @Override

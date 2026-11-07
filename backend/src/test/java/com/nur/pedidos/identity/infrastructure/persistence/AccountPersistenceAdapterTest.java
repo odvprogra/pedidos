@@ -2,11 +2,13 @@ package com.nur.pedidos.identity.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.nur.pedidos.TestcontainersConfiguration;
 import com.nur.pedidos.identity.domain.model.Account;
 import com.nur.pedidos.identity.domain.model.Role;
 import com.nur.pedidos.identity.domain.port.FakePasswordHasher;
+import com.nur.pedidos.shared.domain.model.PageResult;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +90,48 @@ class AccountPersistenceAdapterTest {
                 .get()
                 .extracting(Account::isSuspended)
                 .isEqualTo(true);
+    }
+
+    @Test
+    void listsAPageOfAccountsInRegistrationOrder() {
+        adapter.save(register("ana@correo.com"));
+        Account luis = register("luis@correo.com");
+        luis.suspend();
+        adapter.save(luis);
+        adapter.save(register("carla@correo.com"));
+
+        PageResult<Account> firstPage = adapter.findPageInRegistrationOrder(0, 2);
+        PageResult<Account> secondPage = adapter.findPageInRegistrationOrder(1, 2);
+
+        assertThat(firstPage.items())
+                .extracting(Account::getEmail, Account::isSuspended)
+                .containsExactly(tuple("ana@correo.com", false), tuple("luis@correo.com", true));
+        assertThat(secondPage.items()).extracting(Account::getEmail).containsExactly("carla@correo.com");
+        assertThat(firstPage.totalItems()).isEqualTo(3);
+        assertThat(firstPage.totalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void returnsAnEmptyPageAfterTheLastOneWithTheRealTotals() {
+        adapter.save(register("ana@correo.com"));
+        adapter.save(register("luis@correo.com"));
+        adapter.save(register("carla@correo.com"));
+
+        PageResult<Account> result = adapter.findPageInRegistrationOrder(5, 2);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.page()).isEqualTo(5);
+        assertThat(result.totalItems()).isEqualTo(3);
+        assertThat(result.totalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void returnsAnEmptyPageWhenThereAreNoAccounts() {
+        PageResult<Account> result = adapter.findPageInRegistrationOrder(0, 20);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.totalItems()).isZero();
+        assertThat(result.totalPages()).isZero();
     }
 
     @Test

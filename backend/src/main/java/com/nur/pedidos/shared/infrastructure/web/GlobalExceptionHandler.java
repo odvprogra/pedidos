@@ -17,6 +17,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -69,6 +70,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "El cuerpo de la petición no es válido");
         problem.setProperty("code", VALIDATION_FAILED);
         problem.setProperty("errors", List.of());
+        return handleExceptionInternal(ex, problem, headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(
+            HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        List<FieldViolation> errors = ex.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> new FieldViolation(
+                                result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
+                .toList();
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "Datos inválidos");
+        problem.setProperty("code", VALIDATION_FAILED);
+        problem.setProperty("errors", errors);
         return handleExceptionInternal(ex, problem, headers, status, request);
     }
 

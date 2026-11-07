@@ -1,0 +1,123 @@
+<app-auth-shell>
+  <h1 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Crea tu cuenta</h1>
+  <p class="mt-1 text-muted">Es gratis y te toma un minuto.</p>
+
+  <form class="mt-6 grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
+    <fieldset class="mb-3">
+      <legend class="mb-2 text-sm font-semibold">¿Qué quieres hacer?</legend>
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (option of roleOptions; track option.value) {
+          <label
+            class="group relative flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-line bg-surface p-4 pr-11 transition hover:border-brand/40 has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:ring-4 has-focus-visible:ring-brand/20 sm:flex-col sm:items-start sm:pr-4"
+          >
+            <input class="sr-only" type="radio" formControlName="role" [value]="option.value" />
+            <span
+              class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand transition group-has-checked:bg-brand group-has-checked:text-white"
+            >
+              <svg
+                aria-hidden="true"
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                @if (option.value === 'CUSTOMER') {
+                  <path d="M5.5 8h13l-1 12h-11l-1-12z" />
+                  <path d="M9 10V6.5a3 3 0 0 1 6 0V10" />
+                } @else {
+                  <path d="M3 9l1.5-5h15L21 9" />
+                  <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+                  <path d="M5 12v8h14v-8" />
+                  <path d="M10 20v-5h4v5" />
+                }
+              </svg>
+            </span>
+            <span>
+              <span class="block font-bold">{{ option.title }}</span>
+              <span class="block text-sm text-muted">{{ option.description }}</span>
+            </span>
+            <span
+              aria-hidden="true"
+              class="absolute top-4 right-4 grid size-5 place-items-center rounded-full border-2 border-line bg-surface transition group-has-checked:border-brand group-has-checked:bg-brand"
+            >
+              <span class="size-2 rounded-full bg-surface"></span>
+            </span>
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    @let nameError = errorOf('name');
+    <app-form-field label="Nombre" fieldId="name" [error]="nameError">
+      <input
+        appTextInput
+        id="name"
+        formControlName="name"
+        autocomplete="name"
+        placeholder="Ana Rojas"
+        aria-describedby="name-message"
+        [attr.aria-invalid]="nameError !== null"
+      />
+    </app-form-field>
+
+    @let emailError = errorOf('email');
+    <app-form-field label="Correo" fieldId="email" [error]="emailError">
+      <input
+        appTextInput
+        id="email"
+        type="email"
+        formControlName="email"
+        autocomplete="email"
+        placeholder="ana@correo.com"
+        aria-describedby="email-message"
+        [attr.aria-invalid]="emailError !== null"
+      />
+    </app-form-field>
+
+    @let passwordError = errorOf('password');
+    <app-form-field
+      label="Contraseña"
+      fieldId="password"
+      hint="Mínimo 8 caracteres."
+      [error]="passwordError"
+    >
+      <app-password-field
+        fieldId="password"
+        autocomplete="new-password"
+        [control]="form.controls.password"
+        [invalid]="passwordError !== null"
+      />
+    </app-form-field>
+
+    @if (alert(); as alert) {
+      <app-alert class="block">{{ alert }}</app-alert>
+    }
+
+    <button
+      type="submit"
+      class="flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 font-bold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-strong focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+      [disabled]="submitting()"
+    >
+      @if (submitting()) {
+        <app-spinner />
+        Creando cuenta…
+      } @else {
+        Crear cuenta
+      }
+    </button>
+  </form>
+
+  <p class="mt-6 text-center text-sm text-muted">
+    ¿Ya tienes cuenta?
+    <a
+      class="font-bold text-brand hover:underline"
+      [routerLink]="logInPath"
+      [queryParams]="{ returnUrl: returnUrl() }"
+    >
+      Ingresa
+    </a>
+  </p>
+</app-auth-shell>

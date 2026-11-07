@@ -8,7 +8,7 @@
     </app-alert>
   }
 
-  <form class="mt-6 grid gap-1" [formGroup]="form" (ngSubmit)="submit()">
+  <form class="mt-6 grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
     @let emailError = errorOf('email');
     <app-form-field label="Correo" fieldId="email" [error]="emailError">
       <input
@@ -34,7 +34,7 @@
     </app-form-field>
 
     @if (alert(); as alert) {
-      <app-alert class="mb-4 block">{{ alert }}</app-alert>
+      <app-alert class="block">{{ alert }}</app-alert>
     }
 
     <button

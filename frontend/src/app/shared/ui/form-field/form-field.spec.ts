@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TextInput } from '../text-input/text-input';
 import { FormField } from './form-field';
 
 @Component({
-  imports: [FormField],
+  imports: [FormField, TextInput],
   template: `
     <app-form-field label="Correo" fieldId="email" [error]="error()" [hint]="hint()">
-      <input id="email" aria-describedby="email-message" />
+      <input appTextInput id="email" />
     </app-form-field>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +34,13 @@ describe('FormField', () => {
 
     expect(label.htmlFor).toBe('email');
     expect(label.textContent).toContain('Correo');
+  });
+
+  it('links the field to its message', () => {
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    expect(input.id).toBe('email');
+    expect(input.getAttribute('aria-describedby')).toBe(message().id);
   });
 
   it('shows the hint while there is no error', () => {

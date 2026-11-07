@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+export function fieldMessageId(fieldId: string): string {
+  return `${fieldId}-message`;
+}
+
 @Component({
   selector: 'app-form-field',
   templateUrl: './form-field.html',
@@ -11,5 +15,5 @@ export class FormField {
   readonly error = input<string | null>(null);
   readonly hint = input<string | null>(null);
 
-  protected readonly messageId = computed(() => `${this.fieldId()}-message`);
+  protected readonly messageId = computed(() => fieldMessageId(this.fieldId()));
 }

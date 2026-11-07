@@ -34,13 +34,18 @@ describe('PasswordField', () => {
     await fixture.whenStable();
 
     expect(input().type).toBe('text');
-    expect(toggle().getAttribute('aria-label')).toBe('Ocultar contraseña');
     expect(toggle().getAttribute('aria-pressed')).toBe('true');
 
     toggle().click();
     await fixture.whenStable();
 
     expect(input().type).toBe('password');
+    expect(toggle().getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('links the field to the message below it', () => {
+    expect(input().id).toBe('password');
+    expect(input().getAttribute('aria-describedby')).toBe('password-message');
   });
 
   it('writes what the person types into the form control', () => {

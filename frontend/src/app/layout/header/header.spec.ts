@@ -83,7 +83,7 @@ describe('Header', () => {
   it('disables the button while the session is closing', async () => {
     await logOutFrom('/pedidos');
 
-    expect(logOutButton().disabled).toBe(true);
+    expect(logOutButton().getAttribute('aria-disabled')).toBe('true');
     expect(logOutButton().textContent).toContain('Cerrando sesión…');
     httpTesting.expectOne(LOGOUT_URL).flush(null, { status: 204, statusText: 'No Content' });
   });
@@ -117,6 +117,6 @@ describe('Header', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
       'No pudimos cerrar la sesión',
     );
-    expect(logOutButton().disabled).toBe(false);
+    expect(logOutButton().getAttribute('aria-disabled')).toBe('false');
   });
 });

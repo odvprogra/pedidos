@@ -1,6 +1,9 @@
 <header class="sticky top-0 z-10 bg-brand text-white shadow-md">
-  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-    <a routerLink="/" class="text-2xl font-extrabold tracking-tight">
+  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
+    <a
+      routerLink="/"
+      class="rounded-lg text-xl font-extrabold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:text-2xl"
+    >
       Pedidos<span class="text-accent">.</span>
     </a>
 
@@ -14,12 +17,12 @@
         </span>
         <p class="sr-only leading-tight sm:not-sr-only">
           <span class="block font-bold">{{ firstName() }}</span>
-          <span class="block text-xs font-medium">{{ roleLabel() }}</span>
+          <span class="block text-xs font-semibold">{{ roleLabel() }}</span>
         </p>
         <button
           type="button"
-          class="flex items-center gap-2 rounded-full border border-white/40 px-3 py-2 text-sm font-bold transition hover:bg-white/10 focus-visible:ring-4 focus-visible:ring-white/40 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70 sm:ml-2"
-          [disabled]="loggingOut()"
+          class="inline-flex size-11 items-center justify-center gap-2 rounded-full border border-white/40 text-sm font-bold transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-disabled:cursor-wait aria-disabled:opacity-70 sm:ml-2 sm:size-auto sm:min-h-11 sm:px-4"
+          [attr.aria-disabled]="loggingOut()"
           (click)="logOut()"
         >
           <svg
@@ -44,15 +47,15 @@
     } @else if (status() === 'anonymous') {
       <nav aria-label="Cuenta" class="flex items-center gap-1 sm:gap-2">
         <a
-          class="rounded-full px-3 py-2 text-sm font-bold transition hover:bg-white/10"
-          routerLinkActive="bg-white/15"
+          class="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-bold whitespace-nowrap transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          routerLinkActive="bg-brand-strong"
           ariaCurrentWhenActive="page"
           [routerLink]="logInPath"
         >
           Ingresar
         </a>
         <a
-          class="rounded-full bg-white px-4 py-2 text-sm font-bold text-brand shadow-sm transition hover:bg-brand-soft"
+          class="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm font-bold whitespace-nowrap text-brand shadow-sm transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-4"
           ariaCurrentWhenActive="page"
           [routerLink]="registerPath"
           routerLinkActive

@@ -2,15 +2,24 @@
   <h1 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Crea tu cuenta</h1>
   <p class="mt-1 text-muted">Es gratis y te toma un minuto.</p>
 
-  <form class="mt-6 grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
-    <fieldset class="mb-3">
+  <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
+    <fieldset class="mb-2">
       <legend class="mb-2 text-sm font-semibold">¿Qué quieres hacer?</legend>
       <div class="grid gap-3 sm:grid-cols-2">
         @for (option of roleOptions; track option.value) {
+          @let titleId = 'role-' + option.value + '-title';
+          @let descriptionId = 'role-' + option.value + '-description';
           <label
-            class="group relative flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-line bg-surface p-4 pr-11 transition hover:border-brand/40 has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:ring-4 has-focus-visible:ring-brand/20 sm:flex-col sm:items-start sm:pr-4"
+            class="group relative flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-line bg-surface p-4 pr-11 transition hover:border-brand/40 has-checked:border-brand has-checked:bg-brand-soft has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand sm:flex-col sm:items-start sm:pr-4"
           >
-            <input class="sr-only" type="radio" formControlName="role" [value]="option.value" />
+            <input
+              class="sr-only"
+              type="radio"
+              formControlName="role"
+              [value]="option.value"
+              [attr.aria-labelledby]="titleId"
+              [attr.aria-describedby]="descriptionId"
+            />
             <span
               class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand transition group-has-checked:bg-brand group-has-checked:text-white"
             >
@@ -36,8 +45,13 @@
               </svg>
             </span>
             <span>
-              <span class="block font-bold">{{ option.title }}</span>
-              <span class="block text-sm text-muted">{{ option.description }}</span>
+              <span class="block font-bold" [id]="titleId">{{ option.title }}</span>
+              <span
+                class="block text-sm text-muted group-has-checked:text-ink"
+                [id]="descriptionId"
+              >
+                {{ option.description }}
+              </span>
             </span>
             <span
               aria-hidden="true"
@@ -58,7 +72,6 @@
         formControlName="name"
         autocomplete="name"
         placeholder="Ana Rojas"
-        aria-describedby="name-message"
         [attr.aria-invalid]="nameError !== null"
       />
     </app-form-field>
@@ -72,7 +85,6 @@
         formControlName="email"
         autocomplete="email"
         placeholder="ana@correo.com"
-        aria-describedby="email-message"
         [attr.aria-invalid]="emailError !== null"
       />
     </app-form-field>
@@ -96,11 +108,7 @@
       <app-alert class="block">{{ alert }}</app-alert>
     }
 
-    <button
-      type="submit"
-      class="flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3.5 font-bold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-strong focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-      [disabled]="submitting()"
-    >
+    <button appButton type="submit" [attr.aria-disabled]="submitting()">
       @if (submitting()) {
         <app-spinner />
         Creando cuenta…
@@ -113,7 +121,7 @@
   <p class="mt-6 text-center text-sm text-muted">
     ¿Ya tienes cuenta?
     <a
-      class="font-bold text-brand hover:underline"
+      class="rounded font-bold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       [routerLink]="logInPath"
       [queryParams]="{ returnUrl: returnUrl() }"
     >

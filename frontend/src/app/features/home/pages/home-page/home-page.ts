@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Button } from '@shared/ui/button/button';
 import { Status } from '@shared/ui/status-badge/status-badge';
 import { ServiceStatus } from '../../components/service-status/service-status';
 import { HealthApi } from '../../data-access/health-api';
@@ -14,7 +15,7 @@ import { HealthStatus } from '../../models/health-status';
 
 @Component({
   selector: 'app-home-page',
-  imports: [ServiceStatus],
+  imports: [Button, ServiceStatus],
   templateUrl: './home-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

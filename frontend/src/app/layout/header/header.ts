@@ -34,6 +34,9 @@ export class Header {
   protected readonly logOutFailed = signal(false);
 
   protected logOut(): void {
+    if (this.loggingOut()) {
+      return;
+    }
     this.loggingOut.set(true);
     this.logOutFailed.set(false);
     this.session.logOut().subscribe({

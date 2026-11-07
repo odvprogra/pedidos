@@ -1,7 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  Injector,
   booleanAttribute,
+  computed,
   inject,
   input,
   signal,
@@ -13,10 +16,12 @@ import { safeReturnUrl } from '@core/auth/return-url';
 import { SessionStore } from '@core/auth/session-store';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
+import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
+import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
 import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
 import { AuthShell } from '../../components/auth-shell/auth-shell';
 import { PasswordField } from '../../components/password-field/password-field';
@@ -37,6 +42,7 @@ const MESSAGES: Record<LogInField, ValidationMessages> = {
     RouterLink,
     Alert,
     AuthShell,
+    Button,
     FormField,
     PasswordField,
     Spinner,
@@ -49,6 +55,8 @@ export class LogInPage {
   private readonly authApi = inject(AuthApi);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly returnUrl = input<string>();
   readonly sessionExpired = input(false, { transform: booleanAttribute });
@@ -59,15 +67,22 @@ export class LogInPage {
     password: ['', Validators.required],
   });
   protected readonly submitting = signal(false);
+  protected readonly attempted = signal(false);
   protected readonly alert = signal<string | null>(null);
+  protected readonly showExpiredNotice = computed(() => this.sessionExpired() && !this.attempted());
 
   protected errorOf(field: LogInField): string | null {
     return validationMessage(this.form.controls[field], MESSAGES[field]);
   }
 
   protected submit(): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.attempted.set(true);
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.submitting()) {
+    if (this.form.invalid) {
+      focusFirstInvalid(this.host.nativeElement, this.injector);
       return;
     }
 
@@ -83,6 +98,7 @@ export class LogInPage {
         applyFieldErrors(this.form, fieldErrors);
         this.alert.set(alert);
         this.submitting.set(false);
+        focusFirstInvalid(this.host.nativeElement, this.injector);
       },
     });
   }

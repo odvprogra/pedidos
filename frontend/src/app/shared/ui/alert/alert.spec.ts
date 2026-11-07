@@ -19,19 +19,20 @@ describe('Alert', () => {
     await fixture.whenStable();
   });
 
-  it('interrupts with the message when something failed', () => {
-    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+  function alert(): HTMLElement {
+    return fixture.nativeElement.querySelector('[role="alert"]');
+  }
 
-    expect(alert.textContent).toContain('Tu sesión terminó.');
-    expect(alert.classList).toContain('bg-danger-soft');
+  it('announces that something failed', () => {
+    expect(alert().textContent).toContain('Tu sesión terminó.');
+    expect(alert().classList).toContain('bg-danger-soft');
   });
 
-  it('announces a warning politely', async () => {
+  it('announces a warning with its own colors', async () => {
     fixture.componentInstance.tone.set('warning');
     await fixture.whenStable();
 
-    const status = fixture.nativeElement.querySelector('[role="status"]');
-    expect(status.textContent).toContain('Tu sesión terminó.');
-    expect(status.classList).toContain('bg-warning-soft');
+    expect(alert().textContent).toContain('Tu sesión terminó.');
+    expect(alert().classList).toContain('bg-warning-soft');
   });
 });

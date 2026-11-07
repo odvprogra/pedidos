@@ -16,5 +16,4 @@ export class Alert {
   readonly tone = input<AlertTone>('danger');
 
   protected readonly style = computed(() => STYLES[this.tone()]);
-  protected readonly role = computed(() => (this.tone() === 'danger' ? 'alert' : 'status'));
 }

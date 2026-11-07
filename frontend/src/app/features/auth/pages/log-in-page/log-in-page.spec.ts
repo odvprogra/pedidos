@@ -74,7 +74,7 @@ describe('LogInPage', () => {
     expect((page().querySelector('#email') as HTMLInputElement).value).toBe('');
     expect((page().querySelector('#password') as HTMLInputElement).value).toBe('');
     expect(submitButton().textContent?.trim()).toBe('Ingresar');
-    expect(submitButton().disabled).toBe(false);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
     expect(page().querySelector('[role="alert"]')).toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe('LogInPage', () => {
     const request = httpTesting.expectOne(LOGIN_URL);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ email: 'ana@correo.com', password: 'secreta123' });
-    expect(submitButton().disabled).toBe(true);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('true');
     expect(submitButton().textContent).toContain('Ingresando…');
     request.flush(ANA);
   });
@@ -138,7 +138,7 @@ describe('LogInPage', () => {
     await harness.fixture.whenStable();
 
     expect(page().querySelector('[role="alert"]')?.textContent).toContain(message);
-    expect(submitButton().disabled).toBe(false);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
     expect(TestBed.inject(SessionStore).account()).toBeNull();
     expect(TestBed.inject(Router).url).toBe('/ingresar');
   });
@@ -156,13 +156,32 @@ describe('LogInPage', () => {
   it('warns that the session ended when the account was sent back to log in', async () => {
     await open('/ingresar?returnUrl=%2Fpedidos&sessionExpired=true');
 
-    expect(page().querySelector('[role="status"]')?.textContent).toContain('Tu sesión terminó');
+    expect(page().querySelector('[role="alert"]')?.textContent).toContain('Tu sesión terminó');
   });
 
   it('does not talk about an ended session on a normal visit', async () => {
     await open();
 
-    expect(page().querySelector('[role="status"]')).toBeNull();
+    expect(page().textContent).not.toContain('Tu sesión terminó');
+  });
+
+  it('hides the ended session notice once the account tries to log in', async () => {
+    await open('/ingresar?sessionExpired=true');
+
+    submitButton().click();
+    await harness.fixture.whenStable();
+
+    expect(page().textContent).not.toContain('Tu sesión terminó');
+  });
+
+  it('moves the focus to the first field with a problem', async () => {
+    await open();
+    fill('email', 'ana@correo.com');
+
+    submitButton().click();
+    await harness.fixture.whenStable();
+
+    expect(document.activeElement?.id).toBe('password');
   });
 
   it('keeps the return url in the link to create an account', async () => {

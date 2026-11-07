@@ -109,6 +109,7 @@ describe('RegisterPage', () => {
     expect(messageOf('name')).toBe('Escribe tu nombre.');
     expect(messageOf('email')).toBe('Escribe tu correo.');
     expect(messageOf('password')).toBe('Crea una contraseña.');
+    expect(document.activeElement?.id).toBe('name');
   });
 
   it.each([
@@ -142,7 +143,7 @@ describe('RegisterPage', () => {
       password: 'secreta123',
       role: 'OWNER',
     });
-    expect(submitButton().disabled).toBe(true);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('true');
     expect(submitButton().textContent).toContain('Creando cuenta…');
     request.flush(LUIS, { status: 201, statusText: 'Created' });
   });
@@ -171,8 +172,9 @@ describe('RegisterPage', () => {
     await harness.fixture.whenStable();
 
     expect(messageOf(id)).toContain(message);
+    expect(document.activeElement?.id).toBe(id);
     expect(page().querySelector('[role="alert"]')).toBeNull();
-    expect(submitButton().disabled).toBe(false);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
     expect(TestBed.inject(SessionStore).account()).toBeNull();
   });
 
@@ -199,7 +201,7 @@ describe('RegisterPage', () => {
     await harness.fixture.whenStable();
 
     expect(page().querySelector('[role="alert"]')?.textContent).toContain('No hay conexión');
-    expect(submitButton().disabled).toBe(false);
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
   });
 
   it('keeps the return url in the link to log in', async () => {

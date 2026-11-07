@@ -71,14 +71,23 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Si un conjunto de clases se repite, se crea un componente en `shared/ui`, no una clase con
   `@apply`.
 - Diseño mobile first: la app de cliente se usa sobre todo en el celular.
+- El foco se marca con un contorno sólido (`outline`), nunca solo con un anillo translúcido. Los
+  controles táctiles miden al menos 44 px (`min-h-11`).
+- La tipografía es Plus Jakarta Sans, desde Google Fonts. El build de producción incrusta su hoja de
+  estilos, así que `npm run build` necesita conexión; si hiciera falta compilar sin red, se sirve el
+  archivo desde `public/fonts`.
 
 ## Formularios
 
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
-- Mientras se envía, el botón se deshabilita y muestra que está trabajando.
-- Cada campo va en `app-form-field` (etiqueta y mensaje debajo, enlazado con `aria-describedby`) y
-  los inputs de texto llevan `appTextInput`. Los errores que no son de un campo van en `app-alert`.
+- El botón principal lleva `appButton`. Mientras se envía, muestra que está trabajando y usa
+  `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()` ignora los envíos
+  repetidos.
+- Al enviar con errores, el foco va al primer campo inválido (`focusFirstInvalid`).
+- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto llevan
+  `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por `aria-describedby`. Los
+  errores que no son de un campo van en `app-alert`.
 - Los mensajes de cada regla se escriben en la página y se eligen con `validationMessage`
   (`@shared/utils`), que prioriza el error que mandó el backend.
 

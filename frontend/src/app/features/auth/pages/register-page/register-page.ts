@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LOG_IN_PATH, safeReturnUrl } from '@core/auth/return-url';
+import { LOG_IN_PATH } from '@core/auth/auth-paths';
+import { safeReturnUrl } from '@core/auth/return-url';
 import { SessionStore } from '@core/auth/session-store';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
+import { applyFieldErrors } from '@shared/utils/field-errors';
 import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
 import { AuthShell } from '../../components/auth-shell/auth-shell';
 import { PasswordField } from '../../components/password-field/password-field';
 import { AuthApi } from '../../data-access/auth-api';
-import { applyAuthError } from '../../models/auth-error';
+import { describeAuthError } from '../../models/auth-error';
 import { RegistrableRole } from '../../models/credentials';
 
 type RegisterField = 'name' | 'email' | 'password';
@@ -62,6 +64,7 @@ export class RegisterPage {
   private readonly authApi = inject(AuthApi);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly formBuilder = inject(NonNullableFormBuilder);
 
   readonly returnUrl = input<string>();
 
@@ -78,11 +81,11 @@ export class RegisterPage {
       description: 'Publica tu menú y recibe pedidos.',
     },
   ];
-  protected readonly form = inject(NonNullableFormBuilder).group({
+  protected readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.pattern(EMAIL_FORMAT), Validators.maxLength(254)]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
-    role: ['CUSTOMER' as RegistrableRole, Validators.required],
+    role: this.formBuilder.control<RegistrableRole>('CUSTOMER', Validators.required),
   });
   protected readonly submitting = signal(false);
   protected readonly alert = signal<string | null>(null);
@@ -105,7 +108,9 @@ export class RegisterPage {
         this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
       },
       error: (error: unknown) => {
-        this.alert.set(applyAuthError(this.form, toProblemDetails(error)));
+        const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));
+        applyFieldErrors(this.form, fieldErrors);
+        this.alert.set(alert);
         this.submitting.set(false);
       },
     });

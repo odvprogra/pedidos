@@ -4,7 +4,7 @@ import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { Account } from './account';
 import { SessionApi } from './session-api';
 
-export type SessionStatus = 'loading' | 'anonymous' | 'authenticated';
+type SessionStatus = 'loading' | 'anonymous' | 'authenticated';
 
 type SessionState =
   { status: 'loading' } | { status: 'anonymous' } | { status: 'authenticated'; account: Account };

@@ -1,25 +1,11 @@
-import { FormGroup } from '@angular/forms';
-import { ProblemDetails } from '@core/http/problem-details';
+import { FieldViolation, ProblemDetails } from '@core/http/problem-details';
 
-export type AuthErrorField = 'email' | 'password';
-
-export interface AuthError {
-  field: AuthErrorField | null;
-  message: string;
+export interface AuthErrorView {
+  fieldErrors: FieldViolation[];
+  alert: string | null;
 }
 
-const AUTH_ERRORS = new Map<string, AuthError>([
-  [
-    'identity.invalid_credentials',
-    { field: null, message: 'El correo o la contraseña no coinciden. Revisa e intenta de nuevo.' },
-  ],
-  [
-    'identity.account_suspended',
-    {
-      field: null,
-      message: 'Tu cuenta está suspendida. Habla con el administrador para reactivarla.',
-    },
-  ],
+const FIELD_ERRORS = new Map<string, FieldViolation>([
   [
     'identity.email_taken',
     { field: 'email', message: 'Ya hay una cuenta con este correo. Prueba ingresar con él.' },
@@ -33,24 +19,27 @@ const AUTH_ERRORS = new Map<string, AuthError>([
     'identity.password_too_long',
     { field: 'password', message: 'Tu contraseña es demasiado larga. Prueba con una más corta.' },
   ],
-  ['validation_failed', { field: null, message: 'Revisa los datos marcados e intenta de nuevo.' }],
-  ['unauthenticated', { field: null, message: 'Tu sesión terminó. Ingresa de nuevo.' }],
-  ['csrf_invalid', { field: null, message: 'No pudimos validar tu solicitud. Intenta de nuevo.' }],
 ]);
 
-export function describeAuthError(problem: ProblemDetails): AuthError {
-  return AUTH_ERRORS.get(problem.code ?? '') ?? { field: null, message: problem.detail };
-}
+const ALERTS = new Map<string, string>([
+  [
+    'identity.invalid_credentials',
+    'El correo o la contraseña no coinciden. Revisa e intenta de nuevo.',
+  ],
+  [
+    'identity.account_suspended',
+    'Tu cuenta está suspendida. Habla con el administrador para reactivarla.',
+  ],
+  ['validation_failed', 'Revisa los datos marcados e intenta de nuevo.'],
+  ['csrf_invalid', 'No pudimos validar tu solicitud. Intenta de nuevo.'],
+]);
 
-export function applyAuthError(form: FormGroup, problem: ProblemDetails): string | null {
-  for (const { field, message } of problem.errors ?? []) {
-    form.get(field)?.setErrors({ server: message });
+export function describeAuthError(problem: ProblemDetails): AuthErrorView {
+  const code = problem.code ?? '';
+  const backendErrors = problem.errors ?? [];
+  const fieldError = FIELD_ERRORS.get(code);
+  if (fieldError) {
+    return { fieldErrors: [...backendErrors, fieldError], alert: null };
   }
-  const error = describeAuthError(problem);
-  const control = error.field ? form.get(error.field) : null;
-  if (!control) {
-    return error.message;
-  }
-  control.setErrors({ server: error.message });
-  return null;
+  return { fieldErrors: backendErrors, alert: ALERTS.get(code) ?? problem.detail };
 }

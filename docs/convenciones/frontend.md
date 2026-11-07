@@ -38,8 +38,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   señales). Una librería de estado global (NgRx u otra) requiere una ADR.
 - Todas las URLs usan `environment.apiUrl`.
 - Toda vista con datos cubre cuatro estados: cargando, vacío, error y éxito.
-- Los errores del backend llegan como Problem Details; se muestra el `detail` y los `errors[]` se
-  asocian a los campos del formulario.
+- Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
+  propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
+  Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
 
 ## Sesión
 

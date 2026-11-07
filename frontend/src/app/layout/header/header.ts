@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Role } from '@core/auth/account';
-import { LOG_IN_PATH, REGISTER_PATH } from '@core/auth/return-url';
+import { LOG_IN_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
 
 const ROLE_LABELS: Record<Role, string> = {

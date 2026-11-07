@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { Role } from './account';
-import { LOG_IN_PATH } from './return-url';
+import { LOG_IN_PATH } from './auth-paths';
 import { SessionStore } from './session-store';
 
 export const authGuard: CanActivateFn = (_route, state) =>

@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { LOG_IN_PATH } from './return-url';
+import { LOG_IN_PATH } from './auth-paths';
 import { AUTH_URL } from './session-api';
 import { SessionStore } from './session-store';
 

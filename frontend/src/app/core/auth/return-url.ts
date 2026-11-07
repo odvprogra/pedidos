@@ -1,5 +1,4 @@
-export const LOG_IN_PATH = '/ingresar';
-export const REGISTER_PATH = '/registro';
+import { LOG_IN_PATH, REGISTER_PATH } from './auth-paths';
 
 const HOME_PATH = '/';
 const GUEST_PATHS = [LOG_IN_PATH, REGISTER_PATH];

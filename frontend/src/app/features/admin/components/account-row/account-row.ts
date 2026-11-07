@@ -26,15 +26,17 @@ interface ActionStyle {
 const ACTION_STYLES: Record<AccountAction, ActionStyle> = {
   suspend: {
     button:
-      'border-brand/30 text-brand hover:bg-brand-soft focus-visible:outline-brand aria-expanded:bg-brand-soft',
+      'border-brand/30 text-brand hover:bg-brand-soft hover:text-brand-strong focus-visible:outline-brand aria-expanded:bg-brand-soft aria-expanded:text-brand-strong',
     panel: 'bg-brand-soft',
-    confirm: 'bg-brand shadow-brand/25 hover:bg-brand-strong focus-visible:outline-brand',
+    confirm:
+      'bg-brand shadow-brand/25 hover:bg-brand-strong focus-visible:outline-brand aria-disabled:hover:bg-brand',
   },
   reactivate: {
     button:
       'border-success/30 text-success hover:bg-success-soft focus-visible:outline-success aria-expanded:bg-success-soft',
     panel: 'bg-success-soft',
-    confirm: 'bg-success shadow-success/25 hover:bg-success/90 focus-visible:outline-success',
+    confirm:
+      'bg-success shadow-success/25 hover:bg-success/90 focus-visible:outline-success aria-disabled:hover:bg-success',
   },
 };
 
@@ -65,6 +67,10 @@ export class AccountRow {
     const action = this.action();
     return action ? ACTION_STYLES[action] : null;
   });
+  protected readonly actionButtonStyle = computed(() => {
+    const cursor = this.busy() ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed';
+    return `${this.style()?.button ?? ''} ${cursor}`;
+  });
   protected readonly unavailable = computed(() => this.busy() || this.locked());
   protected readonly roleLabel = computed(() => ROLE_LABELS[this.account().role]);
   protected readonly initial = computed(() => this.account().name.trim().charAt(0).toUpperCase());
@@ -83,6 +89,12 @@ export class AccountRow {
     } else if (!this.unavailable()) {
       this.confirming.set(true);
       this.focusAfterRender(this.cancelButton);
+    }
+  }
+
+  protected dismiss(): void {
+    if (this.confirming()) {
+      this.cancel();
     }
   }
 

@@ -1,6 +1,4 @@
-<div
-  class="grid gap-3 px-4 py-4 sm:px-6 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_10rem] md:items-center md:gap-x-4"
->
+<div class="grid gap-3 px-4 py-4 sm:px-6 md:grid-cols-accounts md:items-center md:gap-x-4">
   <div class="flex min-w-0 items-center gap-3">
     <span
       aria-hidden="true"
@@ -16,11 +14,11 @@
         </span>
         @if (isSelf()) {
           <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-extrabold text-ink">
-            Tú
+            Tú<span class="sr-only"> (tu cuenta)</span>
           </span>
         }
       </p>
-      <p class="truncate text-sm text-muted">{{ account().email }}</p>
+      <p class="text-sm wrap-anywhere text-muted md:truncate">{{ account().email }}</p>
     </div>
   </div>
 
@@ -51,12 +49,13 @@
     <button
       #actionButton
       type="button"
-      class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-surface px-4 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-      [class]="style()?.button"
+      class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-surface px-4 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:opacity-60 aria-disabled:hover:bg-surface"
+      [class]="actionButtonStyle()"
       [attr.aria-disabled]="unavailable()"
       [attr.aria-expanded]="confirming()"
-      [attr.aria-controls]="confirmId()"
+      [attr.aria-controls]="confirming() ? confirmId() : null"
       (click)="toggle()"
+      (keydown.escape)="dismiss()"
     >
       @if (busy()) {
         <app-spinner />
@@ -73,11 +72,14 @@
         class="rounded-xl p-4 md:col-span-4 md:px-5"
         [id]="confirmId()"
         [attr.aria-labelledby]="confirmId() + '-question'"
+        [attr.aria-describedby]="confirmId() + '-consequence'"
         [class]="style()?.panel"
       >
         <p class="font-bold" [id]="confirmId() + '-question'">{{ copy.question }}</p>
-        <p class="mt-1 text-sm text-ink/80">{{ copy.consequence }}</p>
-        <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <p class="mt-1 text-sm text-ink/80" [id]="confirmId() + '-consequence'">
+          {{ copy.consequence }}
+        </p>
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
             #cancelButton
             type="button"
@@ -92,6 +94,7 @@
             class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-white shadow-md transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
             [class]="style()?.confirm"
             [attr.aria-disabled]="unavailable()"
+            [attr.aria-describedby]="confirmId() + '-consequence'"
             (click)="confirm()"
             (keydown.escape)="cancel()"
           >

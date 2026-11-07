@@ -1,10 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  Injector,
   OnInit,
+  Signal,
+  afterNextRender,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
@@ -34,6 +39,9 @@ interface Notice {
 export class AccountListPage implements OnInit {
   private readonly accountApi = inject(AccountApi);
   private readonly session = inject(SessionStore);
+  private readonly injector = inject(Injector);
+  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly retryButton = viewChild<ElementRef<HTMLElement>>('retryButton');
   private requestedPage = 0;
 
   protected readonly placeholders = [1, 2, 3, 4, 5];
@@ -50,7 +58,7 @@ export class AccountListPage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.load(0);
+    this.load(0, false);
   }
 
   protected goTo(page: number): void {
@@ -58,11 +66,11 @@ export class AccountListPage implements OnInit {
       return;
     }
     this.notice.set(null);
-    this.load(page);
+    this.load(page, true);
   }
 
   protected retry(): void {
-    this.load(this.requestedPage);
+    this.load(this.requestedPage, true);
   }
 
   protected run(action: AccountAction, account: AccountSummary): void {
@@ -84,7 +92,7 @@ export class AccountListPage implements OnInit {
     });
   }
 
-  private load(page: number): void {
+  private load(page: number, moveFocus: boolean): void {
     this.requestedPage = page;
     this.loading.set(true);
     this.problem.set(null);
@@ -92,10 +100,16 @@ export class AccountListPage implements OnInit {
       next: (result) => {
         this.result.set(result);
         this.loading.set(false);
+        if (moveFocus) {
+          this.focusAfterRender(this.heading);
+        }
       },
       error: (error: unknown) => {
         this.problem.set(describeAccountError(toProblemDetails(error)));
         this.loading.set(false);
+        if (moveFocus) {
+          this.focusAfterRender(this.retryButton);
+        }
       },
     });
   }
@@ -108,5 +122,9 @@ export class AccountListPage implements OnInit {
           items: result.items.map((item) => (item.id === updated.id ? updated : item)),
         },
     );
+  }
+
+  private focusAfterRender(target: Signal<ElementRef<HTMLElement> | undefined>): void {
+    afterNextRender(() => target()?.nativeElement.focus(), { injector: this.injector });
   }
 }

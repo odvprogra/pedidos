@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  booleanAttribute,
+  computed,
+  input,
+  output,
+} from '@angular/core';
 
 export type AlertTone = 'danger' | 'warning' | 'success';
 
@@ -21,6 +28,8 @@ const ROLES: Record<AlertTone, 'alert' | 'status'> = {
 })
 export class Alert {
   readonly tone = input<AlertTone>('danger');
+  readonly dismissible = input(false, { transform: booleanAttribute });
+  readonly dismissed = output();
 
   protected readonly style = computed(() => STYLES[this.tone()]);
   protected readonly role = computed(() => ROLES[this.tone()]);

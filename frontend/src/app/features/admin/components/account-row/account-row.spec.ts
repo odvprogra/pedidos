@@ -62,9 +62,14 @@ describe('AccountRow', () => {
     await fixture.whenStable();
   }
 
+  function pressEscapeOn(element: HTMLElement): void {
+    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
+
   it('names the account in the action for screen readers', () => {
     expect(button('Suspender').textContent).toContain('la cuenta de Ana Rojas');
     expect(button('Suspender').getAttribute('aria-expanded')).toBe('false');
+    expect(button('Suspender').getAttribute('aria-controls')).toBeNull();
   });
 
   it('opens the question below the account and moves the focus to cancel', async () => {
@@ -75,6 +80,17 @@ describe('AccountRow', () => {
     expect(button('Suspender').getAttribute('aria-expanded')).toBe('true');
     expect(button('Suspender').getAttribute('aria-controls')).toBe(question.id);
     expect(document.activeElement).toBe(button('Cancelar'));
+  });
+
+  it('describes what the suspension does to the question and its confirmation', async () => {
+    await ask();
+
+    const question = row().querySelector('[role="group"]') as HTMLElement;
+    const consequence = document.getElementById(
+      question.getAttribute('aria-describedby') ?? '',
+    ) as HTMLElement;
+    expect(consequence.textContent).toContain('se cerrarán sus sesiones abiertas');
+    expect(button('Sí, suspender').getAttribute('aria-describedby')).toBe(consequence.id);
   });
 
   it('closes the question and gives the focus back to the action', async () => {
@@ -88,13 +104,25 @@ describe('AccountRow', () => {
     expect(host.confirmed).toEqual([]);
   });
 
-  it('closes the question with the escape key', async () => {
-    await ask();
+  it.each(['Cancelar', 'Sí, suspender', 'Suspender'])(
+    'closes the question with the escape key from %s',
+    async (label) => {
+      await ask();
 
-    button('Cancelar').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      pressEscapeOn(button(label));
+      await fixture.whenStable();
+
+      expect(row().querySelector('[role="group"]')).toBeNull();
+      expect(document.activeElement).toBe(button('Suspender'));
+    },
+  );
+
+  it('ignores the escape key while the question is closed', async () => {
+    pressEscapeOn(button('Suspender'));
     await fixture.whenStable();
 
     expect(row().querySelector('[role="group"]')).toBeNull();
+    expect(host.confirmed).toEqual([]);
   });
 
   it('closes the question when the action is pressed again', async () => {

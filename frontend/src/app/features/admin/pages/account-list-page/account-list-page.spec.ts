@@ -194,6 +194,26 @@ describe('AccountListPage', () => {
       expect(list?.getAttribute('aria-busy')).toBe('false');
     });
 
+    it('takes the focus to the top of the list once the new page arrives', async () => {
+      await show(pageOf([ANA], 0, 45));
+
+      buttonIn(page(), 'Siguiente').click();
+      httpTesting.expectOne('/api/v1/accounts?page=1&size=20').flush(pageOf([LUIS], 1, 45));
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(page().querySelector('h1'));
+    });
+
+    it('takes the focus to retry when the new page fails', async () => {
+      await show(pageOf([ANA], 0, 45));
+
+      buttonIn(page(), 'Siguiente').click();
+      failWith('/api/v1/accounts?page=1&size=20', 500);
+      await fixture.whenStable();
+
+      expect(document.activeElement).toBe(buttonIn(page(), 'Reintentar'));
+    });
+
     it('loads the same page again when it failed', async () => {
       await show(pageOf([ANA], 0, 45));
       buttonIn(page(), 'Siguiente').click();
@@ -330,6 +350,20 @@ describe('AccountListPage', () => {
         );
       },
     );
+
+    it('lets the admin close the message', async () => {
+      await show(pageOf([ANA]));
+      await confirm('Ana Rojas', 'Suspender', 'Sí, suspender');
+      httpTesting
+        .expectOne('/api/v1/accounts/7/suspend')
+        .flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      (page().querySelector('button[aria-label="Cerrar aviso"]') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(page().querySelector('[role="status"]')).toBeNull();
+    });
 
     it('clears the previous message when another action starts', async () => {
       await show(pageOf([ANA, LUIS]));

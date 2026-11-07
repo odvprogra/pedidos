@@ -27,4 +27,24 @@
     }
   </svg>
   <div class="grow font-medium"><ng-content /></div>
+  @if (dismissible()) {
+    <button
+      type="button"
+      aria-label="Cerrar aviso"
+      class="-my-3 -mr-2 grid size-11 shrink-0 place-items-center rounded-lg transition hover:bg-current/10 focus-visible:outline-2 focus-visible:outline-current"
+      (click)="dismissed.emit()"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      >
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    </button>
+  }
 </div>

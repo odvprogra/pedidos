@@ -28,6 +28,13 @@ class PageResultTest {
         assertThat(result.totalPages()).isEqualTo(3);
     }
 
+    @ParameterizedTest
+    @CsvSource({"-1, 20, 0", "0, 0, 0", "0, -5, 0", "0, 20, -1"})
+    void rejectsAPageThatCannotExist(int page, int size, long totalItems) {
+        assertThatThrownBy(() -> new PageResult<>(List.of(), page, size, totalItems))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     @Test
     void doesNotChangeWhenTheOriginalListChanges() {
         List<String> items = new ArrayList<>(List.of("Ana"));

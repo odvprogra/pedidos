@@ -34,10 +34,10 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 @Import(SecurityConfig.class)
 class AccountControllerTest {
 
+    private static final Instant NOW = Instant.parse("2026-11-07T12:00:00Z");
+
     @Autowired
     private MockMvcTester mvc;
-
-    private static final Instant NOW = Instant.parse("2026-11-07T12:00:00Z");
 
     @MockitoBean
     private ListAccountsUseCase listAccounts;

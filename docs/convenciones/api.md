@@ -83,13 +83,32 @@ guarda credenciales.
 
 ## Cuentas
 
-El admin suspende y reactiva cuentas de clientes y dueños. La cuenta del admin la crea el backend al
-arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la configuración en el `README.md`).
+El admin ve todas las cuentas y suspende o reactiva las de clientes y dueños. La cuenta del admin la
+crea el backend al arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la configuración en el
+`README.md`).
 
-| Operación        | Ruta                                    | Acceso | Respuesta |
-| ---------------- | --------------------------------------- | ------ | --------- |
-| Suspender cuenta | `POST /api/v1/accounts/{id}/suspend`    | Admin  | `204`     |
-| Reactivar cuenta | `POST /api/v1/accounts/{id}/reactivate` | Admin  | `204`     |
+| Operación        | Ruta                                    | Acceso | Respuesta          |
+| ---------------- | --------------------------------------- | ------ | ------------------ |
+| Listar cuentas   | `GET /api/v1/accounts?page=0&size=20`   | Admin  | `200` + una página |
+| Suspender cuenta | `POST /api/v1/accounts/{id}/suspend`    | Admin  | `204`              |
+| Reactivar cuenta | `POST /api/v1/accounts/{id}/reactivate` | Admin  | `204`              |
+
+```json
+{
+  "items": [
+    { "id": 1, "name": "Administrador", "email": "admin@pedidos.com", "role": "ADMIN", "suspended": false },
+    { "id": 7, "name": "Ana Rojas", "email": "ana@correo.com", "role": "CUSTOMER", "suspended": true }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalItems": 2,
+  "totalPages": 1
+}
+```
+
+- La lista trae todas las cuentas, también las de los admins, en orden de registro (por `id`
+  ascendente). Una cuenta nueva cae en la última página, así que las anteriores no se corren.
+- Cada cuenta trae id, nombre, correo, rol y si está suspendida. Nunca la contraseña.
 
 - Suspender borra todas las sesiones de la cuenta. La próxima petición con cualquiera de ellas
   responde `401` con `unauthenticated`, y el login, `403` con `identity.account_suspended`.
@@ -106,6 +125,16 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 ```json
 { "items": [], "page": 0, "size": 20, "totalItems": 0, "totalPages": 0 }
 ```
+
+- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es
+  20. Fuera de esos límites, o con un valor que no es número, responde `400` con
+  `validation_failed` y el parámetro en `errors[].field`. El valor no se recorta en silencio.
+- Una página después de la última responde `200` con `items` vacío y los totales reales, no `404`.
+- Cada lista paginada documenta su orden, y el orden es estable: dos pedidos iguales devuelven lo
+  mismo en el mismo orden.
+- En el backend, el puerto devuelve un `PageResult` (`shared.domain.model`) y el controller responde
+  con `PageResponse.from(...)` (`shared.infrastructure.web`). En el frontend, la forma es `Page<T>`
+  (`core/http`).
 
 ## Datos
 

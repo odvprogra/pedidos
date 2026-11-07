@@ -11,6 +11,7 @@ import { Header } from './header';
 class BlankPage {}
 
 const ANA: Account = { id: 7, name: 'Ana María Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
+const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
 const LOGOUT_URL = '/api/v1/auth/logout';
 
 describe('Header', () => {
@@ -78,6 +79,35 @@ describe('Header', () => {
     expect(text()).not.toContain('Rojas');
     expect(text()).toContain('Cliente');
     expect(logOutButton().textContent).toContain('Cerrar sesión');
+  });
+
+  it('gives an admin a link to the panel', async () => {
+    session.signIn(ADMIN);
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
+    expect(link.textContent).toContain('Panel');
+    expect(link.getAttribute('aria-current')).toBeNull();
+    expect(text()).toContain('Administrador');
+  });
+
+  it('marks the panel link while the admin is in the panel', async () => {
+    session.signIn(ADMIN);
+    await TestBed.inject(Router).navigateByUrl('/admin');
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
+    expect(link.getAttribute('aria-current')).toBe('page');
+  });
+
+  it.each([
+    ['a customer', ANA],
+    ['an owner', { ...ANA, role: 'OWNER' } as Account],
+  ])('does not show the panel link to %s', async (_case, account) => {
+    session.signIn(account);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('a[href="/admin"]')).toBeNull();
   });
 
   it('disables the button while the session is closing', async () => {

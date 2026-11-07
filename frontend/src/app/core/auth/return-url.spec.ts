@@ -2,7 +2,7 @@ import { safeReturnUrl } from './return-url';
 
 describe('safeReturnUrl', () => {
   it('keeps an internal path with its query', () => {
-    expect(safeReturnUrl('/pedidos/12?vista=detalle')).toBe('/pedidos/12?vista=detalle');
+    expect(safeReturnUrl('/pedidos/12?vista=detalle', '/')).toBe('/pedidos/12?vista=detalle');
   });
 
   it.each([
@@ -14,7 +14,7 @@ describe('safeReturnUrl', () => {
     ['a relative path', 'pedidos'],
     ['the log in page', '/ingresar?returnUrl=/pedidos'],
     ['the register page', '/registro'],
-  ])('falls back to the home page for %s', (_case, url) => {
-    expect(safeReturnUrl(url)).toBe('/');
+  ])('falls back to the home of the account for %s', (_case, url) => {
+    expect(safeReturnUrl(url, '/admin')).toBe('/admin');
   });
 });

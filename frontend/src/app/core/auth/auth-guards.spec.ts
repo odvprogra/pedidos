@@ -13,6 +13,7 @@ class BlankPage {}
 
 const OWNER: Account = { id: 3, name: 'Luis Pérez', email: 'luis@correo.com', role: 'OWNER' };
 const CUSTOMER: Account = { id: 7, name: 'Ana Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
+const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
 
 describe('auth guards', () => {
   let session: SessionStore;
@@ -27,6 +28,7 @@ describe('auth guards', () => {
           { path: 'ingresar', component: BlankPage, canActivate: [guestGuard] },
           { path: 'pedidos', component: BlankPage, canActivate: [authGuard] },
           { path: 'mi-restaurante', component: BlankPage, canActivate: [roleGuard('OWNER')] },
+          { path: 'admin', component: BlankPage, canActivate: [roleGuard('ADMIN')] },
         ]),
       ],
     });
@@ -73,6 +75,12 @@ describe('auth guards', () => {
 
       expect(await visit('/mi-restaurante')).toBe('/');
     });
+
+    it('sends an admin to its panel from a page of another role', async () => {
+      session.signIn(ADMIN);
+
+      expect(await visit('/mi-restaurante')).toBe('/admin');
+    });
   });
 
   describe('guestGuard', () => {
@@ -86,6 +94,12 @@ describe('auth guards', () => {
       session.signIn(CUSTOMER);
 
       expect(await visit('/ingresar')).toBe('/');
+    });
+
+    it('sends an admin with a session to its panel', async () => {
+      session.signIn(ADMIN);
+
+      expect(await visit('/ingresar')).toBe('/admin');
     });
   });
 });

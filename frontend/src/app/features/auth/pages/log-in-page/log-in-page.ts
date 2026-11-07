@@ -12,6 +12,7 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { REGISTER_PATH } from '@core/auth/auth-paths';
+import { homeFor } from '@core/auth/home-path';
 import { safeReturnUrl } from '@core/auth/return-url';
 import { SessionStore } from '@core/auth/session-store';
 import { toProblemDetails } from '@core/http/problem-details';
@@ -91,7 +92,7 @@ export class LogInPage {
     this.authApi.logIn(this.form.getRawValue()).subscribe({
       next: (account) => {
         this.session.signIn(account);
-        this.router.navigateByUrl(safeReturnUrl(this.returnUrl())).then(
+        this.router.navigateByUrl(safeReturnUrl(this.returnUrl(), homeFor(account.role))).then(
           (navigated) => this.submitting.set(navigated),
           () => this.submitting.set(false),
         );

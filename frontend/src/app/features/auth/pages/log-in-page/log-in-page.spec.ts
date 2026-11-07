@@ -12,6 +12,7 @@ import { LogInPage } from './log-in-page';
 class BlankPage {}
 
 const ANA: Account = { id: 7, name: 'Ana Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
+const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
 const LOGIN_URL = '/api/v1/auth/login';
 
 describe('LogInPage', () => {
@@ -140,6 +141,26 @@ describe('LogInPage', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  it('takes an admin to the panel when there is nowhere else to go', async () => {
+    await open();
+
+    await submitCredentials();
+    httpTesting.expectOne(LOGIN_URL).flush(ADMIN);
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/admin');
+  });
+
+  it('takes an admin back to where it was going', async () => {
+    await open('/ingresar?returnUrl=%2Fpedidos%2F12');
+
+    await submitCredentials();
+    httpTesting.expectOne(LOGIN_URL).flush(ADMIN);
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/pedidos/12');
   });
 
   it.each([

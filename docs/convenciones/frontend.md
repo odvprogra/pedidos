@@ -47,7 +47,8 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 
 - El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
   copia.
-- Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`.
+- Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`; las de ingreso y registro,
+  `guestGuard`.
 - No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`. Lo único
   que va a `localStorage` es el carrito de `core/cart` (restaurante, productos y cantidades), que se
   vacía al cerrar sesión ([modelo-de-datos.md](../modelo-de-datos.md#el-carrito)).
@@ -75,6 +76,10 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
 - Mientras se envía, el botón se deshabilita y muestra que está trabajando.
+- Cada campo va en `app-form-field` (etiqueta y mensaje debajo, enlazado con `aria-describedby`) y
+  los inputs de texto llevan `appTextInput`. Los errores que no son de un campo van en `app-alert`.
+- Los mensajes de cada regla se escriben en la página y se eligen con `validationMessage`
+  (`@shared/utils`), que prioriza el error que mandó el backend.
 
 ## Estilo de código
 

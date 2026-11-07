@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
   --color-brand: #dc1f45;
   --color-brand-strong: #b8173a;
   --color-brand-soft: #ffe4ea;
@@ -16,6 +18,8 @@
   --color-success-soft: #dcfce7;
   --color-danger: #991b1b;
   --color-danger-soft: #fee2e2;
+  --color-warning: #854d0e;
+  --color-warning-soft: #fef3c7;
 }
 
 @layer base {

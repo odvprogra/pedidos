@@ -35,4 +35,14 @@ describe('Alert', () => {
     expect(alert().textContent).toContain('Tu sesión terminó.');
     expect(alert().classList).toContain('bg-warning-soft');
   });
+
+  it('reports a success politely instead of interrupting', async () => {
+    fixture.componentInstance.tone.set('success');
+    await fixture.whenStable();
+
+    const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
+    expect(alert()).toBeNull();
+    expect(status.textContent).toContain('Tu sesión terminó.');
+    expect(status.classList).toContain('bg-success-soft');
+  });
 });

@@ -1,0 +1,48 @@
+<nav aria-label="Paginación" class="flex items-center justify-between gap-3">
+  <button
+    type="button"
+    class="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-line aria-disabled:hover:text-ink sm:px-4"
+    [attr.aria-disabled]="cannotGoBack()"
+    (click)="previous()"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+    Anterior
+  </button>
+
+  <p class="text-sm font-semibold text-muted" aria-live="polite">
+    Página <span class="text-ink">{{ page() + 1 }}</span> de
+    <span class="text-ink">{{ totalPages() }}</span>
+  </p>
+
+  <button
+    type="button"
+    class="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-line aria-disabled:hover:text-ink sm:px-4"
+    [attr.aria-disabled]="cannotGoForward()"
+    (click)="next()"
+  >
+    Siguiente
+    <svg
+      aria-hidden="true"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  </button>
+</nav>

@@ -25,12 +25,14 @@ interface ActionStyle {
 
 const ACTION_STYLES: Record<AccountAction, ActionStyle> = {
   suspend: {
-    button: 'border-brand/30 text-brand hover:bg-brand-soft focus-visible:outline-brand',
+    button:
+      'border-brand/30 text-brand hover:bg-brand-soft focus-visible:outline-brand aria-expanded:bg-brand-soft',
     panel: 'bg-brand-soft',
     confirm: 'bg-brand shadow-brand/25 hover:bg-brand-strong focus-visible:outline-brand',
   },
   reactivate: {
-    button: 'border-success/30 text-success hover:bg-success-soft focus-visible:outline-success',
+    button:
+      'border-success/30 text-success hover:bg-success-soft focus-visible:outline-success aria-expanded:bg-success-soft',
     panel: 'bg-success-soft',
     confirm: 'bg-success shadow-success/25 hover:bg-success/90 focus-visible:outline-success',
   },

@@ -161,15 +161,17 @@ src/app/
   señal, con tres estados: cargando, sin sesión y con sesión. Un `provideAppInitializer` espera esa
   respuesta antes de la primera navegación, así los guards nunca ven el estado cargando. Si `/me`
   falla por cualquier motivo, la app arranca sin sesión.
+- Cada rol tiene su inicio, que da `homeFor(role)`: `/admin` para el admin y `/` para clientes y
+  dueños.
 - `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol. Sin sesión llevan a
-  `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva a `/`. `guestGuard` saca de
-  `/ingresar` y `/registro` a quien ya tiene sesión.
+  `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva al inicio de ese rol. `guestGuard`
+  saca de `/ingresar` y `/registro` a quien ya tiene sesión y lo lleva a su inicio.
 - `unauthorizedInterceptor` atiende los 401 de las rutas fuera de `/api/v1/auth/`: limpia la sesión
   y lleva a `/ingresar?returnUrl=<ruta actual>`, con `sessionExpired=true` si había sesión para que
   la pantalla avise que terminó. Los 401 de `/me`, `/login` y `/logout` los maneja quien hizo la
   petición.
 - Después de ingresar o registrarse se vuelve a `returnUrl` solo si `safeReturnUrl` lo acepta (una
-  ruta interna que no es `/ingresar` ni `/registro`); si no, a `/`.
+  ruta interna que no es `/ingresar` ni `/registro`); si no, al inicio del rol.
 - El CSRF lo resuelve el `HttpClient` de Angular por defecto: lee la cookie `XSRF-TOKEN` y manda el
   header `X-XSRF-TOKEN`.
 

@@ -41,6 +41,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
+- Una lista paginada recibe un `Page<T>` (`@core/http/page`) y usa `app-pagination`
+  (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
+  queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva.
+- Una acción que cambia algo y se puede deshacer se confirma dentro de la misma fila o tarjeta, sin
+  modal: el foco va a "Cancelar" al abrir la pregunta y vuelve al botón al cerrarla. El resultado
+  se anuncia arriba de la lista con `app-alert`: `tone="success"` (que usa `role="status"`) o el
+  tono de error.
 
 ## Sesión
 
@@ -49,7 +56,9 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
   copia.
 - Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`; las de ingreso y registro,
-  `guestGuard`.
+  `guestGuard`. Cuando hay que mandar a alguien a "su inicio", se usa `homeFor(role)` de
+  `@core/auth/home-path`, nunca una ruta fija.
+- Los nombres de los roles en la interfaz salen de `ROLE_LABELS` (`@core/auth/account`).
 - No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`. Lo único
   que va a `localStorage` es el carrito de `core/cart` (restaurante, productos y cantidades), que se
   vacía al cerrar sesión ([modelo-de-datos.md](../modelo-de-datos.md#el-carrito)).

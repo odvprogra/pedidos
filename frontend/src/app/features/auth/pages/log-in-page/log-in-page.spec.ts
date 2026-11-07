@@ -26,6 +26,7 @@ describe('LogInPage', () => {
         provideRouter(
           [
             { path: 'ingresar', component: LogInPage },
+            { path: 'bloqueada', component: BlankPage, canActivate: [() => false] },
             { path: '**', component: BlankPage },
           ],
           withComponentInputBinding(),
@@ -39,6 +40,11 @@ describe('LogInPage', () => {
 
   async function open(url = '/ingresar'): Promise<void> {
     harness = await RouterTestingHarness.create(url);
+  }
+
+  async function waitForTheNavigationToSettle(): Promise<void> {
+    await harness.fixture.whenStable();
+    await harness.fixture.whenStable();
   }
 
   function page(): HTMLElement {
@@ -113,6 +119,17 @@ describe('LogInPage', () => {
 
     expect(TestBed.inject(SessionStore).account()).toEqual(ANA);
     expect(TestBed.inject(Router).url).toBe('/pedidos/12');
+  });
+
+  it('lets the account try again when it cannot leave the page', async () => {
+    await open('/ingresar?returnUrl=%2Fbloqueada');
+
+    await submitCredentials();
+    httpTesting.expectOne(LOGIN_URL).flush(ANA);
+    await waitForTheNavigationToSettle();
+
+    expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2Fbloqueada');
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
   });
 
   it('goes to the home page when the return url leaves the site', async () => {

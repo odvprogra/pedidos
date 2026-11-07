@@ -20,6 +20,7 @@ import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
 import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
+import { maxUtf8Bytes } from '@shared/utils/max-utf8-bytes';
 import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
 import { AuthShell } from '../../components/auth-shell/auth-shell';
 import { PasswordField } from '../../components/password-field/password-field';
@@ -51,7 +52,7 @@ const MESSAGES: Record<RegisterField, ValidationMessages> = {
   password: {
     required: 'Crea una contraseña.',
     minlength: 'Usa al menos 8 caracteres.',
-    maxlength: 'Usa hasta 72 caracteres.',
+    maxbytes: 'Tu contraseña es demasiado larga. Prueba con una más corta.',
   },
 };
 
@@ -97,7 +98,7 @@ export class RegisterPage {
   protected readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.pattern(EMAIL_FORMAT), Validators.maxLength(254)]],
-    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
+    password: ['', [Validators.required, Validators.minLength(8), maxUtf8Bytes(72)]],
     role: this.formBuilder.control<RegistrableRole>('CUSTOMER', Validators.required),
   });
   protected readonly submitting = signal(false);
@@ -122,7 +123,10 @@ export class RegisterPage {
     this.authApi.register(this.form.getRawValue()).subscribe({
       next: (account) => {
         this.session.signIn(account);
-        this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
+        this.router.navigateByUrl(safeReturnUrl(this.returnUrl())).then(
+          (navigated) => this.submitting.set(navigated),
+          () => this.submitting.set(false),
+        );
       },
       error: (error: unknown) => {
         const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));

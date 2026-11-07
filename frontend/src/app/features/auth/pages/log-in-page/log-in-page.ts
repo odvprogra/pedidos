@@ -91,7 +91,10 @@ export class LogInPage {
     this.authApi.logIn(this.form.getRawValue()).subscribe({
       next: (account) => {
         this.session.signIn(account);
-        this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
+        this.router.navigateByUrl(safeReturnUrl(this.returnUrl())).then(
+          (navigated) => this.submitting.set(navigated),
+          () => this.submitting.set(false),
+        );
       },
       error: (error: unknown) => {
         const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));

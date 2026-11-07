@@ -26,6 +26,7 @@ describe('RegisterPage', () => {
         provideRouter(
           [
             { path: 'registro', component: RegisterPage },
+            { path: 'bloqueada', component: BlankPage, canActivate: [() => false] },
             { path: '**', component: BlankPage },
           ],
           withComponentInputBinding(),
@@ -39,6 +40,11 @@ describe('RegisterPage', () => {
 
   async function open(url = '/registro'): Promise<void> {
     harness = await RouterTestingHarness.create(url);
+  }
+
+  async function waitForTheNavigationToSettle(): Promise<void> {
+    await harness.fixture.whenStable();
+    await harness.fixture.whenStable();
   }
 
   function page(): HTMLElement {
@@ -118,7 +124,8 @@ describe('RegisterPage', () => {
     ['email', 'luis@correo', 'Ingresa un correo válido, como ana@correo.com.'],
     ['email', `${'a'.repeat(245)}@correo.com`, 'Usa hasta 254 caracteres.'],
     ['password', 'corta', 'Usa al menos 8 caracteres.'],
-    ['password', 'a'.repeat(73), 'Usa hasta 72 caracteres.'],
+    ['password', 'a'.repeat(73), 'Tu contraseña es demasiado larga. Prueba con una más corta.'],
+    ['password', 'ñ'.repeat(37), 'Tu contraseña es demasiado larga. Prueba con una más corta.'],
   ])('rejects %s "%s" when leaving the field', async (id, value, message) => {
     await open();
 
@@ -157,6 +164,17 @@ describe('RegisterPage', () => {
 
     expect(TestBed.inject(SessionStore).account()).toEqual(LUIS);
     expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
+  });
+
+  it('lets the new account try again when it cannot leave the page', async () => {
+    await open('/registro?returnUrl=%2Fbloqueada');
+
+    await submitValidForm();
+    httpTesting.expectOne(REGISTER_URL).flush(LUIS, { status: 201, statusText: 'Created' });
+    await waitForTheNavigationToSettle();
+
+    expect(TestBed.inject(Router).url).toBe('/registro?returnUrl=%2Fbloqueada');
+    expect(submitButton().getAttribute('aria-disabled')).toBe('false');
   });
 
   it.each([

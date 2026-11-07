@@ -1,14 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Role } from '@core/auth/account';
+import { ROLE_LABELS } from '@core/auth/account';
 import { LOG_IN_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
-
-const ROLE_LABELS: Record<Role, string> = {
-  CUSTOMER: 'Cliente',
-  OWNER: 'Dueño de restaurante',
-  ADMIN: 'Administrador',
-};
 
 @Component({
   selector: 'app-header',

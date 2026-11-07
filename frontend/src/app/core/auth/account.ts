@@ -6,3 +6,9 @@ export interface Account {
   email: string;
   role: Role;
 }
+
+export const ROLE_LABELS: Record<Role, string> = {
+  CUSTOMER: 'Cliente',
+  OWNER: 'Dueño de restaurante',
+  ADMIN: 'Administrador',
+};

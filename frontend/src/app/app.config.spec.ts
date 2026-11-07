@@ -9,7 +9,10 @@ import { SessionStore } from '@core/auth/session-store';
 import { appConfig } from './app.config';
 
 const ANA: Account = { id: 7, name: 'Ana Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
+const LUIS: Account = { id: 9, name: 'Luis Pérez', email: 'luis@correo.com', role: 'OWNER' };
+const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
 const ME_URL = '/api/v1/auth/me';
+const ACCOUNTS_URL = '/api/v1/accounts?page=0&size=20';
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;
@@ -61,6 +64,47 @@ describe('appConfig', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2F&sessionExpired=true');
+  });
+
+  describe('the admin panel', () => {
+    it('sends a visitor without a session to log in first', async () => {
+      await startWith(null);
+
+      await RouterTestingHarness.create('/admin');
+
+      expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2Fadmin');
+    });
+
+    it.each([
+      ['a customer', ANA],
+      ['an owner', LUIS],
+    ])('sends %s back to the home page', async (_case, account) => {
+      await startWith(account);
+
+      await RouterTestingHarness.create('/admin');
+      httpTesting.expectOne('/api/health').flush({});
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      httpTesting.expectNone(ACCOUNTS_URL);
+    });
+
+    it('shows the accounts to an admin', async () => {
+      await startWith(ADMIN);
+
+      const harness = await RouterTestingHarness.create('/admin');
+      httpTesting.expectOne(ACCOUNTS_URL).flush({
+        items: [{ ...ADMIN, suspended: false }],
+        page: 0,
+        size: 20,
+        totalItems: 1,
+        totalPages: 1,
+      });
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/admin');
+      expect(harness.routeNativeElement?.textContent).toContain('Cuentas');
+      expect(harness.routeNativeElement?.textContent).toContain('admin@pedidos.com');
+    });
   });
 
   it('serves the log in and registration pages', async () => {

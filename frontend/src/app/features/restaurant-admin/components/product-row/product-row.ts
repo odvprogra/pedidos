@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Badge } from '@shared/ui/badge/badge';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
 import { Spinner } from '@shared/ui/spinner/spinner';
@@ -21,7 +22,7 @@ export type ProductTask = 'availability' | 'deletion';
 
 @Component({
   selector: 'app-product-row',
-  imports: [ConfirmPanel, SecondaryButton, Spinner],
+  imports: [Badge, ConfirmPanel, SecondaryButton, Spinner],
   templateUrl: './product-row.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

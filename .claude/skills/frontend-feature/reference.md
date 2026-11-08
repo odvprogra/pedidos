@@ -45,6 +45,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `app-form-field`, `appTextInput`         | Etiqueta, campo y mensaje enlazados por `aria-describedby`                  |
 | `app-confirm-panel` (`@shared/ui`)       | La confirmación dentro de la fila, sin modal                                |
 | `app-pagination` (`@shared/ui`)          | "‹ Anterior · Página X de Y · Siguiente ›"                                  |
+| `app-badge` (`@shared/ui`)               | Insignia de estado con `tone` (`success`, `neutral`, `danger`) y `size`     |
 | `app-spinner` (`@shared/ui`)             | El indicador dentro de un botón que trabaja                                 |
 | `validationMessage` (`@shared/utils`)    | El mensaje de un campo, con prioridad para el error del backend             |
 | `applyFieldErrors` (`@shared/utils`)     | Asigna los `errors[]` del backend a los campos del formulario               |
@@ -199,6 +200,7 @@ Solo recibe `input()` y emite `output()`; no inyecta servicios de datos. No camb
 ```ts
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Badge, BadgeTone } from '@shared/ui/badge/badge';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { Restaurant } from '../../models/restaurant';
 import {
@@ -209,15 +211,15 @@ import {
   statusOf,
 } from '../../models/restaurant-status';
 
-const BADGE_STYLES: Record<RestaurantStatus, string> = {
-  open: 'bg-success-soft text-success',
-  closed: 'bg-line text-ink',
-  suspended: 'bg-danger-soft text-danger',
+const BADGE_TONES: Record<RestaurantStatus, BadgeTone> = {
+  open: 'success',
+  closed: 'neutral',
+  suspended: 'danger',
 };
 
 @Component({
   selector: 'app-restaurant-card',
-  imports: [RouterLink, Spinner],
+  imports: [RouterLink, Badge, Spinner],
   templateUrl: './restaurant-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -229,7 +231,7 @@ export class RestaurantCard {
 
   protected readonly status = computed(() => statusOf(this.restaurant()));
   protected readonly statusLabel = computed(() => STATUS_LABELS[this.status()]);
-  protected readonly badgeStyle = computed(() => BADGE_STYLES[this.status()]);
+  protected readonly badgeTone = computed(() => BADGE_TONES[this.status()]);
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
@@ -285,14 +287,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
       >
         {{ initial() }}
       </span>
-      <span
-        class="mb-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
-        data-status
-        [class]="badgeStyle()"
-      >
-        <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
-        {{ statusLabel() }}
-      </span>
+      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
     </div>
 
     <h2

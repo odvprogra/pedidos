@@ -28,14 +28,7 @@
       >
         {{ initial() }}
       </span>
-      <span
-        class="mb-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
-        data-status
-        [class]="badgeStyle()"
-      >
-        <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
-        {{ statusLabel() }}
-      </span>
+      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
     </div>
 
     <h2

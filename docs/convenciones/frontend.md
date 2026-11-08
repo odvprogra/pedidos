@@ -66,6 +66,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
   Bolivia: `Bs 45,00`.
+- Un estado corto (Abierto, Cerrado, Agotado, Suspendida) es un `app-badge` (`@shared/ui`) con su
+  `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
+  bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el
+  estado; el color solo lo acompaña.
 
 ## Sesión
 

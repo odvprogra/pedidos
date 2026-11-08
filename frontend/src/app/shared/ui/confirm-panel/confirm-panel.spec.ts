@@ -12,7 +12,7 @@ import { ConfirmPanel, ConfirmTone } from './confirm-panel';
       [confirmLabel]="confirmLabel()"
       [cancelLabel]="cancelLabel()"
       [tone]="tone()"
-      [busy]="busy()"
+      [disabled]="disabled()"
       (confirmed)="confirmations = confirmations + 1"
       (cancelled)="cancellations = cancellations + 1"
     />
@@ -23,7 +23,7 @@ class Host {
   readonly confirmLabel = signal<string | null>('Sí, borrar');
   readonly cancelLabel = signal('Cancelar');
   readonly tone = signal<ConfirmTone>('brand');
-  readonly busy = signal(false);
+  readonly disabled = signal(false);
   confirmations = 0;
   cancellations = 0;
 }
@@ -74,8 +74,8 @@ describe('ConfirmPanel', () => {
     expect(host.cancellations).toBe(1);
   });
 
-  it('ignores the confirmation while it is busy', async () => {
-    host.busy.set(true);
+  it('ignores the confirmation while it is disabled', async () => {
+    host.disabled.set(true);
     await fixture.whenStable();
 
     button('Sí, borrar')?.click();

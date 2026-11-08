@@ -9,7 +9,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { SecondaryButton } from '../button/secondary-button';
-import { Spinner } from '../spinner/spinner';
 
 export type ConfirmTone = 'brand' | 'success';
 
@@ -28,7 +27,7 @@ const STYLES: Record<ConfirmTone, { panel: string; confirm: string }> = {
 
 @Component({
   selector: 'app-confirm-panel',
-  imports: [SecondaryButton, Spinner],
+  imports: [SecondaryButton],
   templateUrl: './confirm-panel.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -41,7 +40,7 @@ export class ConfirmPanel {
   readonly confirmLabel = input<string | null>(null);
   readonly cancelLabel = input('Cancelar');
   readonly tone = input<ConfirmTone>('brand');
-  readonly busy = input(false);
+  readonly disabled = input(false);
   readonly confirmed = output();
   readonly cancelled = output();
 
@@ -52,7 +51,7 @@ export class ConfirmPanel {
   }
 
   protected confirm(): void {
-    if (!this.busy()) {
+    if (!this.disabled()) {
       this.confirmed.emit();
     }
   }

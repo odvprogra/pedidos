@@ -67,41 +67,17 @@
     </button>
 
     @if (confirming()) {
-      <div
-        role="group"
-        class="rounded-xl p-4 md:col-span-4 md:px-5"
-        [id]="confirmId()"
-        [attr.aria-labelledby]="confirmId() + '-question'"
-        [attr.aria-describedby]="confirmId() + '-consequence'"
-        [class]="style()?.panel"
-      >
-        <p class="font-bold" [id]="confirmId() + '-question'">{{ copy.question }}</p>
-        <p class="mt-1 text-sm text-ink/80" [id]="confirmId() + '-consequence'">
-          {{ copy.consequence }}
-        </p>
-        <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <button
-            #cancelButton
-            type="button"
-            class="inline-flex min-h-11 items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-bold transition hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            (click)="cancel()"
-            (keydown.escape)="cancel()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-white shadow-md transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-            [class]="style()?.confirm"
-            [attr.aria-disabled]="unavailable()"
-            [attr.aria-describedby]="confirmId() + '-consequence'"
-            (click)="confirm()"
-            (keydown.escape)="cancel()"
-          >
-            {{ copy.confirm }}
-          </button>
-        </div>
-      </div>
+      <app-confirm-panel
+        class="block md:col-span-4"
+        [panelId]="confirmId()"
+        [question]="copy.question"
+        [consequence]="copy.consequence"
+        [confirmLabel]="copy.confirm"
+        [tone]="style()?.tone ?? 'brand'"
+        [disabled]="unavailable()"
+        (confirmed)="confirm()"
+        (cancelled)="cancel()"
+      />
     }
   } @else {
     <p class="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-muted">

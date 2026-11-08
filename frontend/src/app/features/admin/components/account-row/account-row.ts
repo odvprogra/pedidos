@@ -13,43 +13,38 @@ import {
   viewChild,
 } from '@angular/core';
 import { ROLE_LABELS } from '@core/auth/account';
+import { ConfirmPanel, ConfirmTone } from '@shared/ui/confirm-panel/confirm-panel';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { AccountAction, actionFor, copyFor } from '../../models/account-action';
 import { AccountSummary } from '../../models/account-summary';
 
 interface ActionStyle {
   button: string;
-  panel: string;
-  confirm: string;
+  tone: ConfirmTone;
 }
 
 const ACTION_STYLES: Record<AccountAction, ActionStyle> = {
   suspend: {
     button:
       'border-brand/30 text-brand hover:bg-brand-soft hover:text-brand-strong focus-visible:outline-brand aria-expanded:bg-brand-soft aria-expanded:text-brand-strong',
-    panel: 'bg-brand-soft',
-    confirm:
-      'bg-brand shadow-brand/25 hover:bg-brand-strong focus-visible:outline-brand aria-disabled:hover:bg-brand',
+    tone: 'brand',
   },
   reactivate: {
     button:
       'border-success/30 text-success hover:bg-success-soft focus-visible:outline-success aria-expanded:bg-success-soft',
-    panel: 'bg-success-soft',
-    confirm:
-      'bg-success shadow-success/25 hover:bg-success/90 focus-visible:outline-success aria-disabled:hover:bg-success',
+    tone: 'success',
   },
 };
 
 @Component({
   selector: 'app-account-row',
-  imports: [Spinner],
+  imports: [ConfirmPanel, Spinner],
   templateUrl: './account-row.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountRow {
   private readonly injector = inject(Injector);
   private readonly actionButton = viewChild<ElementRef<HTMLButtonElement>>('actionButton');
-  private readonly cancelButton = viewChild<ElementRef<HTMLButtonElement>>('cancelButton');
 
   readonly account = input.required<AccountSummary>();
   readonly isSelf = input(false);
@@ -88,7 +83,6 @@ export class AccountRow {
       this.cancel();
     } else if (!this.unavailable()) {
       this.confirming.set(true);
-      this.focusAfterRender(this.cancelButton);
     }
   }
 

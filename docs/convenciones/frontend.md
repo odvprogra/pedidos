@@ -71,6 +71,15 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
   Bolivia: `Bs 45,00`.
+- El carrito sale solo de `CartStore` (`@core/cart`). Las sumas del carrito se hacen en centavos
+  (`estimatedSubtotal`) y se rotulan como "estimado": el total que vale es el que devuelve la API al
+  confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y
+  su error deja el carrito intacto.
+- Agregar algo que no se puede, como un producto agotado o de un restaurante cerrado, es un botón
+  con `disabled`: el motivo ya está a la vista. Un paso de cantidad que llegó a su límite (1 o 99)
+  usa `aria-disabled`, para no perder el foco mientras se toca.
+- Lo que se agrega sin cambiar de pantalla se anuncia en una región `aria-live="polite"` fija de la
+  página ("Agregaste Silpancho al carrito. Tienes 3 productos."), no con un aviso visible.
 - Un estado corto (Abierto, Cerrado, Agotado, Suspendida) es un `app-badge` (`@shared/ui`) con su
   `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
   bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el

@@ -208,6 +208,13 @@ src/app/
   ruta interna que no es `/ingresar` ni `/registro`); si no, al inicio del rol.
 - El CSRF lo resuelve el `HttpClient` de Angular por defecto: lee la cookie `XSRF-TOKEN` y manda el
   header `X-XSRF-TOKEN`.
+- El carrito (`CartStore`, en `core/cart`) se ve con o sin sesión, igual que `/carrito`, que no lleva
+  guard: la página decide qué ofrece a cada uno. El visitante ve "Ingresar para confirmar", con
+  `returnUrl=/carrito`; el cliente, "Confirmar pedido"; el dueño y el admin, un aviso de que solo los
+  clientes piden. Ellos tampoco ven "Agregar" en el menú ni el carrito en el header.
+- `SessionStore.logOut()` vacía el carrito cuando el backend cierra la sesión. `clear()` no lo
+  toca, porque también lo llaman la sesión vencida y el arranque sin sesión: así el carrito sobrevive
+  al paso por `/ingresar`.
 
 ### Reglas de importación
 

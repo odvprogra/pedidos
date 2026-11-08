@@ -52,6 +52,8 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `applyFieldErrors` (`@shared/utils`)  | Asigna los `errors[]` del backend a los campos del formulario             |
 | `focusFirstInvalid` (`@shared/utils`) | Lleva el foco al primer campo inválido después de renderizar              |
 | `formatPrice` (`@shared/utils`)       | `Bs 45,00`                                                                |
+| `CartStore` (`@core/cart`)            | El carrito de un restaurante, guardado en `localStorage`                  |
+| `describeUnits` (`@core/cart/cart`)   | `1 producto`, `3 productos`                                               |
 
 ## Modelo
 

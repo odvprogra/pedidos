@@ -161,8 +161,8 @@ src/app/
   señal, con tres estados: cargando, sin sesión y con sesión. Un `provideAppInitializer` espera esa
   respuesta antes de la primera navegación, así los guards nunca ven el estado cargando. Si `/me`
   falla por cualquier motivo, la app arranca sin sesión.
-- Cada rol tiene su inicio, que da `homeFor(role)`: `/admin` para el admin y `/` para clientes y
-  dueños.
+- Cada rol tiene su inicio, que da `homeFor(role)`: `/` para el cliente, `/mi-restaurante` para el
+  dueño y `/admin` para el admin. El header le da al dueño y al admin un enlace a su inicio.
 - `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol. Sin sesión llevan a
   `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva al inicio de ese rol. `guestGuard`
   saca de `/ingresar` y `/registro` a quien ya tiene sesión y lo lleva a su inicio.

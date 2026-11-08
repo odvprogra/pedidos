@@ -45,10 +45,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
   queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
   llega, el foco va al título de la página; si falla, a "Reintentar".
-- Una acción que cambia algo y se puede deshacer se confirma dentro de la misma fila o tarjeta, sin
-  modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el foco vuelve al botón.
-  El resultado se anuncia en un `app-alert dismissible` fijo bajo el header: `tone="success"` (que
-  usa `role="status"`) o el tono de error.
+- Una acción que afecta a otra persona, como suspender una cuenta, se confirma dentro de la misma
+  fila o tarjeta, sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el foco
+  vuelve al botón. Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante,
+  es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras trabaja queda
+  con `aria-disabled` y dice qué está haciendo. En los dos casos el resultado se anuncia en un
+  `app-alert dismissible` fijo bajo el header: `tone="success"` (que usa `role="status"`) o el
+  tono de error.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 
@@ -98,9 +101,9 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
   `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()` ignora los envíos
   repetidos.
 - Al enviar con errores, el foco va al primer campo inválido (`focusFirstInvalid`).
-- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto llevan
-  `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por `aria-describedby`. Los
-  errores que no son de un campo van en `app-alert`.
+- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto y los
+  `textarea` llevan `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por
+  `aria-describedby`. Los errores que no son de un campo van en `app-alert`.
 - Los mensajes de cada regla se escriben en la página y se eligen con `validationMessage`
   (`@shared/utils`), que prioriza el error que mandó el backend.
 

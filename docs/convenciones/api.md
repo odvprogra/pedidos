@@ -267,6 +267,53 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
 - En `SecurityConfig`, `/api/v1/restaurants/mine/**` se declara antes que las rutas públicas, porque
   `/api/v1/restaurants/*` y `/*/catalog` también coincidirían con `/mine` y `/mine/catalog`.
 
+## Pedidos
+
+El cliente confirma el carrito y el pedido queda pendiente en el restaurante. No hay envío ni pago:
+lo retira en el local.
+
+| Operación           | Ruta                  | Acceso  | Respuesta                                           |
+| ------------------- | --------------------- | ------- | --------------------------------------------------- |
+| Confirmar un pedido | `POST /api/v1/orders` | Cliente | `201` + `Location: /api/v1/orders/{id}` + el pedido |
+
+```json
+{ "restaurantId": 4, "items": [{ "productId": 10, "quantity": 2 }, { "productId": 12, "quantity": 1 }] }
+```
+
+```json
+{
+  "id": 42,
+  "restaurantId": 4,
+  "restaurantName": "La Casona",
+  "status": "PLACED",
+  "total": 100.50,
+  "placedAt": "2026-11-08T15:00:00Z",
+  "items": [
+    { "productId": 10, "productName": "Silpancho", "unitPrice": 45.00, "quantity": 2, "subtotal": 90.00 },
+    { "productId": 12, "productName": "Limonada", "unitPrice": 10.50, "quantity": 1, "subtotal": 10.50 }
+  ]
+}
+```
+
+- El body trae el restaurante y, por cada producto, su id y la cantidad. Cualquier otro campo, como un
+  precio, un total o un cliente, se ignora: los precios salen del menú y el cliente, de la sesión.
+- Si falta `restaurantId` o `items`, si un ítem es `null` o le falta `productId` o `quantity`,
+  responde `400` con `validation_failed` y el campo en `errors[].field` (`items[0].quantity`). Un
+  valor que no es número también responde `400`.
+- Las reglas del pedido responden `422` con el código de
+  [modelo-de-datos.md](../modelo-de-datos.md#confirmar-un-pedido): `order.empty`,
+  `order.invalid_quantity`, `order.duplicate_product`, `order.restaurant_unavailable` y
+  `order.product_unavailable`. Una lista vacía o una cantidad fuera de 1 a 99 son reglas del pedido,
+  no del formato. Se revisan en ese orden y responde la primera que falla; ante cualquiera, no se
+  guarda nada.
+- Un restaurante que no existe, está suspendido o está cerrado responde lo mismo,
+  `order.restaurant_unavailable`, y un producto que no existe, es de otro restaurante o está agotado,
+  `order.product_unavailable`. El mensaje no dice cuál de los casos fue.
+- El pedido nace en `PLACED`, con `placedAt` en UTC. Cada línea copia el nombre y el precio que el
+  producto tiene al confirmar, y `subtotal` y `total` los calcula el backend.
+- Un dueño o un admin reciben `403` con `access_denied`. El `Location` apunta a la ruta del pedido,
+  que todavía no tiene `GET`: llega con el historial de pedidos.
+
 ## Paginación
 
 Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:

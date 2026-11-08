@@ -4,9 +4,9 @@ Las tablas de cada módulo, sus restricciones y las reglas de negocio que depend
 decisión y sus alternativas están en [ADR-0009](adr/0009-modelo-de-datos-y-migraciones-con-flyway.md);
 cómo se escriben las migraciones, en [backend.md](convenciones/backend.md#migraciones).
 
-Cada tabla entra con la migración de la feature que la usa. Ya existen las de `identity`
-(`V1__create_accounts.sql`), la de `restaurant` (`V2__create_restaurants.sql`) y las de `catalog`
-(`V3__create_catalog.sql`); las de `order` todavía no.
+Cada tabla entra con la migración de la feature que la usa: `identity` (`V1__create_accounts.sql`),
+`restaurant` (`V2__create_restaurants.sql`), `catalog` (`V3__create_catalog.sql`) y `order`
+(`V4__create_orders.sql`).
 
 ## Vista general
 
@@ -195,6 +195,11 @@ el total. El caso de uso rechaza el pedido con `422` si:
 | Un producto se repite                                        | `order.duplicate_product`      |
 | El restaurante no existe, está cerrado o está suspendido     | `order.restaurant_unavailable` |
 | Un producto no existe, es de otro restaurante o está agotado | `order.product_unavailable`    |
+
+Las reglas se revisan en el orden de la tabla y responde la primera que falla. Las tres primeras
+miran solo el pedido (`OrderLines`), así que se revisan antes de consultar a `restaurant` y a
+`catalog`. Que el restaurante reciba pedidos lo decide `Restaurant.acceptsOrders()`: abierto y no
+suspendido.
 
 Si todo está bien, copia el nombre del restaurante y el nombre y el precio actual de cada producto,
 calcula el total como la suma de precio por cantidad y crea el pedido en `PLACED`. Después de eso,

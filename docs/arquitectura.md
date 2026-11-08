@@ -105,6 +105,21 @@ y `catalog` no lee ni repite el estado del restaurante. La única copia es la co
 listado (`findAllBySuspendedFalse`), que la traduce a SQL porque una página no se puede filtrar en
 memoria: si la regla cambia, cambian las dos juntas.
 
+`order` tiene dos puertos propios. `RestaurantDirectory.restaurantTakingOrders(restaurantId)` lo
+implementa `OrderRestaurantDirectoryAdapter`, en `order/infrastructure/restaurant`: llama a
+`GetVisibleRestaurantUseCase` y pregunta `Restaurant.acceptsOrders()`. Si el restaurante no existe o
+está suspendido, atrapa `RestaurantNotFoundException` y lanza `RestaurantUnavailableException`, porque
+para un pedido es un `422` con `order.restaurant_unavailable`, no un `404`. Traducir así es seguro: la
+transacción ya quedó marcada para rollback, pero la nueva excepción la termina igual, sin intentar el
+commit. Lo que no se hace es atraparla y seguir. `ProductCatalog.productsOf(restaurantId)` lo
+implementa `ProductCatalogAdapter`, en `order/infrastructure/catalog`, con los productos de
+`GetVisibleCatalogUseCase`: un producto de otro restaurante no está en ese menú, así que no se puede
+pedir. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
+`ProductSnapshot`), y el dominio de `order` no conoce los modelos de los otros módulos.
+
+Los adaptadores son beans de Spring, y el nombre del bean sale del de la clase. Por eso el de `order`
+se llama `OrderRestaurantDirectoryAdapter` y no `RestaurantDirectoryAdapter`, que ya usa `catalog`.
+
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en
 [modelo-de-datos.md](modelo-de-datos.md).

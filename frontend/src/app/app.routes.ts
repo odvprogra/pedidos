@@ -11,7 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'estado',
-    loadChildren: () => import('@features/home/home.routes').then((m) => m.HOME_ROUTES),
+    loadChildren: () => import('@features/status/status.routes').then((m) => m.STATUS_ROUTES),
   },
   {
     path: '',

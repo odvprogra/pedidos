@@ -5,5 +5,5 @@
     <h3 class="font-semibold">{{ name() }}</h3>
     <p class="text-sm text-muted">{{ detail() }}</p>
   </div>
-  <app-status-badge [status]="status()" />
+  <app-badge size="sm" [tone]="tone()" [attr.data-status]="status()">{{ label() }}</app-badge>
 </div>

@@ -275,7 +275,7 @@ describe('appConfig', () => {
     httpTesting.expectOne('/api/health').flush({});
     await harness.fixture.whenStable();
 
-    expect(harness.routeNativeElement?.textContent).toContain('Estado del proyecto');
+    expect(harness.routeNativeElement?.textContent).toContain('Estado del sistema');
   });
 
   it('serves the log in and registration pages', async () => {

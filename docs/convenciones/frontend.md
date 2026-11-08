@@ -15,7 +15,7 @@ Se sigue la guía de estilo de Angular 2025: archivos sin sufijo de tipo para co
 | Estado compartido       | `data-access/cart-store.ts`                          | `CartStore`          |
 | Modelo                  | `models/restaurant.ts`                               | `Restaurant`         |
 | Rutas de la feature     | `restaurants.routes.ts`                              | `RESTAURANTS_ROUTES` |
-| Componente reutilizable | `shared/ui/status-badge/status-badge.ts`             | `StatusBadge`        |
+| Componente reutilizable | `shared/ui/badge/badge.ts`                           | `Badge`              |
 
 Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I`.
 

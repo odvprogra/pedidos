@@ -8,32 +8,32 @@ import {
   signal,
 } from '@angular/core';
 import { Button } from '@shared/ui/button/button';
-import { Status } from '@shared/ui/status-badge/status-badge';
 import { ServiceStatus } from '../../components/service-status/service-status';
 import { HealthApi } from '../../data-access/health-api';
 import { HealthStatus } from '../../models/health-status';
+import { ServiceState } from '../../models/service-state';
 
 @Component({
-  selector: 'app-home-page',
+  selector: 'app-status-page',
   imports: [Button, ServiceStatus],
-  templateUrl: './home-page.html',
+  templateUrl: './status-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomePage implements OnInit {
+export class StatusPage implements OnInit {
   private readonly healthApi = inject(HealthApi);
 
   protected readonly angularVersion = VERSION.full;
   protected readonly health = signal<HealthStatus | null>(null);
   protected readonly loading = signal(true);
 
-  protected readonly backendStatus = computed<Status>(() => {
+  protected readonly backendStatus = computed<ServiceState>(() => {
     if (this.loading()) {
       return 'pending';
     }
     return this.health() ? 'ok' : 'error';
   });
 
-  protected readonly databaseStatus = computed<Status>(() => {
+  protected readonly databaseStatus = computed<ServiceState>(() => {
     if (this.loading()) {
       return 'pending';
     }

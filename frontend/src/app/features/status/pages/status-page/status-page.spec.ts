@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HealthStatus } from '../../models/health-status';
-import { HomePage } from './home-page';
+import { StatusPage } from './status-page';
 
 const HEALTHY: HealthStatus = {
   status: 'UP',
@@ -12,17 +12,17 @@ const HEALTHY: HealthStatus = {
   databaseVersion: '17.6',
 };
 
-describe('HomePage', () => {
-  let fixture: ComponentFixture<HomePage>;
+describe('StatusPage', () => {
+  let fixture: ComponentFixture<StatusPage>;
   let httpTesting: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HomePage],
+      imports: [StatusPage],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     httpTesting = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(HomePage);
+    fixture = TestBed.createComponent(StatusPage);
     fixture.detectChanges();
   });
 

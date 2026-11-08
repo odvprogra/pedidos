@@ -35,22 +35,23 @@ frontend/src/app/features/restaurant-admin/
 
 Lo que ya existe y no se vuelve a escribir en una feature:
 
-| Pieza                                    | Para qué                                                                    |
-| ---------------------------------------- | --------------------------------------------------------------------------- |
-| `toProblemDetails` (`@core/http`)        | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión    |
-| `Page<T>` (`@core/http/page`)            | La forma de una página de la API                                            |
-| `app-load-error` (`@shared/ui`)          | El error de carga con "Reintentar" y su método `focus()`                    |
-| `app-alert` (`@shared/ui`)               | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`    |
-| `appButton`, `appSecondaryButton`        | Botón principal y secundarios (`tone="danger"`, `working`)                  |
-| `app-form-field`, `appTextInput`         | Etiqueta, campo y mensaje enlazados por `aria-describedby`                  |
-| `app-confirm-panel` (`@shared/ui`)       | La confirmación dentro de la fila, sin modal                                |
-| `app-pagination` (`@shared/ui`)          | "‹ Anterior · Página X de Y · Siguiente ›"                                  |
-| `app-badge` (`@shared/ui`)               | Insignia de estado con `tone` (`success`, `neutral`, `danger`) y `size`     |
-| `app-spinner` (`@shared/ui`)             | El indicador dentro de un botón que trabaja                                 |
-| `validationMessage` (`@shared/utils`)    | El mensaje de un campo, con prioridad para el error del backend             |
-| `applyFieldErrors` (`@shared/utils`)     | Asigna los `errors[]` del backend a los campos del formulario               |
-| `focusFirstInvalid` (`@shared/utils`)    | Lleva el foco al primer campo inválido después de renderizar                |
-| `formatPrice` (`@shared/utils`)          | `Bs 45,00`                                                                  |
+| Pieza                                 | Para qué                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `toProblemDetails` (`@core/http`)     | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión  |
+| `Page<T>` (`@core/http/page`)         | La forma de una página de la API                                          |
+| `app-load-error` (`@shared/ui`)       | El error de carga con "Reintentar" y su método `focus()`                  |
+| `app-empty-state` (`@shared/ui`)      | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional |
+| `app-alert` (`@shared/ui`)            | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`  |
+| `appButton`, `appSecondaryButton`     | Botón principal y secundarios (`tone="danger"`, `working`)                |
+| `app-form-field`, `appTextInput`      | Etiqueta, campo y mensaje enlazados por `aria-describedby`                |
+| `app-confirm-panel` (`@shared/ui`)    | La confirmación dentro de la fila, sin modal                              |
+| `app-pagination` (`@shared/ui`)       | "‹ Anterior · Página X de Y · Siguiente ›"                                |
+| `app-badge` (`@shared/ui`)            | Insignia de estado con `tone` (`success`, `neutral`, `danger`) y `size`   |
+| `app-spinner` (`@shared/ui`)          | El indicador dentro de un botón que trabaja                               |
+| `validationMessage` (`@shared/utils`) | El mensaje de un campo, con prioridad para el error del backend           |
+| `applyFieldErrors` (`@shared/utils`)  | Asigna los `errors[]` del backend a los campos del formulario             |
+| `focusFirstInvalid` (`@shared/utils`) | Lleva el foco al primer campo inválido después de renderizar              |
+| `formatPrice` (`@shared/utils`)       | `Bs 45,00`                                                                |
 
 ## Modelo
 
@@ -1349,12 +1350,13 @@ describe('MyRestaurantPage', () => {
 
 ## Otros patrones de la feature
 
-| Patrón                                              | Dónde verlo                                                          |
-| --------------------------------------------------- | -------------------------------------------------------------------- |
-| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                     |
-| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`              |
-| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                              |
-| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec          |
-| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)               |
-| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`  |
-| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination`          |
+| Patrón                                              | Dónde verlo                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                      |
+| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`               |
+| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                               |
+| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec           |
+| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)                |
+| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`   |
+| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination`           |
+| Lista pública en grilla y página de detalle         | `RestaurantListPage` y `RestaurantMenuPage` en `features/restaurants` |

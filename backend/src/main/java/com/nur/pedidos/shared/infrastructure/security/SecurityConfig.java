@@ -16,7 +16,9 @@ import tools.jackson.databind.json.JsonMapper;
 public class SecurityConfig {
 
     private static final String OWN_RESTAURANT = "/api/v1/restaurants/mine/**";
-    private static final String[] PUBLIC_RESTAURANTS = {"/api/v1/restaurants", "/api/v1/restaurants/*"};
+    private static final String[] PUBLIC_RESTAURANTS = {
+        "/api/v1/restaurants", "/api/v1/restaurants/*", "/api/v1/restaurants/*/catalog"
+    };
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JsonMapper jsonMapper) throws Exception {

@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class GetRestaurantCatalogUseCase {
+public class GetVisibleCatalogUseCase {
 
     private final RestaurantDirectory restaurantDirectory;
     private final CategoryRepository categoryRepository;

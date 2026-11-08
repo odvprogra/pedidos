@@ -101,7 +101,9 @@ endpoints del menú responden el mismo `404` con `restaurant.not_found` que `/mi
 El menú público usa el mismo puerto: `RestaurantDirectory.ensureVisible(restaurantId)` llama a
 `GetVisibleRestaurantUseCase` y deja pasar su `RestaurantNotFoundException` si el restaurante no
 existe o está suspendido. Así la regla de visibilidad vive en `restaurant` (`Restaurant.isVisible()`)
-y `catalog` no lee ni repite el estado del restaurante.
+y `catalog` no lee ni repite el estado del restaurante. La única copia es la consulta paginada del
+listado (`findAllBySuspendedFalse`), que la traduce a SQL porque una página no se puede filtrar en
+memoria: si la regla cambia, cambian las dos juntas.
 
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en

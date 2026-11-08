@@ -4,8 +4,9 @@ import static com.nur.pedidos.shared.infrastructure.security.TestSessions.sessio
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-import com.nur.pedidos.catalog.application.GetRestaurantCatalogUseCase;
+import com.nur.pedidos.catalog.application.GetVisibleCatalogUseCase;
 import com.nur.pedidos.catalog.domain.model.Catalog;
 import com.nur.pedidos.catalog.domain.model.Category;
 import com.nur.pedidos.catalog.domain.model.Product;
@@ -19,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
@@ -33,12 +35,12 @@ class PublicCatalogControllerTest {
     private MockMvcTester mvc;
 
     @MockitoBean
-    private GetRestaurantCatalogUseCase getRestaurantCatalog;
+    private GetVisibleCatalogUseCase getVisibleCatalog;
 
     @Test
     void returnsTheCatalogOfARestaurantWithoutSession() {
         Category mainDishes = new Category(3L, 4L, "Platos fuertes");
-        when(getRestaurantCatalog.execute(4L))
+        when(getVisibleCatalog.execute(4L))
                 .thenReturn(new Catalog(
                         List.of(mainDishes),
                         List.of(
@@ -82,7 +84,7 @@ class PublicCatalogControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"CUSTOMER", "OWNER", "ADMIN"})
     void returnsTheCatalogForEveryRole(String role) {
-        when(getRestaurantCatalog.execute(4L)).thenReturn(new Catalog(List.of(), List.of()));
+        when(getVisibleCatalog.execute(4L)).thenReturn(new Catalog(List.of(), List.of()));
 
         assertThat(mvc.get().uri(CATALOG).with(sessionOf(role, 3L)))
                 .hasStatus(HttpStatus.OK)
@@ -94,7 +96,7 @@ class PublicCatalogControllerTest {
 
     @Test
     void returnsANeutralNotFoundForAHiddenOrMissingRestaurant() {
-        when(getRestaurantCatalog.execute(4L)).thenThrow(new RestaurantNotFoundException());
+        when(getVisibleCatalog.execute(4L)).thenThrow(new RestaurantNotFoundException());
 
         assertThat(mvc.get().uri(CATALOG))
                 .hasStatus(HttpStatus.NOT_FOUND)
@@ -114,7 +116,18 @@ class PublicCatalogControllerTest {
                     assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
                     assertThat(json).extractingPath("$.errors[0].field").isEqualTo("restaurantId");
                 });
-        verifyNoInteractions(getRestaurantCatalog);
+        verifyNoInteractions(getVisibleCatalog);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT", "PATCH", "DELETE"})
+    void opensTheCatalogOnlyForReading(String method) {
+        assertThat(mvc.method(HttpMethod.valueOf(method)).uri(CATALOG).with(csrf()))
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("unauthenticated");
+        verifyNoInteractions(getVisibleCatalog);
     }
 
     @Test
@@ -124,6 +137,6 @@ class PublicCatalogControllerTest {
                 .bodyJson()
                 .extractingPath("$.code")
                 .isEqualTo("unauthenticated");
-        verifyNoInteractions(getRestaurantCatalog);
+        verifyNoInteractions(getVisibleCatalog);
     }
 }

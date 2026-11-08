@@ -1,6 +1,6 @@
 package com.nur.pedidos.catalog.infrastructure.web;
 
-import com.nur.pedidos.catalog.application.GetRestaurantCatalogUseCase;
+import com.nur.pedidos.catalog.application.GetVisibleCatalogUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 class PublicCatalogController {
 
-    private final GetRestaurantCatalogUseCase getRestaurantCatalog;
+    private final GetVisibleCatalogUseCase getVisibleCatalog;
 
     @GetMapping
     CatalogResponse get(@PathVariable Long restaurantId) {
-        return CatalogResponse.from(getRestaurantCatalog.execute(restaurantId));
+        return CatalogResponse.from(getVisibleCatalog.execute(restaurantId));
     }
 }

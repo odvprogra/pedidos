@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class GetRestaurantCatalogUseCaseTest {
+class GetVisibleCatalogUseCaseTest {
 
     private static final Long RESTAURANT = 4L;
     private static final Long OTHER_RESTAURANT = 5L;
@@ -20,8 +20,8 @@ class GetRestaurantCatalogUseCaseTest {
     private final InMemoryRestaurantDirectory restaurantDirectory = new InMemoryRestaurantDirectory();
     private final InMemoryCategoryRepository categoryRepository = new InMemoryCategoryRepository();
     private final InMemoryProductRepository productRepository = new InMemoryProductRepository();
-    private final GetRestaurantCatalogUseCase getRestaurantCatalog =
-            new GetRestaurantCatalogUseCase(restaurantDirectory, categoryRepository, productRepository);
+    private final GetVisibleCatalogUseCase getVisibleCatalog =
+            new GetVisibleCatalogUseCase(restaurantDirectory, categoryRepository, productRepository);
 
     @BeforeEach
     void registerRestaurants() {
@@ -38,7 +38,7 @@ class GetRestaurantCatalogUseCaseTest {
         productRepository.save(Product.create(drinks, "Limonada", null, new BigDecimal("10")));
         productRepository.save(Product.create(foreign, "Napolitana", null, new BigDecimal("70")));
 
-        Catalog catalog = getRestaurantCatalog.execute(RESTAURANT);
+        Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
         assertThat(catalog.categories()).extracting(Category::getName).containsExactly("Platos fuertes", "Bebidas");
         assertThat(catalog.productsIn(mainDishes)).extracting(Product::getName).containsExactly("Silpancho");
@@ -53,7 +53,7 @@ class GetRestaurantCatalogUseCaseTest {
         piqueMacho.markSoldOut();
         productRepository.save(piqueMacho);
 
-        Catalog catalog = getRestaurantCatalog.execute(RESTAURANT);
+        Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
         assertThat(catalog.productsIn(mainDishes))
                 .extracting(Product::getName, Product::isAvailable)
@@ -66,7 +66,7 @@ class GetRestaurantCatalogUseCaseTest {
         categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
         productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
 
-        Catalog catalog = getRestaurantCatalog.execute(RESTAURANT);
+        Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
         assertThat(catalog.categories()).extracting(Category::getName).containsExactly("Platos fuertes");
     }
@@ -75,7 +75,7 @@ class GetRestaurantCatalogUseCaseTest {
     void returnsAnEmptyCatalogWhenTheRestaurantHasNoProductsYet() {
         categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
 
-        Catalog catalog = getRestaurantCatalog.execute(RESTAURANT);
+        Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
         assertThat(catalog.categories()).isEmpty();
         assertThat(catalog.products()).isEmpty();
@@ -87,7 +87,7 @@ class GetRestaurantCatalogUseCaseTest {
         productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
         restaurantDirectory.suspend(RESTAURANT);
 
-        assertThatThrownBy(() -> getRestaurantCatalog.execute(RESTAURANT))
+        assertThatThrownBy(() -> getVisibleCatalog.execute(RESTAURANT))
                 .isInstanceOf(RestaurantNotFoundException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.not_found");
@@ -95,7 +95,7 @@ class GetRestaurantCatalogUseCaseTest {
 
     @Test
     void failsWhenTheRestaurantDoesNotExist() {
-        assertThatThrownBy(() -> getRestaurantCatalog.execute(99L))
+        assertThatThrownBy(() -> getVisibleCatalog.execute(99L))
                 .isInstanceOf(RestaurantNotFoundException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.not_found");

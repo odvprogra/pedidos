@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import com.nur.pedidos.restaurant.application.GetVisibleRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.ListVisibleRestaurantsUseCase;
@@ -21,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
@@ -179,6 +181,19 @@ class PublicRestaurantControllerTest {
                     assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
                     assertThat(json).extractingPath("$.errors[0].field").isEqualTo("id");
                 });
+        verifyNoInteractions(getVisibleRestaurant);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT", "PATCH", "DELETE"})
+    void opensARestaurantOnlyForReading(String method) {
+        assertThat(mvc.method(HttpMethod.valueOf(method))
+                        .uri("/api/v1/restaurants/4")
+                        .with(csrf()))
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("unauthenticated");
         verifyNoInteractions(getVisibleRestaurant);
     }
 

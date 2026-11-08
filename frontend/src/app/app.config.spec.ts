@@ -240,6 +240,32 @@ describe('appConfig', () => {
 
       expect(TestBed.inject(Router).url).toBe('/restaurantes');
     });
+
+    it('shows the menu of a restaurant without a session', async () => {
+      await startWith(null);
+
+      const harness = await RouterTestingHarness.create('/restaurantes/4');
+      httpTesting.expectOne('/api/v1/restaurants/4').flush({ ...LA_CASONA, open: true });
+      httpTesting.expectOne('/api/v1/restaurants/4/catalog').flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/restaurantes/4');
+      expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('La Casona');
+    });
+
+    it('takes the focus to the restaurant opened from the list', async () => {
+      await startWith(null);
+      const harness = await RouterTestingHarness.create('/restaurantes');
+      httpTesting.expectOne(RESTAURANTS_URL).flush(NO_RESTAURANTS);
+      await harness.fixture.whenStable();
+
+      await harness.navigateByUrl('/restaurantes/4');
+      httpTesting.expectOne('/api/v1/restaurants/4').flush({ ...LA_CASONA, open: true });
+      httpTesting.expectOne('/api/v1/restaurants/4/catalog').flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(document.activeElement).toBe(harness.routeNativeElement?.querySelector('h1'));
+    });
   });
 
   it('keeps the status of the system at its own page', async () => {

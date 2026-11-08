@@ -3,6 +3,7 @@ package com.nur.pedidos.catalog.domain.model;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,16 @@ class CatalogTest {
         assertThat(catalog.productsIn(MAIN_DISHES)).containsExactly(silpancho, piqueMacho);
         assertThat(catalog.productsIn(DRINKS)).containsExactly(lemonade);
         assertThat(catalog.productsIn(DESSERTS)).isEmpty();
+    }
+
+    @Test
+    void keepsItsOwnCopyOfTheLists() {
+        List<Category> categories = new ArrayList<>(List.of(MAIN_DISHES));
+        Catalog catalog = new Catalog(categories, List.of());
+
+        categories.add(DRINKS);
+
+        assertThat(catalog.categories()).containsExactly(MAIN_DISHES);
     }
 
     private static Product product(Long id, Category category, String name) {

@@ -3,6 +3,7 @@ package com.nur.pedidos.catalog.domain.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.nur.pedidos.catalog.domain.exception.CatalogNotOwnerException;
 import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -108,6 +109,20 @@ class ProductTest {
         assertThat(product)
                 .extracting(Product::getCategoryId, Product::getName, Product::getDescription, Product::getPrice)
                 .containsExactly(3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.00"));
+    }
+
+    @Test
+    void refusesToMoveTheProductToACategoryOfAnotherRestaurant() {
+        Product product = silpancho(true);
+        Category foreign = new Category(9L, 8L, "Pizzas");
+
+        assertThatThrownBy(() -> product.edit(foreign, "Silpancho", null, BigDecimal.TEN))
+                .isInstanceOf(CatalogNotOwnerException.class)
+                .extracting("code")
+                .isEqualTo("catalog.not_owner");
+        assertThat(product)
+                .extracting(Product::getCategoryId, Product::getPrice)
+                .containsExactly(3L, new BigDecimal("45.00"));
     }
 
     @Test

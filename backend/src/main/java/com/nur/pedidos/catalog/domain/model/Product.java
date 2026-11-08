@@ -1,5 +1,6 @@
 package com.nur.pedidos.catalog.domain.model;
 
+import com.nur.pedidos.catalog.domain.exception.CatalogNotOwnerException;
 import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -45,6 +46,9 @@ public class Product {
     }
 
     public void edit(Category category, String name, String description, BigDecimal price) {
+        if (!category.belongsTo(restaurantId)) {
+            throw new CatalogNotOwnerException();
+        }
         String validName = requiredName(name);
         BigDecimal validPrice = positivePrice(price);
         this.name = validName;

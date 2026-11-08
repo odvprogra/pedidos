@@ -64,6 +64,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
 - Una página que se abre desde otra de la app lleva el foco a su título cuando termina de cargar.
+  El router abre cada página arriba (`withInMemoryScrolling` con `scrollPositionRestoration: 'top'`).
+  Eso no se prueba en `TestBed`, porque el router solo lo activa cuando arranca la app; se revisa
+  en el navegador.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de

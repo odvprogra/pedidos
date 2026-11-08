@@ -95,6 +95,9 @@ suspendido o no, que decide el admin.
   `restaurant.already_registered`, y `unique (owner_id)` lo respalda en la base. Ese único
   (`restaurants_owner_id_key`) ya indexa `owner_id`, así que no lleva un índice aparte.
 - Un restaurante nuevo empieza cerrado: el dueño carga el menú y después lo abre.
+- El listado público muestra primero los abiertos y después los cerrados, cada grupo en orden de
+  registro. La tabla es chica, así que la consulta (`where suspended = false order by open desc,
+  id`) no lleva un índice propio.
 - Suspender un restaurante también lo cierra. Al reactivarlo vuelve cerrado y el dueño decide cuándo
   abrir. Mientras está suspendido, el dueño no lo puede abrir: `409` con `restaurant.suspended`.
 - Suspender la cuenta de un dueño no cambia su restaurante. Si el admin quiere sacar el local,
@@ -116,7 +119,8 @@ suspendido o no, que decide el admin.
 
 `categories_restaurant_id_name_key` es un índice único sobre `(restaurant_id, lower(name))`. Como
 empieza por `restaurant_id`, esa columna no lleva un índice aparte. El menú muestra las categorías
-en el orden en que se crearon.
+en el orden en que se crearon. El menú público deja afuera las que no tienen productos; el del
+dueño las muestra todas.
 
 ### `products`
 

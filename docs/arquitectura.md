@@ -98,6 +98,11 @@ restaurante, el adaptador deja pasar `RestaurantNotFoundException` en lugar de c
 para rollback, así que atraparla y seguir terminaría en `UnexpectedRollbackException`. Por eso los
 endpoints del menú responden el mismo `404` con `restaurant.not_found` que `/mine`.
 
+El menú público usa el mismo puerto: `RestaurantDirectory.ensureVisible(restaurantId)` llama a
+`GetVisibleRestaurantUseCase` y deja pasar su `RestaurantNotFoundException` si el restaurante no
+existe o está suspendido. Así la regla de visibilidad vive en `restaurant` (`Restaurant.isVisible()`)
+y `catalog` no lee ni repite el estado del restaurante.
+
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en
 [modelo-de-datos.md](modelo-de-datos.md).

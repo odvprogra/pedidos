@@ -69,6 +69,10 @@ public class Restaurant {
         this.open = false;
     }
 
+    public boolean isVisible() {
+        return !suspended;
+    }
+
     private static String stripToNull(String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }
@@ -83,15 +87,20 @@ public class Restaurant {
 package com.nur.pedidos.restaurant.domain.port;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.shared.domain.model.PageResult;
 import java.util.Optional;
 
 public interface RestaurantRepository {
 
     Restaurant save(Restaurant restaurant);
 
+    Optional<Restaurant> findById(Long id);
+
     Optional<Restaurant> findByOwnerId(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
+
+    PageResult<Restaurant> findVisibleOpenFirst(int page, int size);
 }
 ```
 
@@ -319,6 +328,8 @@ class RestaurantEntity {
 package com.nur.pedidos.restaurant.infrastructure.persistence;
 
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 interface RestaurantJpaRepository extends JpaRepository<RestaurantEntity, Long> {
@@ -326,6 +337,8 @@ interface RestaurantJpaRepository extends JpaRepository<RestaurantEntity, Long> 
     Optional<RestaurantEntity> findByOwnerId(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
+
+    Page<RestaurantEntity> findAllBySuspendedFalse(Pageable pageable);
 }
 ```
 
@@ -338,19 +351,30 @@ package com.nur.pedidos.restaurant.infrastructure.persistence;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
 import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import com.nur.pedidos.shared.domain.model.PageResult;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 class RestaurantPersistenceAdapter implements RestaurantRepository {
 
+    private static final Sort OPEN_FIRST = Sort.by(Sort.Order.desc("open"), Sort.Order.asc("id"));
+
     private final RestaurantJpaRepository jpaRepository;
 
     @Override
     public Restaurant save(Restaurant restaurant) {
         return jpaRepository.save(RestaurantEntity.fromDomain(restaurant)).toDomain();
+    }
+
+    @Override
+    public Optional<Restaurant> findById(Long id) {
+        return jpaRepository.findById(id).map(RestaurantEntity::toDomain);
     }
 
     @Override
@@ -361,6 +385,13 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
     @Override
     public boolean existsByOwnerId(Long ownerId) {
         return jpaRepository.existsByOwnerId(ownerId);
+    }
+
+    @Override
+    public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
+        Page<RestaurantEntity> entities = jpaRepository.findAllBySuspendedFalse(PageRequest.of(page, size, OPEN_FIRST));
+        return new PageResult<>(
+                entities.map(RestaurantEntity::toDomain).getContent(), page, size, entities.getTotalElements());
     }
 }
 ```
@@ -412,7 +443,7 @@ record RestaurantResponse(Long id, String name, String description, String addre
 
 ## Web: controller
 
-Cada método declara quién lo puede usar con `@PreAuthorize`. El usuario llega con `@AuthenticationPrincipal CurrentUser` y su id pasa al caso de uso. Si una ruta es pública (por ejemplo, ver un menú), se agrega a las rutas públicas de `SecurityConfig` y no lleva `@PreAuthorize`.
+Cada método declara quién lo puede usar con `@PreAuthorize`. El usuario llega con `@AuthenticationPrincipal CurrentUser` y su id pasa al caso de uso. Si una ruta es pública, va en un controller aparte sin `@PreAuthorize` (ver la sección siguiente).
 
 `backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RestaurantController.java`
 
@@ -479,6 +510,65 @@ class RestaurantController {
         closeRestaurant.execute(owner.id());
     }
 }
+```
+
+## Web: controller público
+
+Las rutas que cualquiera puede leer van en un controller propio, sin `@PreAuthorize` ni `CurrentUser`. Una lista paginada recibe `page` y `size` con sus límites y responde con `PageResponse.from(...)`.
+
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/PublicRestaurantController.java`
+
+```java
+package com.nur.pedidos.restaurant.infrastructure.web;
+
+import com.nur.pedidos.restaurant.application.GetVisibleRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.ListVisibleRestaurantsUseCase;
+import com.nur.pedidos.shared.infrastructure.web.PageResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/restaurants")
+@RequiredArgsConstructor
+class PublicRestaurantController {
+
+    private final ListVisibleRestaurantsUseCase listVisibleRestaurants;
+    private final GetVisibleRestaurantUseCase getVisibleRestaurant;
+
+    @GetMapping
+    PageResponse<PublicRestaurantResponse> list(
+            @RequestParam(defaultValue = "0") @Min(0) @Max(1_000_000) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        return PageResponse.from(listVisibleRestaurants.execute(page, size), PublicRestaurantResponse::from);
+    }
+
+    @GetMapping("/{id}")
+    PublicRestaurantResponse get(@PathVariable Long id) {
+        return PublicRestaurantResponse.from(getVisibleRestaurant.execute(id));
+    }
+}
+```
+
+Las rutas públicas se declaran en `SecurityConfig` solo para `GET`. Las del dueño van antes, porque `/api/v1/restaurants/*` también coincidiría con `/mine`.
+
+`backend/src/main/java/com/nur/pedidos/shared/infrastructure/security/SecurityConfig.java` (recortado: las rutas del restaurante)
+
+```java
+private static final String OWN_RESTAURANT = "/api/v1/restaurants/mine/**";
+private static final String[] PUBLIC_RESTAURANTS = {
+    "/api/v1/restaurants", "/api/v1/restaurants/*", "/api/v1/restaurants/*/catalog"
+};
+
+.requestMatchers(OWN_RESTAURANT)
+.authenticated()
+.requestMatchers(HttpMethod.GET, PUBLIC_RESTAURANTS)
+.permitAll()
 ```
 
 ## Test de dominio
@@ -558,11 +648,17 @@ package com.nur.pedidos.restaurant.application;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
 import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import com.nur.pedidos.shared.domain.model.PageResult;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 class InMemoryRestaurantRepository implements RestaurantRepository {
+
+    private static final Comparator<Restaurant> OPEN_FIRST =
+            Comparator.comparing(Restaurant::isOpen).reversed().thenComparing(Restaurant::getId);
 
     private final Map<Long, Restaurant> restaurants = new HashMap<>();
     private long sequence;
@@ -572,6 +668,11 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
         Long id = restaurant.getId() != null ? restaurant.getId() : ++sequence;
         restaurants.put(id, copyOf(restaurant, id));
         return copyOf(restaurant, id);
+    }
+
+    @Override
+    public Optional<Restaurant> findById(Long id) {
+        return Optional.ofNullable(restaurants.get(id)).map(restaurant -> copyOf(restaurant, id));
     }
 
     @Override
@@ -585,6 +686,20 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
     @Override
     public boolean existsByOwnerId(Long ownerId) {
         return findByOwnerId(ownerId).isPresent();
+    }
+
+    @Override
+    public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
+        List<Restaurant> visible = restaurants.values().stream()
+                .filter(Restaurant::isVisible)
+                .sorted(OPEN_FIRST)
+                .toList();
+        List<Restaurant> items = visible.stream()
+                .skip((long) page * size)
+                .limit(size)
+                .map(restaurant -> copyOf(restaurant, restaurant.getId()))
+                .toList();
+        return new PageResult<>(items, page, size, visible.size());
     }
 
     int count() {
@@ -891,9 +1006,11 @@ package com.nur.pedidos.restaurant.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.nur.pedidos.TestcontainersConfiguration;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.shared.domain.model.PageResult;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -979,11 +1096,93 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void findsARestaurantByItsId() {
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant fogon = adapter.save(Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", NOW));
+
+        assertThat(adapter.findById(fogon.getId()))
+                .get()
+                .extracting(Restaurant::getOwnerId, Restaurant::getName)
+                .containsExactly(8L, "El Fogón");
+    }
+
+    @Test
+    void findsNothingWhenTheIdDoesNotExist() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findById(saved.getId() + 100)).isEmpty();
+    }
+
+    @Test
+    void listsTheVisibleRestaurantsWithTheOpenOnesFirst() {
+        save(7L, "La Casona", false, false);
+        save(8L, "El Fogón", true, false);
+        save(9L, "Pizzería Napoli", true, true);
+        save(10L, "Sabor Camba", false, false);
+        save(11L, "Doña Ely", true, false);
+
+        PageResult<Restaurant> result = adapter.findVisibleOpenFirst(0, 20);
+
+        assertThat(result.items())
+                .extracting(Restaurant::getName, Restaurant::isOpen)
+                .containsExactly(
+                        tuple("El Fogón", true),
+                        tuple("Doña Ely", true),
+                        tuple("La Casona", false),
+                        tuple("Sabor Camba", false));
+        assertThat(result.totalItems()).isEqualTo(4);
+        assertThat(result.totalPages()).isEqualTo(1);
+    }
+
+    @Test
+    void splitsTheVisibleRestaurantsInPagesWithTheirRealTotals() {
+        save(7L, "La Casona", false, false);
+        save(8L, "El Fogón", true, false);
+        save(9L, "Pizzería Napoli", true, true);
+        save(10L, "Sabor Camba", false, false);
+
+        PageResult<Restaurant> firstPage = adapter.findVisibleOpenFirst(0, 2);
+        PageResult<Restaurant> secondPage = adapter.findVisibleOpenFirst(1, 2);
+
+        assertThat(firstPage.items()).extracting(Restaurant::getName).containsExactly("El Fogón", "La Casona");
+        assertThat(secondPage.items()).extracting(Restaurant::getName).containsExactly("Sabor Camba");
+        assertThat(secondPage.totalItems()).isEqualTo(3);
+        assertThat(secondPage.totalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void returnsAnEmptyPageAfterTheLastOneWithTheRealTotals() {
+        save(7L, "La Casona", true, false);
+        save(8L, "El Fogón", false, false);
+
+        PageResult<Restaurant> result = adapter.findVisibleOpenFirst(3, 2);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.page()).isEqualTo(3);
+        assertThat(result.totalItems()).isEqualTo(2);
+        assertThat(result.totalPages()).isEqualTo(1);
+    }
+
+    @Test
+    void returnsAnEmptyPageWhenNoRestaurantIsVisible() {
+        save(7L, "La Casona", false, true);
+
+        PageResult<Restaurant> result = adapter.findVisibleOpenFirst(0, 20);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.totalItems()).isZero();
+    }
+
+    @Test
     void rejectsASecondRestaurantForTheSameOwner() {
         adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
 
         assertThatThrownBy(() -> adapter.save(Restaurant.register(7L, "El Fogón", null, "Av. Banzer 120", NOW)))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private void save(Long ownerId, String name, boolean open, boolean suspended) {
+        adapter.save(new Restaurant(null, ownerId, name, null, "Calle Sucre 245", open, suspended, NOW));
     }
 }
 ```

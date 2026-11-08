@@ -47,15 +47,19 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
   queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
   llega, el foco va al título de la página; si falla, a "Reintentar".
-- Una acción que afecta a otra persona, como suspender una cuenta, se confirma dentro de la misma
-  fila o tarjeta, sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el foco
-  vuelve al botón. Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante,
+- Una acción que afecta a otra persona, como suspender una cuenta, o que no se puede deshacer, como
+  borrar un producto del menú, se confirma dentro de la misma fila o tarjeta con `app-confirm-panel`
+  (`@shared/ui`), sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el
+  foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
+  mismo panel explica por qué y solo ofrece "Entendido". Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante,
   es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras trabaja queda
   con `aria-disabled` y dice qué está haciendo. En los dos casos el resultado se anuncia en un
   `app-alert dismissible` fijo bajo el header: `tone="success"` (que usa `role="status"`) o el
   tono de error.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
+- Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
+  Bolivia: `Bs 45,00`.
 
 ## Sesión
 
@@ -99,15 +103,21 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
-- El botón principal lleva `appButton`. Mientras se envía, muestra que está trabajando y usa
-  `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()` ignora los envíos
-  repetidos.
+- El botón principal lleva `appButton`, y los secundarios, como "Cancelar", "Editar" o "Borrar",
+  `appSecondaryButton` (con `tone="danger"` para borrar). Mientras se envía, el principal muestra que
+  está trabajando y usa `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()`
+  ignora los envíos repetidos.
+- Un formulario que crea o edita un elemento de una lista se abre en el lugar, sin modal: el
+  elemento se convierte en su formulario. Hay uno solo abierto a la vez, el foco va a su primer
+  campo, Escape o "Cancelar" lo cierran, y al cerrarse el foco vuelve al botón que lo abrió.
 - Al enviar con errores, el foco va al primer campo inválido (`focusFirstInvalid`).
-- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto y los
-  `textarea` llevan `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por
+- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto, los
+  `textarea` y los `select` llevan `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por
   `aria-describedby`. Los errores que no son de un campo van en `app-alert`.
-- Los mensajes de cada regla se escriben en la página y se eligen con `validationMessage`
-  (`@shared/utils`), que prioriza el error que mandó el backend.
+- Los mensajes de cada regla se escriben en la página o en el componente del formulario y se eligen
+  con `validationMessage` (`@shared/utils`), que prioriza el error que mandó el backend.
+- Un precio se escribe en un input de texto con `inputmode="decimal"` y acepta coma o punto
+  (`45,50` o `45.50`), con hasta dos decimales.
 
 ## Estilo de código
 

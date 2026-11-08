@@ -1,0 +1,18 @@
+<div
+  class="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface px-4 py-3 shadow-lg lg:static lg:rounded-2xl lg:border lg:px-5 lg:py-4 lg:shadow-sm"
+>
+  <p class="mb-2 hidden text-sm font-semibold text-muted lg:block">Tu pedido</p>
+  <a appButton class="w-full justify-between" [routerLink]="cartPath">
+    <span class="sr-only">{{ readableLabel() }}</span>
+    <span aria-hidden="true" class="inline-flex items-center gap-2">
+      <span
+        class="grid h-7 min-w-7 place-items-center rounded-full bg-white/20 px-1.5 text-sm"
+        data-units
+      >
+        {{ units() }}
+      </span>
+      Ver carrito
+    </span>
+    <span aria-hidden="true" data-subtotal>{{ subtotalLabel() }}</span>
+  </a>
+</div>

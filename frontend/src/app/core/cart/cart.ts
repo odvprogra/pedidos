@@ -27,7 +27,8 @@ export interface Cart {
 }
 
 export function startCart(restaurant: CartRestaurant, product: CartProduct): Cart {
-  return { restaurant, items: [itemOf(product)] };
+  const { id, name, address } = restaurant;
+  return { restaurant: { id, name, address }, items: [itemOf(product)] };
 }
 
 export function addProduct(cart: Cart, product: CartProduct): Cart {

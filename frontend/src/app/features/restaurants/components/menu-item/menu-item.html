@@ -1,21 +1,83 @@
-<article
-  class="flex items-start justify-between gap-4 px-4 py-4 sm:px-5"
-  [attr.aria-labelledby]="nameId()"
->
-  <div class="min-w-0">
-    <h3 class="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold">
-      <span class="wrap-anywhere" [id]="nameId()" [class.text-muted]="!product().available">
-        {{ product().name }}
-      </span>
-      @if (!product().available) {
-        <app-badge size="sm" data-status="sold-out">Agotado</app-badge>
+<article class="px-4 py-4 sm:px-5" [attr.aria-labelledby]="nameId()">
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h3 class="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold">
+        <span class="wrap-anywhere" [id]="nameId()" [class.text-muted]="!product().available">
+          {{ product().name }}
+        </span>
+        @if (!product().available) {
+          <app-badge size="sm" data-status="sold-out">Agotado</app-badge>
+        }
+      </h3>
+      @if (product().description; as description) {
+        <p class="mt-0.5 text-sm wrap-anywhere text-muted">{{ description }}</p>
       }
-    </h3>
-    @if (product().description; as description) {
-      <p class="mt-0.5 text-sm wrap-anywhere text-muted">{{ description }}</p>
-    }
+      @if (canOrder() && quantityInCart() > 0) {
+        <p class="mt-2 flex items-center gap-1.5 text-sm font-bold text-success" data-in-cart>
+          <svg
+            aria-hidden="true"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m5 12.5 4.5 4.5L19 7.5" />
+          </svg>
+          {{ quantityInCart() }} en tu carrito
+          @if (atMaximum()) {
+            <span class="font-semibold text-muted">· máximo por pedido</span>
+          }
+        </p>
+      }
+    </div>
+    <div class="flex shrink-0 flex-col items-end gap-2">
+      <p
+        class="font-extrabold whitespace-nowrap"
+        data-price
+        [class.text-muted]="!product().available"
+      >
+        <span class="sr-only">Precio: </span>{{ price() }}
+      </p>
+      @if (canOrder()) {
+        <button
+          #addButton
+          type="button"
+          class="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand-soft px-3.5 text-sm font-bold text-brand transition hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted aria-expanded:bg-brand aria-expanded:text-white"
+          [disabled]="!addable()"
+          [attr.aria-expanded]="otherRestaurant() && addable() ? confirming() : null"
+          [attr.aria-controls]="confirming() ? idPrefix() + '-replace' : null"
+          (click)="add()"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.75"
+            stroke-linecap="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Agregar<span class="sr-only"> {{ product().name }} al carrito</span>
+        </button>
+      }
+    </div>
   </div>
-  <p class="shrink-0 font-extrabold whitespace-nowrap" [class.text-muted]="!product().available">
-    <span class="sr-only">Precio: </span>{{ price() }}
-  </p>
+
+  @if (confirming()) {
+    <app-confirm-panel
+      class="mt-4 block"
+      [panelId]="idPrefix() + '-replace'"
+      [question]="replacementQuestion()"
+      [consequence]="replacementConsequence()"
+      confirmLabel="Vaciar y agregar"
+      cancelLabel="Mantener mi carrito"
+      (confirmed)="replace()"
+      (cancelled)="closeConfirmation()"
+    />
+  }
 </article>

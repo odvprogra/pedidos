@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { SessionStore } from '@core/auth/session-store';
+import { CartStore } from '@core/cart/cart-store';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantMenuPage } from './restaurant-menu-page';
@@ -316,6 +318,110 @@ describe('RestaurantMenuPage', () => {
         catalog: '/api/v1/restaurants/7/catalog',
       });
       expect(heading()?.textContent).toContain('El Fogón');
+    });
+  });
+
+  describe('the cart', () => {
+    afterEach(() => localStorage.clear());
+
+    function addButtonOf(product: string): HTMLButtonElement {
+      const article = Array.from(page().querySelectorAll('article')).find((candidate) =>
+        candidate.querySelector('h3 > span')?.textContent?.includes(product),
+      );
+      const found = article?.querySelector<HTMLButtonElement>('article > div button');
+      if (!found) {
+        throw new Error(`${product} cannot be added`);
+      }
+      return found;
+    }
+
+    function announcement(): string {
+      return page().querySelector('[data-cart-announcement]')?.textContent?.trim() ?? '';
+    }
+
+    function summary(): HTMLAnchorElement | null {
+      return page().querySelector('app-cart-summary a');
+    }
+
+    async function add(product: string): Promise<void> {
+      addButtonOf(product).click();
+      await fixture.whenStable();
+    }
+
+    it('adds products of the restaurant and announces each one', async () => {
+      await open('4');
+      await respond();
+
+      await add('Silpancho');
+      await add('Silpancho');
+      await add('Limonada');
+
+      const cart = TestBed.inject(CartStore);
+      expect(cart.restaurant()).toEqual({ id: 4, name: 'La Casona', address: 'Calle Sucre 245' });
+      expect(cart.quantityOf(10)).toBe(2);
+      expect(cart.quantityOf(12)).toBe(1);
+      expect(text()).toContain('2 en tu carrito');
+      expect(announcement()).toBe('Agregaste Limonada al carrito. Tienes 3 productos.');
+    });
+
+    it('shows the way to the cart once it has products of this restaurant', async () => {
+      await open('4');
+      await respond();
+      expect(summary()).toBeNull();
+
+      await add('Silpancho');
+
+      expect(summary()?.getAttribute('href')).toBe('/carrito');
+      expect(summary()?.textContent?.replace(/\s+/g, ' ')).toContain('Bs 45,00');
+    });
+
+    it('does not let a sold out product be added', async () => {
+      await open('4');
+      await respond();
+
+      expect(addButtonOf('Pique macho').disabled).toBe(true);
+      expect(addButtonOf('Silpancho').disabled).toBe(false);
+    });
+
+    it('does not let anything be added while the restaurant is closed', async () => {
+      await open('4');
+      await respond({ ...LA_CASONA, open: false });
+
+      expect(addButtonOf('Silpancho').disabled).toBe(true);
+      expect(addButtonOf('Limonada').disabled).toBe(true);
+    });
+
+    it.each([
+      ['an owner', { id: 3, name: 'Luis Pérez', email: 'luis@correo.com', role: 'OWNER' }],
+      ['an admin', { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' }],
+    ] as const)('does not offer the cart to %s', async (_case, account) => {
+      TestBed.inject(SessionStore).signIn(account);
+      await open('4');
+      await respond();
+
+      expect(page().querySelectorAll('article > div button')).toHaveLength(0);
+    });
+
+    it('asks before replacing a cart of another restaurant', async () => {
+      const cart = TestBed.inject(CartStore);
+      cart.add(
+        { id: 7, name: 'El Fogón', address: 'Av. Banzer 120' },
+        { id: 20, name: 'Napolitana', price: 70 },
+      );
+      await open('4');
+      await respond();
+      expect(summary()).toBeNull();
+
+      await add('Silpancho');
+      expect(cart.restaurant()?.name).toBe('El Fogón');
+      expect(text()).toContain('¿Vaciar tu carrito de El Fogón?');
+
+      button('Vaciar y agregar').click();
+      await fixture.whenStable();
+
+      expect(cart.restaurant()?.name).toBe('La Casona');
+      expect(cart.items().map((item) => item.name)).toEqual(['Silpancho']);
+      expect(announcement()).toBe('Agregaste Silpancho al carrito. Tienes 1 producto.');
     });
   });
 });

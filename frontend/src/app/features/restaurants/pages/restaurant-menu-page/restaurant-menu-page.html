@@ -18,10 +18,17 @@
     Restaurantes
   </a>
 
+  <p class="sr-only" aria-live="polite" data-cart-announcement>{{ announcement() }}</p>
+
   @let page = state();
   @if (page.status === 'ready') {
     <div class="mt-2 grid gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
-      <app-restaurant-profile class="block lg:sticky lg:top-24" [restaurant]="page.restaurant" />
+      <div class="grid gap-4 lg:sticky lg:top-24">
+        <app-restaurant-profile [restaurant]="page.restaurant" />
+        @if (cartHere(); as cart) {
+          <app-cart-summary [units]="cart.units" [subtotal]="cart.subtotal" />
+        }
+      </div>
 
       <div class="grid gap-6 lg:col-span-2">
         @if (page.catalog.categories.length === 0) {
@@ -56,7 +63,15 @@
               <ul role="list" class="divide-y divide-line">
                 @for (product of category.products; track product.id) {
                   <li>
-                    <app-menu-item [product]="product" />
+                    <app-menu-item
+                      [product]="product"
+                      [canOrder]="canOrder()"
+                      [restaurantOpen]="page.restaurant.open"
+                      [quantityInCart]="quantityOf(product)"
+                      [otherRestaurant]="otherRestaurant()"
+                      (added)="add(page.restaurant, product)"
+                      (replaced)="replace(page.restaurant, product)"
+                    />
                   </li>
                 }
               </ul>
@@ -65,6 +80,9 @@
         }
       </div>
     </div>
+    @if (cartHere()) {
+      <div class="h-20 lg:hidden" aria-hidden="true"></div>
+    }
   } @else if (page.status === 'missing') {
     <div
       class="mt-2 grid max-w-2xl justify-items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"

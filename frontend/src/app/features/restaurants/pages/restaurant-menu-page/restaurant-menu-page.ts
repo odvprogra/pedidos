@@ -5,6 +5,7 @@ import {
   ElementRef,
   Injector,
   afterNextRender,
+  computed,
   effect,
   inject,
   input,
@@ -14,16 +15,20 @@ import {
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { SessionStore } from '@core/auth/session-store';
+import { describeUnits } from '@core/cart/cart';
+import { CartStore } from '@core/cart/cart-store';
 import { toProblemDetails } from '@core/http/problem-details';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Subscription, forkJoin } from 'rxjs';
+import { CartSummary } from '../../components/cart-summary/cart-summary';
 import { MenuItem } from '../../components/menu-item/menu-item';
 import { RestaurantProfile } from '../../components/restaurant-profile/restaurant-profile';
 import { RestaurantApi } from '../../data-access/restaurant-api';
-import { Catalog } from '../../models/catalog';
+import { Catalog, Product } from '../../models/catalog';
 import { Restaurant, parseRestaurantId } from '../../models/restaurant';
 import { isRestaurantMissing } from '../../models/restaurant-error';
 
@@ -41,6 +46,7 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
   imports: [
     RouterLink,
     Button,
+    CartSummary,
     EmptyState,
     LoadError,
     MenuItem,
@@ -52,6 +58,8 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
 })
 export class RestaurantMenuPage {
   private readonly restaurantApi = inject(RestaurantApi);
+  private readonly cart = inject(CartStore);
+  private readonly session = inject(SessionStore);
   private readonly title = inject(Title);
   private readonly injector = inject(Injector);
   private readonly profile = viewChild(RestaurantProfile);
@@ -67,6 +75,28 @@ export class RestaurantMenuPage {
 
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
+  protected readonly announcement = signal('');
+  protected readonly canOrder = computed(() => {
+    const account = this.session.account();
+    return account === null || account.role === 'CUSTOMER';
+  });
+  protected readonly otherRestaurant = computed(() => {
+    const inCart = this.cart.restaurant();
+    const shown = this.shownRestaurant();
+    return inCart && shown && inCart.id !== shown.id ? inCart.name : null;
+  });
+  protected readonly cartHere = computed(() => {
+    const shown = this.shownRestaurant();
+    if (!this.canOrder() || !shown || this.cart.restaurant()?.id !== shown.id) {
+      return null;
+    }
+    return { units: this.cart.count(), subtotal: this.cart.subtotal() };
+  });
+
+  private readonly shownRestaurant = computed(() => {
+    const state = this.state();
+    return state.status === 'ready' ? state.restaurant : null;
+  });
 
   constructor() {
     effect(() => {
@@ -78,6 +108,27 @@ export class RestaurantMenuPage {
 
   protected retry(): void {
     this.load(this.id(), true);
+  }
+
+  protected quantityOf(product: Product): number {
+    return this.cart.quantityOf(product.id);
+  }
+
+  protected add(restaurant: Restaurant, product: Product): void {
+    if (this.cart.add(restaurant, product) === 'added') {
+      this.announceAdded(product);
+    }
+  }
+
+  protected replace(restaurant: Restaurant, product: Product): void {
+    this.cart.replaceWith(restaurant, product);
+    this.announceAdded(product);
+  }
+
+  private announceAdded(product: Product): void {
+    this.announcement.set(
+      `Agregaste ${product.name} al carrito. Tienes ${describeUnits(this.cart.count())}.`,
+    );
   }
 
   private load(idText: string, moveFocus: boolean): void {

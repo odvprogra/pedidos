@@ -1,0 +1,38 @@
+<div
+  role="group"
+  class="rounded-xl p-4 sm:px-5"
+  [id]="panelId()"
+  [attr.aria-labelledby]="panelId() + '-question'"
+  [attr.aria-describedby]="panelId() + '-consequence'"
+  [class]="style().panel"
+>
+  <p class="font-bold wrap-anywhere" [id]="panelId() + '-question'">{{ question() }}</p>
+  <p class="mt-1 text-sm text-ink/80" [id]="panelId() + '-consequence'">{{ consequence() }}</p>
+  <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+    <button
+      #cancelButton
+      appSecondaryButton
+      type="button"
+      (click)="cancelled.emit()"
+      (keydown.escape)="cancelled.emit()"
+    >
+      {{ cancelLabel() }}
+    </button>
+    @if (confirmLabel(); as label) {
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-md transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-wait aria-disabled:opacity-60"
+        [class]="style().confirm"
+        [attr.aria-disabled]="busy()"
+        [attr.aria-describedby]="panelId() + '-consequence'"
+        (click)="confirm()"
+        (keydown.escape)="cancelled.emit()"
+      >
+        @if (busy()) {
+          <app-spinner />
+        }
+        {{ label }}
+      </button>
+    }
+  </div>
+</div>

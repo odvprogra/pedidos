@@ -1,0 +1,99 @@
+<form
+  class="grid gap-3"
+  aria-labelledby="product-form-title"
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  (keydown.escape)="cancelled.emit()"
+>
+  <h3 id="product-form-title" class="font-extrabold wrap-anywhere">{{ title() }}</h3>
+
+  @let nameError = errorOf('name');
+  <app-form-field label="Nombre del producto" fieldId="product-name" [error]="nameError">
+    <input
+      appTextInput
+      id="product-name"
+      formControlName="name"
+      autocomplete="off"
+      placeholder="Silpancho"
+      [attr.aria-invalid]="nameError !== null"
+    />
+  </app-form-field>
+
+  @let descriptionError = errorOf('description');
+  <app-form-field
+    label="Descripción (opcional)"
+    fieldId="product-description"
+    hint="Qué lleva o de qué tamaño es, en hasta 300 caracteres."
+    [error]="descriptionError"
+  >
+    <div class="grid gap-1">
+      <textarea
+        appTextInput
+        id="product-description"
+        rows="2"
+        class="field-sizing-content min-h-20 resize-none"
+        formControlName="description"
+        placeholder="Con arroz, papa y huevo frito."
+        [attr.aria-invalid]="descriptionError !== null"
+      ></textarea>
+      <p
+        aria-hidden="true"
+        class="text-right text-xs font-semibold"
+        [class.text-danger]="descriptionLength() > descriptionLimit"
+        [class.text-muted]="descriptionLength() <= descriptionLimit"
+      >
+        {{ descriptionLength() }}/{{ descriptionLimit }}
+      </p>
+    </div>
+  </app-form-field>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    @let priceError = errorOf('price');
+    <app-form-field
+      label="Precio (Bs)"
+      fieldId="product-price"
+      hint="Por ejemplo: 45 o 45,50."
+      [error]="priceError"
+    >
+      <input
+        appTextInput
+        id="product-price"
+        formControlName="price"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="45,00"
+        [attr.aria-invalid]="priceError !== null"
+      />
+    </app-form-field>
+
+    @let categoryError = errorOf('categoryId');
+    <app-form-field label="Categoría" fieldId="product-category" [error]="categoryError">
+      <select
+        appTextInput
+        id="product-category"
+        formControlName="categoryId"
+        [attr.aria-invalid]="categoryError !== null"
+      >
+        @for (category of categories(); track category.id) {
+          <option [ngValue]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </app-form-field>
+  </div>
+
+  @if (alert(); as message) {
+    <app-alert class="block">{{ message }}</app-alert>
+  }
+
+  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+    <button appSecondaryButton type="button" (click)="cancelled.emit()">Cancelar</button>
+    <button appButton type="submit" [attr.aria-disabled]="saving()">
+      @if (saving()) {
+        <app-spinner />
+        Guardando…
+      } @else {
+        Guardar producto
+      }
+    </button>
+  </div>
+</form>

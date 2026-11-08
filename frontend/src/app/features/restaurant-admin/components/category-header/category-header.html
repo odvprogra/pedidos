@@ -1,0 +1,60 @@
+<div class="grid gap-3 border-b border-line bg-canvas px-4 py-3 sm:px-5">
+  <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <h2 class="min-w-0 text-lg font-extrabold wrap-anywhere" [id]="idPrefix() + '-name'">
+      {{ category().name }}
+      <span class="text-sm font-semibold text-muted">· {{ countLabel() }}</span>
+    </h2>
+    <div class="flex gap-2">
+      <button
+        appSecondaryButton
+        type="button"
+        [id]="'rename-category-' + category().id"
+        [attr.aria-disabled]="unavailable()"
+        (click)="requestRename()"
+      >
+        Renombrar
+        <span class="sr-only">{{ category().name }}</span>
+      </button>
+      <button
+        #deleteButton
+        appSecondaryButton
+        tone="danger"
+        type="button"
+        [id]="'delete-category-' + category().id"
+        [attr.aria-disabled]="unavailable()"
+        [attr.aria-expanded]="confirming()"
+        [attr.aria-controls]="confirming() ? idPrefix() + '-confirm' : null"
+        (click)="toggleConfirmation()"
+      >
+        @if (deleting()) {
+          <app-spinner />
+          Borrando…
+        } @else {
+          Borrar
+          <span class="sr-only">{{ category().name }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (confirming()) {
+    @if (empty()) {
+      <app-confirm-panel
+        [panelId]="idPrefix() + '-confirm'"
+        [question]="'¿Borrar la categoría ' + category().name + '?'"
+        consequence="Desaparece de tu menú. Puedes volver a crearla cuando quieras."
+        confirmLabel="Sí, borrar"
+        (confirmed)="confirmDeletion()"
+        (cancelled)="closeConfirmation()"
+      />
+    } @else {
+      <app-confirm-panel
+        [panelId]="idPrefix() + '-confirm'"
+        [question]="'Todavía no puedes borrar ' + category().name"
+        [consequence]="notEmptyConsequence()"
+        cancelLabel="Entendido"
+        (cancelled)="closeConfirmation()"
+      />
+    }
+  }
+</div>

@@ -1,0 +1,260 @@
+<section class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+  <a
+    routerLink=".."
+    class="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+    Mi restaurante
+  </a>
+
+  <header class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Panel del restaurante</p>
+      <h1
+        #heading
+        tabindex="-1"
+        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+      >
+        Tu menú
+      </h1>
+      <p class="mt-2 text-muted">
+        Ordena tus productos en categorías, como los verán tus clientes.
+      </p>
+    </div>
+    @let current = catalog();
+    @if (current && current.categories.length > 0 && !isAddingCategory()) {
+      <button
+        appButton
+        id="new-category"
+        type="button"
+        class="self-start sm:self-auto"
+        [attr.aria-disabled]="busy()"
+        (click)="startNewCategory()"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nueva categoría
+      </button>
+    }
+  </header>
+
+  @if (notice(); as shown) {
+    <div class="sticky top-20 z-5 mt-6">
+      <app-alert
+        class="block rounded-xl shadow-md"
+        dismissible
+        [tone]="shown.tone"
+        (dismissed)="notice.set(null)"
+      >
+        {{ shown.message }}
+      </app-alert>
+    </div>
+  }
+
+  @let page = state();
+  @if (page.status === 'ready') {
+    @if (isAddingCategory()) {
+      <div class="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5">
+        <app-category-form
+          heading="Nueva categoría"
+          submitLabel="Crear categoría"
+          [saving]="saving()"
+          [errors]="formErrors()"
+          [alert]="formAlert()"
+          (save)="saveCategory($event)"
+          (cancelled)="closeForm()"
+        />
+      </div>
+    } @else if (page.catalog.categories.length === 0) {
+      <div
+        class="mt-6 grid justify-items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center"
+      >
+        <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
+          <svg
+            aria-hidden="true"
+            class="size-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 5h16M4 12h16M4 19h10" />
+          </svg>
+        </span>
+        <h2 class="text-lg font-extrabold">Tu menú está vacío</h2>
+        <p class="max-w-md text-muted">
+          Empieza con una categoría, como «Platos fuertes» o «Bebidas». Después agrégale sus
+          productos con su precio.
+        </p>
+        <button appButton id="new-category" type="button" class="mt-2" (click)="startNewCategory()">
+          Crear la primera categoría
+        </button>
+      </div>
+    }
+
+    @for (category of page.catalog.categories; track category.id) {
+      <section
+        class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+        [attr.aria-labelledby]="'category-' + category.id + '-name'"
+      >
+        @if (isRenaming(category)) {
+          <div class="border-b border-line bg-canvas p-4 sm:p-5">
+            <app-category-form
+              [heading]="'Renombrar ' + category.name"
+              [initialName]="category.name"
+              submitLabel="Guardar nombre"
+              [saving]="saving()"
+              [errors]="formErrors()"
+              [alert]="formAlert()"
+              (save)="saveCategory($event)"
+              (cancelled)="closeForm()"
+            />
+          </div>
+        } @else {
+          <app-category-header
+            [category]="category"
+            [productCount]="category.products.length"
+            [deleting]="isDeleting(category)"
+            [locked]="busy() && !isDeleting(category)"
+            (rename)="startRename(category)"
+            (deleteConfirmed)="deleteCategory(category)"
+          />
+        }
+
+        <ul class="divide-y divide-line">
+          @for (product of category.products; track product.id) {
+            <li>
+              @if (isEditing(product)) {
+                <div class="bg-canvas p-4 sm:p-5">
+                  <app-product-form
+                    [categories]="categories()"
+                    [product]="product"
+                    [saving]="saving()"
+                    [errors]="formErrors()"
+                    [alert]="formAlert()"
+                    (save)="saveProduct($event)"
+                    (cancelled)="closeForm()"
+                  />
+                </div>
+              } @else {
+                <app-product-row
+                  [product]="product"
+                  [working]="taskOf(product)"
+                  [locked]="busy() && taskOf(product) === null"
+                  (availabilityChange)="changeAvailability(product, $event)"
+                  (edit)="startEdit(product)"
+                  (deleteConfirmed)="deleteProduct(product)"
+                />
+              }
+            </li>
+          } @empty {
+            <li class="px-4 py-5 text-sm text-muted sm:px-5">
+              Todavía no tiene productos. Agrega el primero para que tus clientes puedan pedirlo.
+            </li>
+          }
+        </ul>
+
+        <div class="border-t border-line px-4 py-2 sm:px-5">
+          @if (isAddingProductTo(category)) {
+            <div class="py-2">
+              <app-product-form
+                [categories]="categories()"
+                [categoryId]="category.id"
+                [saving]="saving()"
+                [errors]="formErrors()"
+                [alert]="formAlert()"
+                (save)="saveProduct($event)"
+                (cancelled)="closeForm()"
+              />
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="-ml-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-bold text-brand transition hover:bg-brand-soft hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+              [id]="'add-product-' + category.id"
+              [attr.aria-disabled]="busy()"
+              (click)="startNewProduct(category)"
+            >
+              <svg
+                aria-hidden="true"
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar producto
+              <span class="sr-only">a {{ category.name }}</span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+  } @else if (page.status === 'failed') {
+    <app-load-error
+      class="mt-6 block"
+      heading="No pudimos cargar tu menú"
+      [message]="page.message"
+      (retry)="retry()"
+    />
+  } @else {
+    <div class="mt-6 grid gap-6" role="status">
+      <span class="sr-only">Cargando tu menú…</span>
+      @for (placeholder of placeholders; track placeholder) {
+        <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+          <div
+            class="flex items-center justify-between gap-4 border-b border-line bg-canvas px-4 py-4 sm:px-5"
+          >
+            <div class="h-5 w-40 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+            <div
+              class="h-11 w-44 animate-pulse rounded-xl bg-line motion-reduce:animate-none"
+            ></div>
+          </div>
+          @for (row of placeholders; track row) {
+            <div class="grid gap-2 border-b border-line px-4 py-4 last:border-b-0 sm:px-5">
+              <div class="flex justify-between gap-4">
+                <div
+                  class="h-4 w-36 animate-pulse rounded bg-line motion-reduce:animate-none"
+                ></div>
+                <div
+                  class="h-4 w-16 animate-pulse rounded bg-line motion-reduce:animate-none"
+                ></div>
+              </div>
+              <div
+                class="h-3.5 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+              ></div>
+              <div
+                class="mt-2 h-7 w-32 animate-pulse rounded-full bg-line motion-reduce:animate-none"
+              ></div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

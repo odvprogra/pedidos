@@ -1,0 +1,81 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { SecondaryButton } from '@shared/ui/button/secondary-button';
+import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
+import { Spinner } from '@shared/ui/spinner/spinner';
+import { formatPrice } from '@shared/utils/format-price';
+import { Product } from '../../models/catalog';
+
+export type ProductTask = 'availability' | 'deletion';
+
+@Component({
+  selector: 'app-product-row',
+  imports: [ConfirmPanel, SecondaryButton, Spinner],
+  templateUrl: './product-row.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProductRow {
+  private readonly injector = inject(Injector);
+  private readonly deleteButton = viewChild<ElementRef<HTMLButtonElement>>('deleteButton');
+
+  readonly product = input.required<Product>();
+  readonly working = input<ProductTask | null>(null);
+  readonly locked = input(false);
+  readonly availabilityChange = output<boolean>();
+  readonly edit = output();
+  readonly deleteConfirmed = output();
+
+  protected readonly confirming = signal(false);
+  protected readonly unavailable = computed(() => this.working() !== null || this.locked());
+  protected readonly price = computed(() => formatPrice(this.product().price));
+  protected readonly idPrefix = computed(() => `product-${this.product().id}`);
+
+  protected toggleAvailability(): void {
+    if (!this.unavailable()) {
+      this.availabilityChange.emit(!this.product().available);
+    }
+  }
+
+  protected requestEdit(): void {
+    if (!this.unavailable()) {
+      this.edit.emit();
+    }
+  }
+
+  protected toggleConfirmation(): void {
+    if (this.confirming()) {
+      this.closeConfirmation();
+    } else if (!this.unavailable()) {
+      this.confirming.set(true);
+    }
+  }
+
+  protected closeConfirmation(): void {
+    this.confirming.set(false);
+    this.focusDeleteButton();
+  }
+
+  protected confirmDeletion(): void {
+    if (this.unavailable()) {
+      return;
+    }
+    this.confirming.set(false);
+    this.deleteConfirmed.emit();
+    this.focusDeleteButton();
+  }
+
+  private focusDeleteButton(): void {
+    afterNextRender(() => this.deleteButton()?.nativeElement.focus(), { injector: this.injector });
+  }
+}

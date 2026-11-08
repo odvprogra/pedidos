@@ -162,7 +162,8 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 { "items": [], "page": 0, "size": 20, "totalItems": 0, "totalPages": 0 }
 ```
 
-- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es 20. Fuera de esos límites, o con un valor que no es número, responde `400` con
+- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto
+  es 20. Fuera de esos límites, o con un valor que no es número, responde `400` con
   `validation_failed` y el parámetro en `errors[].field`. El valor no se recorta en silencio.
 - Una página después de la última responde `200` con `items` vacío y los totales reales, no `404`.
 - Cada lista paginada documenta su orden, y el orden es estable: dos pedidos iguales devuelven lo

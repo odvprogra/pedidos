@@ -24,14 +24,14 @@
 Todas las respuestas de error usan Problem Details ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457))
 con un campo `code` estable que el frontend puede usar para decidir qué mostrar.
 
-| Estado | Cuándo                                                                           | `code`                                            |
-| ------ | -------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                               |
-| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials` |
-| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`   |
-| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found`                              |
-| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                    |
-| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                    |
+| Estado | Cuándo                                                                           | `code`                                                |
+| ------ | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                                   |
+| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials`     |
+| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`       |
+| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found` o `<modulo>.<recurso>_not_found` |
+| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                        |
+| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                        |
 
 ```json
 {
@@ -208,6 +208,9 @@ sale siempre de la sesión.
   `catalog.category_not_empty`. Primero se mueven o se borran sus productos.
 - Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción y el
   precio, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
+- El `Location` de una categoría o un producto creado (`/mine/categories/{id}`,
+  `/mine/products/{id}`) es la ruta donde se edita y se borra; no tiene `GET`, porque el menú se lee
+  entero en `/mine/catalog`.
 - Un id que no existe responde `404` con `catalog.category_not_found` o `catalog.product_not_found`.
   Una categoría o un producto de otro restaurante, también el `categoryId` del body, responde `403`
   con `catalog.not_owner`.

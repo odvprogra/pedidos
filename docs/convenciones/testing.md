@@ -13,6 +13,7 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | `infrastructure.security`    | Unitario     | JUnit + AssertJ                                  | Sin Spring, con la librería real (BCrypt)              |
 | Sesiones en `shared`         | Integración  | `@JdbcTest` + Testcontainers                     | Spring Session JDBC real sobre el esquema de Flyway    |
 | `infrastructure.startup`     | Unitario     | JUnit + mock del caso de uso                     | Qué hace con cada configuración, sin Spring            |
+| Adaptador a otro módulo      | Unitario     | JUnit + mock del caso de uso del otro módulo     | Qué devuelve y qué error deja pasar, sin Spring        |
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
 

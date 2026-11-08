@@ -51,11 +51,17 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   borrar un producto del menú, se confirma dentro de la misma fila o tarjeta con `app-confirm-panel`
   (`@shared/ui`), sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
-  mismo panel explica por qué y solo ofrece "Entendido". Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante,
-  es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras trabaja queda
-  con `aria-disabled` y dice qué está haciendo. En los dos casos el resultado se anuncia en un
-  `app-alert dismissible` fijo bajo el header: `tone="success"` (que usa `role="status"`) o el
-  tono de error.
+  mismo panel lo explica en tono de aviso y solo ofrece "Entendido".
+- Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante o agotar un
+  producto, es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras
+  trabaja queda con `aria-disabled` y dice qué está haciendo.
+- El resultado de una acción se anuncia en un `app-alert dismissible` fijo bajo el header, con
+  `data-sticky-notice`: `tone="success"` (que usa `role="status"`) o el tono de error. Ese atributo
+  agranda el margen de scroll de la página para que el aviso no tape el elemento con el foco. Cada
+  aviso es un nodo nuevo, con su id, así un mismo mensaje repetido se vuelve a anunciar.
+- Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
+  un error propio si falla: queda su texto neutro y la página sigue usable.
+- Una página que se abre desde otra de la app lleva el foco a su título cuando termina de cargar.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
@@ -104,16 +110,17 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
 - El botón principal lleva `appButton`, y los secundarios, como "Cancelar", "Editar" o "Borrar",
-  `appSecondaryButton` (con `tone="danger"` para borrar). Mientras se envía, el principal muestra que
-  está trabajando y usa `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()`
-  ignora los envíos repetidos.
+  `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el principal muestra que
+  está trabajando y usa `aria-disabled` en lugar de `disabled`, para no perder el foco; "Cancelar"
+  también queda con `aria-disabled`, y `submit()` ignora los envíos repetidos. En el celular los
+  botones van uno debajo del otro, en el mismo orden que el Tab.
 - Un formulario que crea o edita un elemento de una lista se abre en el lugar, sin modal: el
   elemento se convierte en su formulario. Hay uno solo abierto a la vez, el foco va a su primer
   campo, Escape o "Cancelar" lo cierran, y al cerrarse el foco vuelve al botón que lo abrió.
 - Al enviar con errores, el foco va al primer campo inválido (`focusFirstInvalid`).
 - Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto, los
-  `textarea` y los `select` llevan `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por
-  `aria-describedby`. Los errores que no son de un campo van en `app-alert`.
+  `textarea` y los `select` llevan `appTextInput`, que toma el `id` del campo y lo enlaza con su
+  mensaje por `aria-describedby`. Los errores que no son de un campo van en `app-alert`.
 - Los mensajes de cada regla se escriben en la página o en el componente del formulario y se eligen
   con `validationMessage` (`@shared/utils`), que prioriza el error que mandó el backend.
 - Un precio se escribe en un input de texto con `inputmode="decimal"` y acepta coma o punto

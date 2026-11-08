@@ -5,8 +5,8 @@ decisión y sus alternativas están en [ADR-0009](adr/0009-modelo-de-datos-y-mig
 cómo se escriben las migraciones, en [backend.md](convenciones/backend.md#migraciones).
 
 Cada tabla entra con la migración de la feature que la usa. Ya existen las de `identity`
-(`V1__create_accounts.sql`) y la de `restaurant` (`V2__create_restaurants.sql`); las demás todavía
-no.
+(`V1__create_accounts.sql`), la de `restaurant` (`V2__create_restaurants.sql`) y las de `catalog`
+(`V3__create_catalog.sql`); las de `order` todavía no.
 
 ## Vista general
 
@@ -99,6 +99,10 @@ suspendido o no, que decide el admin.
   abrir. Mientras está suspendido, el dueño no lo puede abrir: `409` con `restaurant.suspended`.
 - Suspender la cuenta de un dueño no cambia su restaurante. Si el admin quiere sacar el local,
   también lo suspende.
+- Un restaurante se puede abrir sin productos. Exigirlos haría que `restaurant` dependiera de
+  `catalog`, que ya depende de `restaurant`, y armaría un ciclo. Además, un menú vacío no rompe
+  nada: un pedido sin productos se rechaza con `order.empty`. El panel del dueño muestra que el
+  menú está vacío para que lo complete antes de abrir.
 
 ## `catalog`
 
@@ -110,8 +114,9 @@ suspendido o no, que decide el admin.
 | `restaurant_id` | `bigint`      | no   | Id de `restaurants`                             |
 | `name`          | `varchar(60)` | no   | Único por restaurante sin distinguir mayúsculas |
 
-`categories_restaurant_id_name_key` es un índice único sobre `(restaurant_id, lower(name))`. El menú
-muestra las categorías en el orden en que se crearon.
+`categories_restaurant_id_name_key` es un índice único sobre `(restaurant_id, lower(name))`. Como
+empieza por `restaurant_id`, esa columna no lleva un índice aparte. El menú muestra las categorías
+en el orden en que se crearon.
 
 ### `products`
 
@@ -126,6 +131,9 @@ muestra las categorías en el orden en que se crearon.
 | `available`     | `boolean`       | no   | `true` por defecto                                   |
 
 - Un producto pertenece a una categoría de su mismo restaurante; el caso de uso lo verifica.
+- Dentro de su categoría, los productos se muestran en el orden en que se crearon.
+- Los nombres se guardan sin espacios a los costados, y una descripción vacía queda en `null`.
+- El dueño edita el menú con el restaurante abierto, cerrado o suspendido.
 - Una categoría con productos no se puede borrar: responde `409` con `catalog.category_not_empty`,
   y la clave foránea lo respalda en la base.
 - Un producto se puede borrar. Los pedidos que ya lo incluían no cambian, porque guardan su copia.

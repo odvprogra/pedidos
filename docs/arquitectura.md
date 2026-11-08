@@ -36,6 +36,7 @@ com.nur.pedidos
 │       ├── persistence/    @Entity, repositorios Spring Data y adaptadores de los puertos
 │       ├── security/       El hash de contraseñas y el adaptador de sesiones, que delega en shared
 │       ├── startup/        Lo que corre al arrancar la aplicación (el primer admin)
+│       ├── <otro-modulo>/  Adaptadores de los puertos hacia otro módulo (catalog/infrastructure/restaurant)
 │       └── web/            Controllers, requests y responses
 └── shared/
     ├── domain/exception/   DomainException y sus subclases por estado HTTP (404, 409, 403, 401)
@@ -88,6 +89,14 @@ Un módulo no toca la base de datos ni las clases de infraestructura de otro. Si
 datos de `catalog`, define un puerto propio (`order/domain/port/ProductCatalog`) y un adaptador en
 `order/infrastructure` que llama a los casos de uso de `catalog`. Así cada módulo puede cambiar por
 dentro sin romper a los demás.
+
+El primer caso es `catalog`, que necesita el restaurante del dueño. Su puerto
+`RestaurantDirectory.restaurantIdOf(ownerId)` lo implementa `RestaurantDirectoryAdapter`, en
+`catalog/infrastructure/restaurant`, llamando a `GetOwnRestaurantUseCase`. Si el dueño no tiene
+restaurante, el adaptador deja pasar `RestaurantNotFoundException` en lugar de convertirla en un
+`Optional` vacío: una excepción que sale de un caso de uso transaccional ya marcó la transacción
+para rollback, así que atraparla y seguir terminaría en `UnexpectedRollbackException`. Por eso los
+endpoints del menú responden el mismo `404` con `restaurant.not_found` que `/mine`.
 
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en

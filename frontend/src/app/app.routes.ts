@@ -3,8 +3,14 @@ import { roleGuard } from '@core/auth/auth-guards';
 import { ADMIN_SEGMENT, MY_RESTAURANT_SEGMENT } from '@core/auth/auth-paths';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'restaurantes' },
   {
-    path: '',
+    path: 'restaurantes',
+    loadChildren: () =>
+      import('@features/restaurants/restaurants.routes').then((m) => m.RESTAURANTS_ROUTES),
+  },
+  {
+    path: 'estado',
     loadChildren: () => import('@features/home/home.routes').then((m) => m.HOME_ROUTES),
   },
   {

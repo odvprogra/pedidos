@@ -16,6 +16,8 @@ const ACCOUNTS_URL = '/api/v1/accounts?page=0&size=20';
 const MY_RESTAURANT_URL = '/api/v1/restaurants/mine';
 const MY_MENU_URL = '/api/v1/restaurants/mine/catalog';
 const EMPTY_MENU = { categories: [] };
+const RESTAURANTS_URL = '/api/v1/restaurants?page=0&size=12';
+const NO_RESTAURANTS = { items: [], page: 0, size: 12, totalItems: 0, totalPages: 0 };
 const LA_CASONA = {
   id: 4,
   name: 'La Casona',
@@ -90,9 +92,9 @@ describe('appConfig', () => {
       await startWith(ANA);
 
       await RouterTestingHarness.create('/admin');
-      httpTesting.expectOne('/api/health').flush({});
+      httpTesting.expectOne(RESTAURANTS_URL).flush(NO_RESTAURANTS);
 
-      expect(TestBed.inject(Router).url).toBe('/');
+      expect(TestBed.inject(Router).url).toBe('/restaurantes');
       httpTesting.expectNone(ACCOUNTS_URL);
     });
 
@@ -140,9 +142,9 @@ describe('appConfig', () => {
       await startWith(ANA);
 
       await RouterTestingHarness.create('/mi-restaurante');
-      httpTesting.expectOne('/api/health').flush({});
+      httpTesting.expectOne(RESTAURANTS_URL).flush(NO_RESTAURANTS);
 
-      expect(TestBed.inject(Router).url).toBe('/');
+      expect(TestBed.inject(Router).url).toBe('/restaurantes');
       httpTesting.expectNone(MY_RESTAURANT_URL);
     });
 
@@ -206,11 +208,48 @@ describe('appConfig', () => {
       await startWith(ANA);
 
       await RouterTestingHarness.create('/mi-restaurante/menu');
-      httpTesting.expectOne('/api/health').flush({});
+      httpTesting.expectOne(RESTAURANTS_URL).flush(NO_RESTAURANTS);
 
-      expect(TestBed.inject(Router).url).toBe('/');
+      expect(TestBed.inject(Router).url).toBe('/restaurantes');
       httpTesting.expectNone(MY_MENU_URL);
     });
+  });
+
+  describe('the restaurants', () => {
+    it('opens the restaurants as the home page of a visitor', async () => {
+      await startWith(null);
+
+      const harness = await RouterTestingHarness.create('/');
+      httpTesting.expectOne(RESTAURANTS_URL).flush({
+        ...NO_RESTAURANTS,
+        items: [{ ...LA_CASONA, open: true }],
+        totalItems: 1,
+        totalPages: 1,
+      });
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/restaurantes');
+      expect(harness.routeNativeElement?.textContent).toContain('La Casona');
+    });
+
+    it('opens the restaurants as the home page of a customer', async () => {
+      await startWith(ANA);
+
+      await RouterTestingHarness.create('/');
+      httpTesting.expectOne(RESTAURANTS_URL).flush(NO_RESTAURANTS);
+
+      expect(TestBed.inject(Router).url).toBe('/restaurantes');
+    });
+  });
+
+  it('keeps the status of the system at its own page', async () => {
+    await startWith(null);
+
+    const harness = await RouterTestingHarness.create('/estado');
+    httpTesting.expectOne('/api/health').flush({});
+    await harness.fixture.whenStable();
+
+    expect(harness.routeNativeElement?.textContent).toContain('Estado del proyecto');
   });
 
   it('serves the log in and registration pages', async () => {

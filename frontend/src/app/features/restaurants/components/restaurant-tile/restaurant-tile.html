@@ -1,0 +1,81 @@
+<a
+  class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+  [routerLink]="[restaurant().id]"
+  [attr.aria-labelledby]="labelledBy()"
+  [attr.aria-describedby]="describedBy()"
+>
+  <div
+    class="relative h-20 overflow-hidden"
+    data-band
+    [class]="restaurant().open ? 'bg-brand' : 'bg-muted'"
+  >
+    <svg
+      aria-hidden="true"
+      class="absolute -top-3 right-4 size-28 text-white/15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+    </svg>
+  </div>
+
+  <div class="flex flex-1 flex-col px-4 pb-5">
+    <div class="-mt-7 flex items-end justify-between gap-3">
+      <span
+        aria-hidden="true"
+        class="relative grid size-14 shrink-0 place-items-center rounded-xl border-4 border-surface bg-accent text-2xl font-extrabold text-ink shadow-md"
+      >
+        {{ initial() }}
+      </span>
+      <app-badge
+        data-status
+        [attr.id]="idPrefix() + '-status'"
+        [tone]="restaurant().open ? 'success' : 'neutral'"
+      >
+        {{ statusLabel() }}
+      </app-badge>
+    </div>
+
+    <h2
+      class="mt-3 text-lg font-extrabold wrap-anywhere transition group-hover:text-brand motion-reduce:transition-none"
+      [id]="idPrefix() + '-name'"
+    >
+      {{ restaurant().name }}
+    </h2>
+    @if (restaurant().description; as description) {
+      <p
+        class="mt-1 line-clamp-2 text-sm wrap-anywhere text-muted"
+        [id]="idPrefix() + '-description'"
+      >
+        {{ description }}
+      </p>
+    }
+    <p
+      class="mt-auto flex items-start gap-1.5 pt-4 text-sm font-semibold"
+      [id]="idPrefix() + '-address'"
+    >
+      <svg
+        aria-hidden="true"
+        class="mt-px size-4 shrink-0 text-brand"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+        <circle cx="12" cy="9.5" r="2.5" />
+      </svg>
+      <span class="wrap-anywhere">
+        <span class="sr-only">Dirección: </span>{{ restaurant().address }}
+      </span>
+    </p>
+  </div>
+</a>

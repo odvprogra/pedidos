@@ -177,6 +177,9 @@ src/app/
   falla por cualquier motivo, la app arranca sin sesión.
 - Cada rol tiene su inicio, que da `homeFor(role)`: `/` para el cliente, `/mi-restaurante` para el
   dueño y `/admin` para el admin. El header le da al dueño y al admin un enlace a su inicio.
+- La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
+  sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
+  quedó en `/estado`, sin enlace en la interfaz.
 - `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol. Sin sesión llevan a
   `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva al inicio de ese rol. `guestGuard`
   saca de `/ingresar` y `/registro` a quien ya tiene sesión y lo lleva a su inicio.

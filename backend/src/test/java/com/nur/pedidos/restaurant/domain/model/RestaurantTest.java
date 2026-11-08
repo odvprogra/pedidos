@@ -122,6 +122,12 @@ class RestaurantTest {
         assertThat(restaurant(open, suspended).isVisible()).isEqualTo(visible);
     }
 
+    @ParameterizedTest
+    @CsvSource({"true, false, true", "false, false, false", "false, true, false", "true, true, false"})
+    void acceptsOrdersOnlyWhileItIsOpenAndNotSuspended(boolean open, boolean suspended, boolean acceptsOrders) {
+        assertThat(restaurant(open, suspended).acceptsOrders()).isEqualTo(acceptsOrders);
+    }
+
     private static Restaurant restaurant(boolean open, boolean suspended) {
         return new Restaurant(1L, 7L, "La Casona", null, "Calle Sucre 245", open, suspended, NOW);
     }

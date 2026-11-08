@@ -62,6 +62,10 @@ public class Restaurant {
         return !suspended;
     }
 
+    public boolean acceptsOrders() {
+        return open && !suspended;
+    }
+
     private static String stripToNull(String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }

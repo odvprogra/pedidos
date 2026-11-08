@@ -4,8 +4,9 @@ Las tablas de cada módulo, sus restricciones y las reglas de negocio que depend
 decisión y sus alternativas están en [ADR-0009](adr/0009-modelo-de-datos-y-migraciones-con-flyway.md);
 cómo se escriben las migraciones, en [backend.md](convenciones/backend.md#migraciones).
 
-Cada tabla entra con la migración de la feature que la usa. Las de `identity` ya existen
-(`V1__create_accounts.sql`); las demás todavía no.
+Cada tabla entra con la migración de la feature que la usa. Ya existen las de `identity`
+(`V1__create_accounts.sql`) y la de `restaurant` (`V2__create_restaurants.sql`); las demás todavía
+no.
 
 ## Vista general
 
@@ -91,10 +92,11 @@ suspendido o no, que decide el admin.
 | Suspendido | Oculto: responde `404`  | No             | El dueño los puede terminar |
 
 - El dueño registra su restaurante una sola vez. Un segundo registro responde `409` con
-  `restaurant.already_registered`, y `unique (owner_id)` lo respalda en la base.
+  `restaurant.already_registered`, y `unique (owner_id)` lo respalda en la base. Ese único
+  (`restaurants_owner_id_key`) ya indexa `owner_id`, así que no lleva un índice aparte.
 - Un restaurante nuevo empieza cerrado: el dueño carga el menú y después lo abre.
 - Suspender un restaurante también lo cierra. Al reactivarlo vuelve cerrado y el dueño decide cuándo
-  abrir.
+  abrir. Mientras está suspendido, el dueño no lo puede abrir: `409` con `restaurant.suspended`.
 - Suspender la cuenta de un dueño no cambia su restaurante. Si el admin quiere sacar el local,
   también lo suspende.
 

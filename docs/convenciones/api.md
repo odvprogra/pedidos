@@ -118,6 +118,42 @@ crea el backend al arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la config
 - Las dos acciones son idempotentes: suspender una cuenta suspendida o reactivar una activa responde
   `204` y deja la cuenta como estaba.
 
+## Restaurante del dueño
+
+Cada dueño registra un solo restaurante y lo maneja desde `/mine`. El restaurante sale siempre de la
+sesión, así que un dueño nunca ve ni cambia el de otro.
+
+| Operación        | Ruta                                  | Acceso | Respuesta                                                 |
+| ---------------- | ------------------------------------- | ------ | --------------------------------------------------------- |
+| Registrar        | `POST /api/v1/restaurants`            | Dueño  | `201` + `Location: /api/v1/restaurants/mine` + el recurso |
+| Ver el propio    | `GET /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
+| Abrir el propio  | `POST /api/v1/restaurants/mine/open`  | Dueño  | `204`                                                     |
+| Cerrar el propio | `POST /api/v1/restaurants/mine/close` | Dueño  | `204`                                                     |
+
+```json
+{
+  "id": 4,
+  "name": "La Casona",
+  "description": "Comida criolla",
+  "address": "Calle Sucre 245",
+  "open": false,
+  "suspended": false
+}
+```
+
+- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300) y `address`
+  (hasta 200). Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
+  `validation_failed` y el campo en `errors[].field`. Los tres se guardan sin espacios a los
+  costados, y una descripción vacía queda en `null`.
+- Un restaurante nuevo empieza cerrado y sin suspender. Un segundo registro del mismo dueño responde
+  `409` con `restaurant.already_registered`.
+- Si el dueño todavía no registró su restaurante, `GET`, `open` y `close` responden `404` con
+  `restaurant.not_found`. El frontend usa ese código para mostrar el formulario de registro.
+- Abrir y cerrar son idempotentes: abrir uno abierto o cerrar uno cerrado responde `204` y lo deja
+  como estaba.
+- Un restaurante suspendido no se abre: `409` con `restaurant.suspended`. Cerrarlo sí responde
+  `204`. El dueño lo sigue viendo en `/mine`, con `suspended: true`.
+
 ## Paginación
 
 Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
@@ -126,8 +162,7 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 { "items": [], "page": 0, "size": 20, "totalItems": 0, "totalPages": 0 }
 ```
 
-- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es
-  20. Fuera de esos límites, o con un valor que no es número, responde `400` con
+- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es 20. Fuera de esos límites, o con un valor que no es número, responde `400` con
   `validation_failed` y el parámetro en `errors[].field`. El valor no se recorta en silencio.
 - Una página después de la última responde `200` con `items` vacío y los totales reales, no `404`.
 - Cada lista paginada documenta su orden, y el orden es estable: dos pedidos iguales devuelven lo

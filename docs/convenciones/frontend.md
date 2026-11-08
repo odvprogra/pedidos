@@ -39,7 +39,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Todas las URLs usan `environment.apiUrl`.
 - Toda vista con datos cubre cuatro estados: cargando, vacío, error y éxito. El error de carga es
   `app-load-error` (`@shared/ui`): recibe el título y el mensaje, emite `retry` al tocar
-  "Reintentar", y la página le lleva el foco con su método `focus()`.
+  "Reintentar", y la página le lleva el foco con su método `focus()`. El vacío es `app-empty-state`
+  (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo `emptyStateIcon` y la
+  acción, si la hay, como contenido.
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
@@ -115,10 +117,10 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Validación al salir del campo y mensajes en español debajo de cada campo.
 - El botón principal lleva `appButton`, también un enlace que es la acción principal (como "Ver
   restaurantes" cuando un restaurante no existe). Los secundarios, como "Cancelar", "Editar" o
-  "Borrar", llevan `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el principal muestra que
-  está trabajando y usa `aria-disabled` en lugar de `disabled`, para no perder el foco; "Cancelar"
-  también queda con `aria-disabled`, y `submit()` ignora los envíos repetidos. En el celular los
-  botones van uno debajo del otro, en el mismo orden que el Tab.
+  "Borrar", llevan `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el
+  principal muestra que está trabajando y usa `aria-disabled` en lugar de `disabled`, para no
+  perder el foco; "Cancelar" también queda con `aria-disabled`, y `submit()` ignora los envíos
+  repetidos. En el celular los botones van uno debajo del otro, en el mismo orden que el Tab.
 - Un formulario que crea o edita un elemento de una lista se abre en el lugar, sin modal: el
   elemento se convierte en su formulario. Hay uno solo abierto a la vez, el foco va a su primer
   campo, Escape o "Cancelar" lo cierran, y al cerrarse el foco vuelve al botón que lo abrió.

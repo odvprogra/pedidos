@@ -1,3 +1,5 @@
+import { BadgeTone } from '@shared/ui/badge/badge';
+
 export interface Restaurant {
   id: number;
   name: string;
@@ -14,6 +16,10 @@ export function parseRestaurantId(text: string): number | null {
 
 export function openingLabel(open: boolean): string {
   return open ? 'Abierto' : 'Cerrado';
+}
+
+export function openingTone(open: boolean): BadgeTone {
+  return open ? 'success' : 'neutral';
 }
 
 export function countRestaurants(total: number): string {

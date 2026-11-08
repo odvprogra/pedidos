@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { Badge } from '@shared/ui/badge/badge';
-import { Restaurant, openingLabel } from '../../models/restaurant';
+import { Restaurant, openingLabel, openingTone } from '../../models/restaurant';
 
 @Component({
   selector: 'app-restaurant-profile',
@@ -24,6 +24,7 @@ export class RestaurantProfile {
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
   protected readonly statusLabel = computed(() => openingLabel(this.restaurant().open));
+  protected readonly tone = computed(() => openingTone(this.restaurant().open));
 
   focus(): void {
     this.name().nativeElement.focus();

@@ -1,4 +1,4 @@
-import { countRestaurants, openingLabel, parseRestaurantId } from './restaurant';
+import { countRestaurants, openingLabel, openingTone, parseRestaurantId } from './restaurant';
 
 describe('parseRestaurantId', () => {
   it.each([
@@ -27,6 +27,11 @@ describe('the restaurant copy', () => {
   it('names whether a restaurant is open', () => {
     expect(openingLabel(true)).toBe('Abierto');
     expect(openingLabel(false)).toBe('Cerrado');
+  });
+
+  it('paints an open restaurant in green and a closed one in gray', () => {
+    expect(openingTone(true)).toBe('success');
+    expect(openingTone(false)).toBe('neutral');
   });
 
   it.each([

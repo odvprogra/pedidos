@@ -1,4 +1,4 @@
-<section class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+<section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
   <a
     routerLink=".."
     class="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
@@ -20,60 +20,54 @@
 
   @let page = state();
   @if (page.status === 'ready') {
-    <app-restaurant-profile class="mt-2 block" [restaurant]="page.restaurant" />
+    <div class="mt-2 grid gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
+      <app-restaurant-profile class="block lg:sticky lg:top-24" [restaurant]="page.restaurant" />
 
-    @if (page.catalog.categories.length === 0) {
-      <div
-        class="mt-6 grid justify-items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center"
-      >
-        <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
-          <svg
-            aria-hidden="true"
-            class="size-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.25"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+      <div class="grid gap-6 lg:col-span-2">
+        @if (page.catalog.categories.length === 0) {
+          <app-empty-state
+            heading="Este restaurante todavía no publicó su menú"
+            message="Vuelve más tarde o mira qué ofrecen otros restaurantes."
           >
-            <path d="M4 5h16M4 12h16M4 19h10" />
-          </svg>
-        </span>
-        <h2 class="text-lg font-extrabold">Este restaurante todavía no publicó su menú</h2>
-        <p class="max-w-md text-muted">Vuelve más tarde o mira qué ofrecen otros restaurantes.</p>
-        <a
-          routerLink=".."
-          class="mt-1 inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-bold text-brand transition hover:bg-brand-soft hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-brand"
-        >
-          Ver otros restaurantes
-        </a>
+            <svg
+              emptyStateIcon
+              aria-hidden="true"
+              class="size-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.25"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 5h16M4 12h16M4 19h10" />
+            </svg>
+            <a appSecondaryButton routerLink=".." class="mt-1">Ver otros restaurantes</a>
+          </app-empty-state>
+        } @else {
+          @for (category of page.catalog.categories; track category.id) {
+            <section class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+              <h2
+                class="border-b border-line bg-canvas px-4 py-4 text-lg font-extrabold wrap-anywhere sm:px-5"
+                [id]="'category-' + category.id"
+              >
+                {{ category.name }}
+              </h2>
+              <ul role="list" class="divide-y divide-line">
+                @for (product of category.products; track product.id) {
+                  <li>
+                    <app-menu-item [product]="product" />
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        }
       </div>
-    } @else {
-      @for (category of page.catalog.categories; track category.id) {
-        <section
-          class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-          [attr.aria-labelledby]="'category-' + category.id"
-        >
-          <h2
-            class="border-b border-line bg-canvas px-4 py-4 text-lg font-extrabold wrap-anywhere sm:px-5"
-            [id]="'category-' + category.id"
-          >
-            {{ category.name }}
-          </h2>
-          <ul class="divide-y divide-line">
-            @for (product of category.products; track product.id) {
-              <li>
-                <app-menu-item [product]="product" />
-              </li>
-            }
-          </ul>
-        </section>
-      }
-    }
+    </div>
   } @else if (page.status === 'missing') {
     <div
-      class="mt-2 grid justify-items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"
+      class="mt-2 grid max-w-2xl justify-items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"
     >
       <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
         <svg
@@ -101,13 +95,13 @@
   } @else if (page.status === 'failed') {
     <h1 class="sr-only">Menú del restaurante</h1>
     <app-load-error
-      class="mt-2 block"
+      class="mt-2 block max-w-2xl"
       heading="No pudimos cargar el menú"
       [message]="page.message"
       (retry)="retry()"
     />
   } @else {
-    <div class="mt-2 grid gap-6" role="status">
+    <div class="mt-2 grid gap-6 lg:grid-cols-3 lg:items-start lg:gap-8" role="status">
       <span class="sr-only">Cargando el menú…</span>
       <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
         <div class="h-24 animate-pulse bg-line motion-reduce:animate-none sm:h-28"></div>
@@ -126,28 +120,32 @@
           ></div>
         </div>
       </div>
-      @for (placeholder of placeholders; track placeholder) {
-        <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
-          <div class="border-b border-line bg-canvas px-4 py-4 sm:px-5">
-            <div class="h-5 w-40 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
-          </div>
-          @for (row of placeholders; track row) {
-            <div
-              class="flex justify-between gap-4 border-b border-line px-4 py-4 last:border-b-0 sm:px-5"
-            >
-              <div class="grid flex-1 gap-2">
+      <div class="grid gap-6 lg:col-span-2">
+        @for (placeholder of placeholders; track placeholder) {
+          <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+            <div class="border-b border-line bg-canvas px-4 py-4 sm:px-5">
+              <div class="h-5 w-40 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+            </div>
+            @for (row of placeholders; track row) {
+              <div
+                class="flex justify-between gap-4 border-b border-line px-4 py-4 last:border-b-0 sm:px-5"
+              >
+                <div class="grid flex-1 gap-2">
+                  <div
+                    class="h-4 w-36 animate-pulse rounded bg-line motion-reduce:animate-none"
+                  ></div>
+                  <div
+                    class="h-3.5 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+                  ></div>
+                </div>
                 <div
-                  class="h-4 w-36 animate-pulse rounded bg-line motion-reduce:animate-none"
-                ></div>
-                <div
-                  class="h-3.5 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+                  class="h-4 w-16 animate-pulse rounded bg-line motion-reduce:animate-none"
                 ></div>
               </div>
-              <div class="h-4 w-16 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
-            </div>
-          }
-        </div>
-      }
+            }
+          </div>
+        }
+      </div>
     </div>
   }
 </section>

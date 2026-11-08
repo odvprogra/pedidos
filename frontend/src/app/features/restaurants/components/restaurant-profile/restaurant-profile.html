@@ -6,7 +6,7 @@
   >
     <svg
       aria-hidden="true"
-      class="absolute -top-4 right-4 size-36 text-white/15 sm:right-8"
+      class="absolute -top-4 right-4 size-36 text-surface/15 sm:right-8"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -28,7 +28,7 @@
       >
         {{ initial() }}
       </span>
-      <app-badge class="mb-1" data-status [tone]="restaurant().open ? 'success' : 'neutral'">
+      <app-badge class="mb-1" aria-hidden="true" data-status [tone]="tone()">
         {{ statusLabel() }}
       </app-badge>
     </div>
@@ -40,6 +40,7 @@
     >
       {{ restaurant().name }}
     </h1>
+    <p class="sr-only" data-status-for-readers>{{ statusLabel() }}</p>
     @if (restaurant().description; as description) {
       <p class="mt-1 wrap-anywhere text-muted">{{ description }}</p>
     }
@@ -84,9 +85,7 @@
       </svg>
       <div>
         <p class="font-bold">Cerrado por ahora</p>
-        <p class="mt-0.5 text-sm text-muted">
-          Puedes ver su menú, pero no recibe pedidos hasta que abra.
-        </p>
+        <p class="mt-0.5 text-sm text-muted">No recibe pedidos hasta que abra.</p>
       </div>
     </div>
   }

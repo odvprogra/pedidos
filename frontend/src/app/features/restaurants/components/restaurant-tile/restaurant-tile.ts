@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Badge } from '@shared/ui/badge/badge';
-import { Restaurant, openingLabel } from '../../models/restaurant';
+import { Restaurant, openingLabel, openingTone } from '../../models/restaurant';
 
 @Component({
   selector: 'app-restaurant-tile',
@@ -16,10 +16,9 @@ export class RestaurantTile {
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
   protected readonly statusLabel = computed(() => openingLabel(this.restaurant().open));
+  protected readonly tone = computed(() => openingTone(this.restaurant().open));
+  protected readonly label = computed(() => `${this.restaurant().name}, ${this.statusLabel()}`);
   protected readonly idPrefix = computed(() => `restaurant-${this.restaurant().id}`);
-  protected readonly labelledBy = computed(
-    () => `${this.idPrefix()}-name ${this.idPrefix()}-status`,
-  );
   protected readonly describedBy = computed(() => {
     const prefix = this.idPrefix();
     return this.restaurant().description

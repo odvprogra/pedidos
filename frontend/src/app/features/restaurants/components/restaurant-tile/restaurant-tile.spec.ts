@@ -69,7 +69,7 @@ describe('RestaurantTile', () => {
   });
 
   it('names the link after the restaurant and its status and describes it with the rest', () => {
-    expect(textOf(link().getAttribute('aria-labelledby') ?? '')).toBe('La Casona | Abierto');
+    expect(link().getAttribute('aria-label')).toBe('La Casona, Abierto');
     expect(textOf(link().getAttribute('aria-describedby') ?? '')).toBe(
       'Comida criolla casera | Dirección: Calle Sucre 245',
     );
@@ -85,13 +85,13 @@ describe('RestaurantTile', () => {
 
     expect(status()).toBe('Cerrado');
     expect(tile().querySelector('[data-band]')?.classList).toContain('bg-muted');
-    expect(textOf(link().getAttribute('aria-labelledby') ?? '')).toBe('La Casona | Cerrado');
+    expect(link().getAttribute('aria-label')).toBe('La Casona, Cerrado');
   });
 
   it('leaves out the description when there is none', async () => {
     await show({ description: null });
 
-    expect(tile().querySelector('h2 + p')?.textContent).toContain('Calle Sucre 245');
+    expect(text()).not.toContain('Comida criolla casera');
     expect(textOf(link().getAttribute('aria-describedby') ?? '')).toBe(
       'Dirección: Calle Sucre 245',
     );
@@ -100,7 +100,8 @@ describe('RestaurantTile', () => {
   it('shows the initial of the name without reading it aloud', async () => {
     await show({ name: '  el Fogón' });
 
-    const initial = tile().querySelector('[aria-hidden="true"].bg-accent');
+    const initial = tile().querySelector('[data-initial]');
+    expect(initial?.getAttribute('aria-hidden')).toBe('true');
     expect(initial?.textContent?.trim()).toBe('E');
   });
 });

@@ -15,7 +15,9 @@ import {
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
+import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Subscription, forkJoin } from 'rxjs';
 import { MenuItem } from '../../components/menu-item/menu-item';
@@ -36,7 +38,15 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
 
 @Component({
   selector: 'app-restaurant-menu-page',
-  imports: [RouterLink, Button, LoadError, MenuItem, RestaurantProfile],
+  imports: [
+    RouterLink,
+    Button,
+    EmptyState,
+    LoadError,
+    MenuItem,
+    RestaurantProfile,
+    SecondaryButton,
+  ],
   templateUrl: './restaurant-menu-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

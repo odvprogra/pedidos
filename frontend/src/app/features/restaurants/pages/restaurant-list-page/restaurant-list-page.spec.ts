@@ -115,8 +115,8 @@ describe('RestaurantListPage', () => {
     it('tells open and closed restaurants apart', async () => {
       await respond(pageOf([LA_CASONA, EL_FOGON]));
 
-      const statuses = Array.from(page().querySelectorAll('[data-status]'), (badge) =>
-        badge.textContent?.trim(),
+      const statuses = Array.from(page().querySelectorAll('li'), (tile) =>
+        tile.querySelector('[data-status]')?.textContent?.trim(),
       );
       expect(statuses).toEqual(['Abierto', 'Cerrado']);
     });
@@ -150,6 +150,12 @@ describe('RestaurantListPage', () => {
       await fixture.whenStable();
 
       expect(page().querySelector('[role="alert"]')?.textContent).toContain('No hay conexión');
+    });
+
+    it('cancels the request when the customer leaves before it answers', () => {
+      fixture.destroy();
+
+      expect(expectPage(0).cancelled).toBe(true);
     });
 
     it('leaves the focus alone when the page is the first one opened', async () => {

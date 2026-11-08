@@ -56,6 +56,15 @@ describe('RestaurantProfile', () => {
     expect(text()).toContain('Retiras tu pedido aquí');
   });
 
+  it('tells screen readers the status right after the name', async () => {
+    expect(profile().querySelector('[data-status]')?.getAttribute('aria-hidden')).toBe('true');
+    expect(profile().querySelector('h1 + [data-status-for-readers]')?.textContent).toBe('Abierto');
+
+    await show({ open: false });
+
+    expect(profile().querySelector('h1 + [data-status-for-readers]')?.textContent).toBe('Cerrado');
+  });
+
   it('shows an open restaurant without a notice', () => {
     expect(status()).toBe('Abierto');
     expect(profile().querySelector('[data-closed-notice]')).toBeNull();
@@ -69,13 +78,14 @@ describe('RestaurantProfile', () => {
     expect(profile().querySelector('[data-closed-notice]')?.textContent).toContain(
       'Cerrado por ahora',
     );
-    expect(text()).toContain('Puedes ver su menú, pero no recibe pedidos hasta que abra.');
+    expect(text()).toContain('No recibe pedidos hasta que abra.');
   });
 
   it('leaves out the description when there is none', async () => {
     await show({ description: null });
 
-    expect(profile().querySelector('h1 + p')?.textContent).toContain('Calle Sucre 245');
+    expect(text()).not.toContain('Comida criolla casera');
+    expect(text()).toContain('Calle Sucre 245');
   });
 
   it('takes the focus to the name when asked', () => {

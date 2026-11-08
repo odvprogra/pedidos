@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   OnInit,
@@ -10,9 +11,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { RestaurantTile } from '../../components/restaurant-tile/restaurant-tile';
@@ -23,13 +26,14 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [LoadError, Pagination, RestaurantTile],
+  imports: [EmptyState, LoadError, Pagination, RestaurantTile],
   templateUrl: './restaurant-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RestaurantListPage implements OnInit {
   private readonly restaurantApi = inject(RestaurantApi);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -61,26 +65,29 @@ export class RestaurantListPage implements OnInit {
     this.requestedPage = page;
     this.loading.set(true);
     this.problem.set(null);
-    this.restaurantApi.list(page, PAGE_SIZE).subscribe({
-      next: (result) => {
-        if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
-          this.load(result.totalPages - 1, moveFocus);
-          return;
-        }
-        this.result.set(result);
-        this.loading.set(false);
-        if (moveFocus) {
-          this.focusHeading();
-        }
-      },
-      error: (error: unknown) => {
-        this.problem.set(toProblemDetails(error).detail);
-        this.loading.set(false);
-        if (moveFocus) {
-          this.focusRetry();
-        }
-      },
-    });
+    this.restaurantApi
+      .list(page, PAGE_SIZE)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
+            this.load(result.totalPages - 1, moveFocus);
+            return;
+          }
+          this.result.set(result);
+          this.loading.set(false);
+          if (moveFocus) {
+            this.focusHeading();
+          }
+        },
+        error: (error: unknown) => {
+          this.problem.set(toProblemDetails(error).detail);
+          this.loading.set(false);
+          if (moveFocus) {
+            this.focusRetry();
+          }
+        },
+      });
   }
 
   private focusHeading(): void {

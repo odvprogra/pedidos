@@ -48,32 +48,30 @@
     />
   } @else if (result(); as result) {
     @if (result.items.length === 0) {
-      <div
-        class="mt-6 grid justify-items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center"
+      <app-empty-state
+        class="mt-6 block"
+        heading="Todavía no hay restaurantes"
+        message="Cuando un restaurante se sume a Pedidos, lo vas a ver aquí. Vuelve pronto."
       >
-        <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
-          <svg
-            aria-hidden="true"
-            class="size-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.25"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-            <path d="M7 2v20" />
-            <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
-          </svg>
-        </span>
-        <h2 class="text-lg font-extrabold">Todavía no hay restaurantes</h2>
-        <p class="max-w-md text-muted">
-          Cuando un restaurante se sume a Pedidos, lo vas a ver aquí. Vuelve pronto.
-        </p>
-      </div>
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+        </svg>
+      </app-empty-state>
     } @else {
       <ul
+        role="list"
         class="mt-6 grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3"
         [class.opacity-60]="loading()"
         [attr.aria-busy]="loading()"

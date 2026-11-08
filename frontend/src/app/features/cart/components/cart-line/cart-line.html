@@ -1,0 +1,89 @@
+<article
+  class="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 sm:flex-nowrap sm:px-5"
+  [attr.aria-labelledby]="nameId()"
+>
+  <div class="min-w-0 flex-1">
+    <h3 class="font-bold wrap-anywhere" [id]="nameId()">{{ item().name }}</h3>
+    <p class="text-sm text-muted" data-unit-price>
+      {{ unitPrice() }}<span aria-hidden="true"> c/u</span><span class="sr-only"> cada uno</span>
+    </p>
+  </div>
+
+  <p class="text-right font-extrabold whitespace-nowrap sm:order-last sm:w-28" data-subtotal>
+    <span class="sr-only">Subtotal: </span>{{ subtotal() }}
+  </p>
+
+  <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
+    <div
+      role="group"
+      class="inline-flex items-center rounded-xl border border-line"
+      [attr.aria-label]="'Cantidad de ' + item().name"
+    >
+      <button
+        type="button"
+        class="grid size-11 place-items-center rounded-l-xl text-brand transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-not-allowed aria-disabled:text-muted aria-disabled:hover:bg-transparent"
+        data-decrease
+        [attr.aria-disabled]="locked() || atMinimum()"
+        (click)="decrease()"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.75"
+          stroke-linecap="round"
+        >
+          <path d="M5 12h14" />
+        </svg>
+        <span class="sr-only">Una unidad menos</span>
+      </button>
+      <span class="min-w-8 text-center font-extrabold" aria-live="polite" data-quantity>
+        {{ item().quantity }}
+      </span>
+      <button
+        type="button"
+        class="grid size-11 place-items-center rounded-r-xl text-brand transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-not-allowed aria-disabled:text-muted aria-disabled:hover:bg-transparent"
+        data-increase
+        [attr.aria-disabled]="locked() || atMaximum()"
+        (click)="increase()"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.75"
+          stroke-linecap="round"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span class="sr-only">Una unidad más</span>
+      </button>
+    </div>
+
+    <button
+      appSecondaryButton
+      tone="danger"
+      type="button"
+      [attr.aria-disabled]="locked()"
+      (click)="remove()"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+      </svg>
+      Quitar<span class="sr-only"> {{ item().name }}</span>
+    </button>
+  </div>
+</article>

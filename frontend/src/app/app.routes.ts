@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '@core/auth/auth-guards';
 import { ADMIN_SEGMENT, MY_RESTAURANT_SEGMENT } from '@core/auth/auth-paths';
+import { CART_SEGMENT } from '@core/cart/cart';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'restaurantes' },
@@ -8,6 +9,10 @@ export const routes: Routes = [
     path: 'restaurantes',
     loadChildren: () =>
       import('@features/restaurants/restaurants.routes').then((m) => m.RESTAURANTS_ROUTES),
+  },
+  {
+    path: CART_SEGMENT,
+    loadChildren: () => import('@features/cart/cart.routes').then((m) => m.CART_ROUTES),
   },
   {
     path: 'estado',

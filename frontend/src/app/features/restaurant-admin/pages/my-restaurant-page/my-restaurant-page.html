@@ -116,29 +116,12 @@
       </form>
     </div>
   } @else if (current.status === 'failed') {
-    <div
-      class="mt-6 grid max-w-2xl justify-items-center gap-4 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"
-    >
-      <span class="grid size-12 place-items-center rounded-full bg-danger-soft text-danger">
-        <svg
-          aria-hidden="true"
-          class="size-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.25"
-          stroke-linecap="round"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7.5v5.5M12 16.5h.01" />
-        </svg>
-      </span>
-      <div role="alert">
-        <h2 class="text-lg font-extrabold">No pudimos cargar tu restaurante</h2>
-        <p class="mt-1 max-w-md text-muted">{{ current.message }}</p>
-      </div>
-      <button #retryButton appButton type="button" (click)="retry()">Reintentar</button>
-    </div>
+    <app-load-error
+      class="mt-6 block max-w-2xl"
+      heading="No pudimos cargar tu restaurante"
+      [message]="current.message"
+      (retry)="retry()"
+    />
   } @else {
     <div
       class="mt-6 max-w-2xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"

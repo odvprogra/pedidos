@@ -4,7 +4,6 @@ import {
   ElementRef,
   Injector,
   OnInit,
-  Signal,
   afterNextRender,
   computed,
   inject,
@@ -17,6 +16,7 @@ import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
+import { LoadError } from '@shared/ui/load-error/load-error';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
@@ -73,6 +73,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     Alert,
     Button,
     FormField,
+    LoadError,
     RegistrationSteps,
     RestaurantCard,
     Spinner,
@@ -87,7 +88,7 @@ export class MyRestaurantPage implements OnInit {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
-  private readonly retryButton = viewChild<ElementRef<HTMLElement>>('retryButton');
+  private readonly loadError = viewChild(LoadError);
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly state = signal<PageState>({ status: 'loading' });
@@ -151,7 +152,7 @@ export class MyRestaurantPage implements OnInit {
           tone: 'success',
           message: `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
         });
-        this.focusAfterRender(this.heading);
+        this.focusHeading();
       },
       error: (error: unknown) => {
         this.submitting.set(false);
@@ -221,12 +222,21 @@ export class MyRestaurantPage implements OnInit {
     if (state.status !== 'ready') {
       this.notice.set(null);
     }
-    if (moveFocus) {
-      this.focusAfterRender(state.status === 'failed' ? this.retryButton : this.heading);
+    if (!moveFocus) {
+      return;
+    }
+    if (state.status === 'failed') {
+      this.focusRetry();
+    } else {
+      this.focusHeading();
     }
   }
 
-  private focusAfterRender(target: Signal<ElementRef<HTMLElement> | undefined>): void {
-    afterNextRender(() => target()?.nativeElement.focus(), { injector: this.injector });
+  private focusHeading(): void {
+    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+  }
+
+  private focusRetry(): void {
+    afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
   }
 }

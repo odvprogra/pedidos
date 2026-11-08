@@ -36,8 +36,9 @@ src/app/features/<feature>/
 ## 2. Páginas
 
 1. `XxxPage` en `pages/xxx-page/`: inyecta el cliente, maneja el estado con `signal` y `computed`.
-2. Cubre siempre los cuatro estados: cargando (skeleton con `role="status"`), error (mensaje de
-   `toProblemDetails` con `role="alert"` y botón para reintentar), vacío (explica qué hacer) y éxito.
+2. Cubre siempre los cuatro estados: cargando (skeleton con `role="status"`), error
+   (`app-load-error` con el mensaje de `toProblemDetails` y "Reintentar"), vacío (explica qué hacer)
+   y éxito.
 3. Formularios: `NonNullableFormBuilder`, `markAllAsTouched()` al enviar, botón deshabilitado
    mientras se guarda y los `errors[]` del backend asignados a cada campo.
 

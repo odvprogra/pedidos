@@ -3,6 +3,8 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ROLE_LABELS, Role } from '@core/auth/account';
 import { ADMIN_PATH, LOG_IN_PATH, MY_RESTAURANT_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
+import { CART_PATH, describeUnits } from '@core/cart/cart';
+import { CartStore } from '@core/cart/cart-store';
 
 interface RoleLink {
   path: string;
@@ -25,11 +27,23 @@ const ROLE_LINKS: Partial<Record<Role, RoleLink>> = {
 export class Header {
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly cart = inject(CartStore);
 
   protected readonly logInPath = LOG_IN_PATH;
   protected readonly registerPath = REGISTER_PATH;
+  protected readonly cartPath = CART_PATH;
   protected readonly status = this.session.status;
   protected readonly account = this.session.account;
+  protected readonly showsCart = computed(
+    () => this.status() === 'anonymous' || this.account()?.role === 'CUSTOMER',
+  );
+  protected readonly cartCount = this.cart.count;
+  protected readonly cartBadge = computed(() =>
+    this.cartCount() > 99 ? '99+' : String(this.cartCount()),
+  );
+  protected readonly cartLabel = computed(() =>
+    this.cartCount() > 0 ? `Carrito: ${describeUnits(this.cartCount())}` : 'Carrito',
+  );
   protected readonly roleLink = computed(() => {
     const account = this.account();
     return account ? (ROLE_LINKS[account.role] ?? null) : null;

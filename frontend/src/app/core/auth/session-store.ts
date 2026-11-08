@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { CartStore } from '@core/cart/cart-store';
 import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { Account } from './account';
 import { SessionApi } from './session-api';
@@ -12,6 +13,7 @@ type SessionState =
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
   private readonly sessionApi = inject(SessionApi);
+  private readonly cart = inject(CartStore);
   private readonly state = signal<SessionState>({ status: 'loading' });
 
   readonly status = computed<SessionStatus>(() => this.state().status);
@@ -44,7 +46,10 @@ export class SessionStore {
       catchError((error: unknown) =>
         isUnauthorized(error) ? of(undefined) : throwError(() => error),
       ),
-      tap(() => this.clear()),
+      tap(() => {
+        this.clear();
+        this.cart.clear();
+      }),
     );
   }
 }

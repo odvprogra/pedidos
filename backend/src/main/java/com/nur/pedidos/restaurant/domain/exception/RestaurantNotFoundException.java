@@ -5,6 +5,6 @@ import com.nur.pedidos.shared.domain.exception.NotFoundException;
 public class RestaurantNotFoundException extends NotFoundException {
 
     public RestaurantNotFoundException() {
-        super("restaurant.not_found", "Todavía no registraste un restaurante");
+        super("restaurant.not_found", "No encontramos el restaurante");
     }
 }

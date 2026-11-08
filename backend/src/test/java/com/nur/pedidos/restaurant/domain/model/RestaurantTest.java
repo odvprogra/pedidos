@@ -8,6 +8,7 @@ import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -113,6 +114,12 @@ class RestaurantTest {
         restaurant.close();
 
         assertThat(restaurant.isOpen()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, false, true", "false, false, true", "false, true, false", "true, true, false"})
+    void isVisibleToCustomersUnlessItIsSuspended(boolean open, boolean suspended, boolean visible) {
+        assertThat(restaurant(open, suspended).isVisible()).isEqualTo(visible);
     }
 
     private static Restaurant restaurant(boolean open, boolean suspended) {

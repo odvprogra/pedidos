@@ -58,6 +58,10 @@ public class Restaurant {
         this.open = false;
     }
 
+    public boolean isVisible() {
+        return !suspended;
+    }
+
     private static String stripToNull(String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }

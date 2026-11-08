@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
 
@@ -8,6 +10,25 @@ const MINE_URL = '/api/v1/restaurants/mine';
 const REGISTER_URL = '/api/v1/restaurants';
 const OPEN_URL = '/api/v1/restaurants/mine/open';
 const CLOSE_URL = '/api/v1/restaurants/mine/close';
+const MENU_URL = '/api/v1/restaurants/mine/catalog';
+const MENU: Catalog = {
+  categories: [
+    {
+      id: 3,
+      name: 'Platos fuertes',
+      products: [
+        {
+          id: 10,
+          categoryId: 3,
+          name: 'Silpancho',
+          description: null,
+          price: 45,
+          available: true,
+        },
+      ],
+    },
+  ],
+};
 const LA_CASONA: Restaurant = {
   id: 4,
   name: 'La Casona',
@@ -23,7 +44,7 @@ describe('MyRestaurantPage', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(MyRestaurantPage);
@@ -101,6 +122,12 @@ describe('MyRestaurantPage', () => {
   async function showRestaurant(changes: Partial<Restaurant> = {}): Promise<void> {
     httpTesting.expectOne(MINE_URL).flush({ ...LA_CASONA, ...changes });
     await fixture.whenStable();
+    httpTesting.expectOne(MENU_URL).flush(MENU);
+    await fixture.whenStable();
+  }
+
+  function menuSummary(): string {
+    return page().querySelector('[data-menu-summary]')?.textContent?.trim() ?? '';
   }
 
   async function submitValidForm(): Promise<void> {
@@ -449,6 +476,43 @@ describe('MyRestaurantPage', () => {
       await fixture.whenStable();
 
       expect(notice()).toBe('');
+    });
+  });
+
+  describe('the menu', () => {
+    it('summarizes the menu of the restaurant', async () => {
+      await showRestaurant();
+
+      expect(menuSummary()).toBe('1 categoría · 1 producto');
+    });
+
+    it('says what the menu holds while it loads', async () => {
+      httpTesting.expectOne(MINE_URL).flush(LA_CASONA);
+      await fixture.whenStable();
+
+      expect(menuSummary()).toBe('Categorías y productos');
+      httpTesting.expectOne(MENU_URL).flush(MENU);
+    });
+
+    it('keeps the restaurant in view when the menu cannot load', async () => {
+      httpTesting.expectOne(MINE_URL).flush(LA_CASONA);
+      await fixture.whenStable();
+      failWith(MENU_URL, 500);
+      await fixture.whenStable();
+
+      expect(page().querySelector('h2')?.textContent).toContain('La Casona');
+      expect(menuSummary()).toBe('Categorías y productos');
+      expect(page().querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('tells a new restaurant that its menu is empty without asking for it', async () => {
+      await showMissing();
+      await submitValidForm();
+      httpTesting.expectOne(REGISTER_URL).flush(LA_CASONA, { status: 201, statusText: 'Created' });
+      await fixture.whenStable();
+
+      httpTesting.expectNone(MENU_URL);
+      expect(menuSummary()).toBe('Todavía no tiene productos');
     });
   });
 });

@@ -25,7 +25,9 @@ import { ValidationMessages, validationMessage } from '@shared/utils/validation-
 import { map } from 'rxjs';
 import { RegistrationSteps } from '../../components/registration-steps/registration-steps';
 import { RestaurantCard } from '../../components/restaurant-card/restaurant-card';
+import { CatalogApi } from '../../data-access/catalog-api';
 import { RestaurantApi } from '../../data-access/restaurant-api';
+import { Catalog, summarize } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import {
   describeRestaurantError,
@@ -84,11 +86,13 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
 })
 export class MyRestaurantPage implements OnInit {
   private readonly restaurantApi = inject(RestaurantApi);
+  private readonly catalogApi = inject(CatalogApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   private readonly loadError = viewChild(LoadError);
+  private readonly menu = signal<Catalog | null>(null);
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly state = signal<PageState>({ status: 'loading' });
@@ -96,6 +100,10 @@ export class MyRestaurantPage implements OnInit {
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
+  protected readonly menuSummary = computed(() => {
+    const menu = this.menu();
+    return menu ? summarize(menu) : null;
+  });
   protected readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]],
     description: ['', Validators.maxLength(DESCRIPTION_LIMIT)],
@@ -148,6 +156,7 @@ export class MyRestaurantPage implements OnInit {
       next: (restaurant) => {
         this.submitting.set(false);
         this.state.set({ status: 'ready', restaurant });
+        this.menu.set({ categories: [] });
         this.notice.set({
           tone: 'success',
           message: `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
@@ -204,7 +213,10 @@ export class MyRestaurantPage implements OnInit {
   private load(moveFocus: boolean): void {
     this.state.set({ status: 'loading' });
     this.restaurantApi.mine().subscribe({
-      next: (restaurant) => this.show({ status: 'ready', restaurant }, moveFocus),
+      next: (restaurant) => {
+        this.show({ status: 'ready', restaurant }, moveFocus);
+        this.loadMenu();
+      },
       error: (error: unknown) => {
         const problem = toProblemDetails(error);
         this.show(
@@ -214,6 +226,14 @@ export class MyRestaurantPage implements OnInit {
           moveFocus,
         );
       },
+    });
+  }
+
+  private loadMenu(): void {
+    this.menu.set(null);
+    this.catalogApi.mine().subscribe({
+      next: (menu) => this.menu.set(menu),
+      error: () => this.menu.set(null),
     });
   }
 

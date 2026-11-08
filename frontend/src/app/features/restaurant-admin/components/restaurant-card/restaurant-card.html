@@ -120,4 +120,47 @@
       </div>
     }
   </div>
+
+  <a
+    routerLink="menu"
+    class="group flex items-center justify-between gap-4 border-t border-line px-5 py-4 transition hover:bg-brand-soft/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:px-6"
+  >
+    <span class="flex min-w-0 items-center gap-3">
+      <span
+        aria-hidden="true"
+        class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"
+      >
+        <svg
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <path d="M8 8h6M8 12h6M8 16h3" />
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span class="block font-bold">Tu menú</span>
+        <span class="block text-sm text-muted" data-menu-summary>
+          {{ menuSummary() ?? 'Categorías y productos' }}
+        </span>
+      </span>
+    </span>
+    <svg
+      aria-hidden="true"
+      class="size-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand motion-reduce:transition-none"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  </a>
 </article>

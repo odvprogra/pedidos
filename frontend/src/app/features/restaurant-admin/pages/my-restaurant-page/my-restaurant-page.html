@@ -30,6 +30,7 @@
       class="mt-6 block max-w-2xl"
       [restaurant]="current.restaurant"
       [busy]="toggling()"
+      [menuSummary]="menuSummary()"
       (openChange)="changeOpening($event)"
     />
   } @else if (current.status === 'missing') {

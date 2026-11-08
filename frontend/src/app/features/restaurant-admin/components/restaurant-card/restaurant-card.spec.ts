@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantCard } from './restaurant-card';
 
@@ -18,6 +19,7 @@ const LA_CASONA: Restaurant = {
     <app-restaurant-card
       [restaurant]="restaurant()"
       [busy]="busy()"
+      [menuSummary]="menuSummary()"
       (openChange)="requested.push($event)"
     />
   `,
@@ -26,6 +28,7 @@ const LA_CASONA: Restaurant = {
 class Host {
   readonly restaurant = signal(LA_CASONA);
   readonly busy = signal(false);
+  readonly menuSummary = signal<string | null>(null);
   readonly requested: boolean[] = [];
 }
 
@@ -34,6 +37,7 @@ describe('RestaurantCard', () => {
   let host: Host;
 
   beforeEach(async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
@@ -130,5 +134,33 @@ describe('RestaurantCard', () => {
     expect(toggle()).toBeNull();
     expect(text()).toContain('Tu restaurante está suspendido');
     expect(text()).toContain('Habla con el administrador para reactivarlo.');
+  });
+
+  describe('the menu', () => {
+    function menuLink(): HTMLAnchorElement | null {
+      return card().querySelector('a[href$="/menu"]');
+    }
+
+    it('leads to the menu of the restaurant', () => {
+      expect(menuLink()?.textContent).toContain('Tu menú');
+    });
+
+    it('says what the menu holds while its summary is unknown', () => {
+      expect(menuLink()?.textContent).toContain('Categorías y productos');
+    });
+
+    it('summarizes the menu once it is known', async () => {
+      host.menuSummary.set('2 categorías · 5 productos');
+      await fixture.whenStable();
+
+      expect(menuLink()?.textContent).toContain('2 categorías · 5 productos');
+      expect(menuLink()?.textContent).not.toContain('Categorías y productos');
+    });
+
+    it('stays available while the restaurant is suspended', async () => {
+      await show({ suspended: true });
+
+      expect(menuLink()).toBeTruthy();
+    });
   });
 });

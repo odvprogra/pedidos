@@ -14,6 +14,8 @@ const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com
 const ME_URL = '/api/v1/auth/me';
 const ACCOUNTS_URL = '/api/v1/accounts?page=0&size=20';
 const MY_RESTAURANT_URL = '/api/v1/restaurants/mine';
+const MY_MENU_URL = '/api/v1/restaurants/mine/catalog';
+const EMPTY_MENU = { categories: [] };
 const LA_CASONA = {
   id: 4,
   name: 'La Casona',
@@ -97,8 +99,10 @@ describe('appConfig', () => {
     it('sends an owner to its restaurant', async () => {
       await startWith(LUIS);
 
-      await RouterTestingHarness.create('/admin');
+      const harness = await RouterTestingHarness.create('/admin');
       httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
 
       expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
       httpTesting.expectNone(ACCOUNTS_URL);
@@ -164,9 +168,33 @@ describe('appConfig', () => {
       const harness = await RouterTestingHarness.create('/mi-restaurante');
       httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
       await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
 
       expect(harness.routeNativeElement?.textContent).toContain('La Casona');
       expect(harness.routeNativeElement?.textContent).toContain('Calle Sucre 245');
+      expect(harness.routeNativeElement?.textContent).toContain('Todavía no tiene productos');
+    });
+
+    it('shows its menu to an owner', async () => {
+      await startWith(LUIS);
+
+      const harness = await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Tu menú');
+      expect(harness.routeNativeElement?.textContent).toContain('Tu menú está vacío');
+    });
+
+    it('keeps a customer away from the menu of a restaurant', async () => {
+      await startWith(ANA);
+
+      await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne('/api/health').flush({});
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      httpTesting.expectNone(MY_MENU_URL);
     });
   });
 

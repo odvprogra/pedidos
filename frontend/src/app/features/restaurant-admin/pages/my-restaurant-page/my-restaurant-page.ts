@@ -108,11 +108,16 @@ export class MyRestaurantPage implements OnInit {
   protected readonly title = computed(() =>
     this.registering() ? 'Registra tu restaurante' : 'Mi restaurante',
   );
-  protected readonly subtitle = computed(() =>
-    this.registering()
-      ? 'Completa los datos de tu local para empezar. Te toma un minuto.'
-      : 'Mira cómo te ven tus clientes y decide cuándo recibir pedidos.',
-  );
+  protected readonly subtitle = computed(() => {
+    const current = this.state();
+    if (current.status === 'missing') {
+      return 'Completa los datos de tu local para empezar. Te toma un minuto.';
+    }
+    if (current.status === 'ready' && current.restaurant.suspended) {
+      return 'Revisa en qué estado está tu restaurante.';
+    }
+    return 'Mira cómo te ven tus clientes y decide cuándo recibir pedidos.';
+  });
 
   ngOnInit(): void {
     this.load(false);
@@ -173,7 +178,6 @@ export class MyRestaurantPage implements OnInit {
     }
     const restaurant = current.restaurant;
     this.toggling.set(true);
-    this.notice.set(null);
     const request = open ? this.restaurantApi.open() : this.restaurantApi.close();
     request.subscribe({
       next: () => {
@@ -184,14 +188,14 @@ export class MyRestaurantPage implements OnInit {
       error: (error: unknown) => {
         this.toggling.set(false);
         const problem = toProblemDetails(error);
-        if (isSuspended(problem)) {
-          this.state.set({
-            status: 'ready',
-            restaurant: { ...restaurant, open: false, suspended: true },
-          });
-          this.focusAfterRender(this.heading);
+        const outdated = isSuspended(problem) || isNotRegistered(problem);
+        this.notice.set({
+          tone: outdated ? 'warning' : 'danger',
+          message: describeRestaurantError(problem),
+        });
+        if (outdated) {
+          this.load(true);
         }
-        this.notice.set({ tone: 'danger', message: describeRestaurantError(problem) });
       },
     });
   }
@@ -214,6 +218,9 @@ export class MyRestaurantPage implements OnInit {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    if (state.status !== 'ready') {
+      this.notice.set(null);
+    }
     if (moveFocus) {
       this.focusAfterRender(state.status === 'failed' ? this.retryButton : this.heading);
     }

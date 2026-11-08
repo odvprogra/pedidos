@@ -310,6 +310,19 @@ describe('MyRestaurantPage', () => {
       expect(document.activeElement).toBe(heading());
     });
 
+    it('drops the notice when the restaurant registered meanwhile cannot load', async () => {
+      await submitValidForm();
+      failWith(REGISTER_URL, 409, 'restaurant.already_registered');
+      await fixture.whenStable();
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+
+      expect(notice()).toBe('');
+      expect(page().querySelector('[role="alert"]')?.textContent).toContain(
+        'No pudimos cargar tu restaurante',
+      );
+    });
+
     it('explains that the server cannot be reached and lets the owner try again', async () => {
       await submitValidForm();
       httpTesting.expectOne(REGISTER_URL).error(new ProgressEvent('error'));
@@ -380,20 +393,38 @@ describe('MyRestaurantPage', () => {
       expect(page().querySelector('[role="alert"]')?.textContent).toContain('Detalle del servidor');
     });
 
-    it('shows the suspension when the admin suspended the restaurant meanwhile', async () => {
+    it('loads the restaurant again when the admin suspended it meanwhile', async () => {
       await showRestaurant();
 
       toggle().click();
       failWith(OPEN_URL, 409, 'restaurant.suspended');
       await fixture.whenStable();
+      await showRestaurant({ suspended: true });
 
       expect(status()).toBe('Suspendido');
       expect(page().querySelector('button[role="switch"]')).toBeNull();
-      expect(notice()).toContain('Tu restaurante está suspendido, así que no puedes abrirlo.');
+      expect(text()).toContain('Tu restaurante está suspendido');
+      expect(notice()).toBe('No pudimos abrir tu restaurante: está suspendido.');
+      expect(page().querySelector('app-alert[dismissible] [role="alert"]')).toBeTruthy();
+      expect(heading().textContent).toContain('Mi restaurante');
+      expect(text()).toContain('Revisa en qué estado está tu restaurante.');
       expect(document.activeElement).toBe(heading());
     });
 
-    it('clears the previous notice when a new change starts', async () => {
+    it('offers the registration again when the restaurant is gone', async () => {
+      await showRestaurant({ open: true });
+
+      toggle().click();
+      failWith(CLOSE_URL, 404, 'restaurant.not_found');
+      await fixture.whenStable();
+      await showMissing();
+
+      expect(heading().textContent).toContain('Registra tu restaurante');
+      expect(page().querySelector('form')).toBeTruthy();
+      expect(notice()).toBe('');
+    });
+
+    it('keeps the previous notice until the new change answers', async () => {
       await showRestaurant();
       toggle().click();
       httpTesting.expectOne(OPEN_URL).flush(null, { status: 204, statusText: 'No Content' });
@@ -402,8 +433,10 @@ describe('MyRestaurantPage', () => {
       toggle().click();
       await fixture.whenStable();
 
-      expect(notice()).toBe('');
+      expect(notice()).toContain('Abriste La Casona.');
       httpTesting.expectOne(CLOSE_URL).flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+      expect(notice()).toContain('Cerraste La Casona.');
     });
 
     it('lets the owner dismiss the notice', async () => {

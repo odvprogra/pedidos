@@ -4,7 +4,7 @@
 >
   <h2
     id="registration-steps-title"
-    class="text-sm font-extrabold tracking-wide text-brand uppercase"
+    class="text-sm font-extrabold tracking-wide text-brand-strong uppercase"
   >
     Cómo funciona
   </h2>
@@ -20,7 +20,9 @@
           {{ number + 1 }}
         </span>
         <span>
-          <span class="block text-sm font-bold lg:text-base">{{ step.title }}</span>
+          <span class="block text-sm font-bold lg:text-base">
+            {{ step.title }}<span class="sr-only">: </span>
+          </span>
           <span class="sr-only lg:not-sr-only lg:mt-0.5 lg:block lg:text-sm lg:text-ink/80">
             {{ step.description }}
           </span>

@@ -43,7 +43,7 @@ describe('the conflicts of the page', () => {
 describe('describeRestaurantError', () => {
   it.each([
     ['restaurant.already_registered', 409, 'Ya registraste un restaurante'],
-    ['restaurant.suspended', 409, 'Tu restaurante está suspendido'],
+    ['restaurant.suspended', 409, 'No pudimos abrir tu restaurante: está suspendido.'],
     ['restaurant.not_found', 404, 'No encontramos tu restaurante'],
     ['validation_failed', 400, 'Revisa los datos marcados'],
     ['access_denied', 403, 'no tiene permiso para administrar un restaurante'],

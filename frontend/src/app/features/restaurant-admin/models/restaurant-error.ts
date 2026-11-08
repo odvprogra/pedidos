@@ -6,11 +6,8 @@ const SUSPENDED = 'restaurant.suspended';
 
 const MESSAGES = new Map<string, string>([
   [ALREADY_REGISTERED, 'Ya registraste un restaurante con esta cuenta.'],
-  [
-    SUSPENDED,
-    'Tu restaurante está suspendido, así que no puedes abrirlo. Habla con el administrador para reactivarlo.',
-  ],
-  [NOT_REGISTERED, 'No encontramos tu restaurante. Recarga la página para ver tus datos al día.'],
+  [SUSPENDED, 'No pudimos abrir tu restaurante: está suspendido.'],
+  [NOT_REGISTERED, 'No encontramos tu restaurante.'],
   ['validation_failed', 'Revisa los datos marcados e intenta de nuevo.'],
   ['access_denied', 'Tu cuenta no tiene permiso para administrar un restaurante.'],
   ['csrf_invalid', 'No pudimos validar tu solicitud. Intenta de nuevo.'],

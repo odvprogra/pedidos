@@ -87,7 +87,7 @@ describe('Header', () => {
     await fixture.whenStable();
 
     const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
-    expect(link.textContent).toContain('Panel');
+    expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe('Panel de administración');
     expect(link.getAttribute('aria-current')).toBeNull();
     expect(text()).toContain('Administrador');
   });

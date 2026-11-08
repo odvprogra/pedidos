@@ -22,7 +22,8 @@ export class RegistrationSteps {
     },
     {
       title: 'Ábrelo',
-      description: 'Con un toque empiezas a recibir pedidos, y con otro dejas de recibirlos.',
+      description:
+        'Con un interruptor empiezas a recibir pedidos y dejas de hacerlo cuando quieras.',
     },
   ];
 }

@@ -13,32 +13,25 @@ import {
   viewChild,
 } from '@angular/core';
 import { ROLE_LABELS } from '@core/auth/account';
+import { SecondaryButton, SecondaryButtonTone } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel, ConfirmTone } from '@shared/ui/confirm-panel/confirm-panel';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { AccountAction, actionFor, copyFor } from '../../models/account-action';
 import { AccountSummary } from '../../models/account-summary';
 
-interface ActionStyle {
-  button: string;
-  tone: ConfirmTone;
+interface ActionTones {
+  button: SecondaryButtonTone;
+  panel: ConfirmTone;
 }
 
-const ACTION_STYLES: Record<AccountAction, ActionStyle> = {
-  suspend: {
-    button:
-      'border-brand/30 text-brand hover:bg-brand-soft hover:text-brand-strong focus-visible:outline-brand aria-expanded:bg-brand-soft aria-expanded:text-brand-strong',
-    tone: 'brand',
-  },
-  reactivate: {
-    button:
-      'border-success/30 text-success hover:bg-success-soft focus-visible:outline-success aria-expanded:bg-success-soft',
-    tone: 'success',
-  },
+const ACTION_TONES: Record<AccountAction, ActionTones> = {
+  suspend: { button: 'danger', panel: 'brand' },
+  reactivate: { button: 'success', panel: 'success' },
 };
 
 @Component({
   selector: 'app-account-row',
-  imports: [ConfirmPanel, Spinner],
+  imports: [ConfirmPanel, SecondaryButton, Spinner],
   templateUrl: './account-row.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,13 +51,9 @@ export class AccountRow {
     const action = this.action();
     return action ? copyFor(action, this.account().name) : null;
   });
-  protected readonly style = computed(() => {
+  protected readonly tones = computed(() => {
     const action = this.action();
-    return action ? ACTION_STYLES[action] : null;
-  });
-  protected readonly actionButtonStyle = computed(() => {
-    const cursor = this.busy() ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed';
-    return `${this.style()?.button ?? ''} ${cursor}`;
+    return action ? ACTION_TONES[action] : null;
   });
   protected readonly unavailable = computed(() => this.busy() || this.locked());
   protected readonly roleLabel = computed(() => ROLE_LABELS[this.account().role]);

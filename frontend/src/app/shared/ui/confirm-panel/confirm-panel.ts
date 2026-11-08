@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { SecondaryButton } from '../button/secondary-button';
 
-export type ConfirmTone = 'brand' | 'success';
+export type ConfirmTone = 'brand' | 'success' | 'warning';
 
 const STYLES: Record<ConfirmTone, { panel: string; confirm: string }> = {
   brand: {
@@ -22,6 +22,11 @@ const STYLES: Record<ConfirmTone, { panel: string; confirm: string }> = {
     panel: 'bg-success-soft',
     confirm:
       'bg-success shadow-success/25 hover:bg-success/90 focus-visible:outline-success aria-disabled:hover:bg-success',
+  },
+  warning: {
+    panel: 'bg-warning-soft',
+    confirm:
+      'bg-warning shadow-warning/25 hover:bg-warning/90 focus-visible:outline-warning aria-disabled:hover:bg-warning',
   },
 };
 

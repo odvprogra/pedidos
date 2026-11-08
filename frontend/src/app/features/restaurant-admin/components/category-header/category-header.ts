@@ -58,6 +58,12 @@ export class CategoryHeader {
     }
   }
 
+  protected dismiss(): void {
+    if (this.confirming()) {
+      this.closeConfirmation();
+    }
+  }
+
   protected closeConfirmation(): void {
     this.confirming.set(false);
     this.focusDeleteButton();

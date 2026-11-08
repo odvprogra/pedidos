@@ -48,9 +48,11 @@
   @if (copy(); as copy) {
     <button
       #actionButton
+      appSecondaryButton
       type="button"
-      class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-surface px-4 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:opacity-60 aria-disabled:hover:bg-surface"
-      [class]="actionButtonStyle()"
+      class="w-full"
+      [tone]="tones()?.button ?? 'neutral'"
+      [working]="busy()"
       [attr.aria-disabled]="unavailable()"
       [attr.aria-expanded]="confirming()"
       [attr.aria-controls]="confirming() ? confirmId() : null"
@@ -73,7 +75,7 @@
         [question]="copy.question"
         [consequence]="copy.consequence"
         [confirmLabel]="copy.confirm"
-        [tone]="style()?.tone ?? 'brand'"
+        [tone]="tones()?.panel ?? 'brand'"
         [disabled]="unavailable()"
         (confirmed)="confirm()"
         (cancelled)="cancel()"

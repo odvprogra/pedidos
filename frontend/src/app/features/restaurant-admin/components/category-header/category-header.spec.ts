@@ -100,6 +100,7 @@ describe('CategoryHeader', () => {
 
     expect(text()).toContain('Todavía no puedes borrar Bebidas');
     expect(text()).toContain(reason);
+    expect(header().querySelector('[role="group"]')?.classList).toContain('bg-warning-soft');
     expect(header().querySelectorAll('[role="group"] button')).toHaveLength(1);
 
     button('Entendido').click();
@@ -107,6 +108,16 @@ describe('CategoryHeader', () => {
 
     expect(header().querySelector('[role="group"]')).toBeNull();
     expect(host.deletions).toBe(0);
+  });
+
+  it('closes the question with the escape key on its button', async () => {
+    await askToDelete();
+
+    button('Borrar').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+
+    expect(header().querySelector('[role="group"]')).toBeNull();
+    expect(document.activeElement).toBe(button('Borrar'));
   });
 
   it('says that it is deleting the category', async () => {

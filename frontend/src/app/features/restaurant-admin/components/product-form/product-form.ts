@@ -26,14 +26,11 @@ import { map } from 'rxjs';
 import { Category, Product, ProductDraft } from '../../models/catalog';
 import { parsePrice, priceText, priceValidator } from '../../models/price';
 
-type ProductField = 'categoryId' | 'name' | 'description' | 'price';
+type ProductField = 'name' | 'description' | 'price';
 
 const DESCRIPTION_LIMIT = 300;
 
 const MESSAGES: Record<ProductField, ValidationMessages> = {
-  categoryId: {
-    required: 'Elige en qué categoría va.',
-  },
   name: {
     required: 'Escribe el nombre del producto.',
     pattern: 'Escribe el nombre del producto.',
@@ -60,7 +57,7 @@ export class ProductForm implements OnInit {
   private readonly injector = inject(Injector);
 
   readonly categories = input.required<readonly Category[]>();
-  readonly categoryId = input<number | null>(null);
+  readonly categoryId = input.required<number>();
   readonly product = input<Product | null>(null);
   readonly saving = input(false);
   readonly errors = input<readonly FieldViolation[]>([]);
@@ -70,7 +67,7 @@ export class ProductForm implements OnInit {
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly form = inject(NonNullableFormBuilder).group({
-    categoryId: [0, Validators.required],
+    categoryId: [0],
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]],
     description: ['', Validators.maxLength(DESCRIPTION_LIMIT)],
     price: ['', [Validators.required, priceValidator]],
@@ -104,7 +101,7 @@ export class ProductForm implements OnInit {
             price: priceText(product.price),
           }
         : {
-            categoryId: this.categoryId() ?? this.categories()[0]?.id ?? 0,
+            categoryId: this.categoryId(),
             name: '',
             description: '',
             price: '',
@@ -115,6 +112,10 @@ export class ProductForm implements OnInit {
   protected title(): string {
     const product = this.product();
     return product ? `Editar ${product.name}` : 'Nuevo producto';
+  }
+
+  protected submitLabel(): string {
+    return this.product() ? 'Guardar cambios' : 'Agregar producto';
   }
 
   protected errorOf(field: ProductField): string | null {

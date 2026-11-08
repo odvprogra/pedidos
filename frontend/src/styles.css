@@ -29,6 +29,10 @@
     @apply scroll-pt-20;
   }
 
+  html:has([data-sticky-notice]) {
+    @apply scroll-pt-44;
+  }
+
   body {
     @apply bg-canvas text-ink antialiased;
   }

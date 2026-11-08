@@ -156,6 +156,50 @@ describe('ProductRow', () => {
     expect(row().querySelector('[role="group"]')).toBeNull();
   });
 
+  it.each([
+    [true, 'Marcando como agotado…'],
+    [false, 'Marcando como disponible…'],
+  ])(
+    'says what it is doing while it saves a product available: %s',
+    async (available, progress) => {
+      await show({ available });
+      host.working.set('availability');
+      await fixture.whenStable();
+
+      const describedBy = toggle().getAttribute('aria-describedby') ?? '';
+      expect(toggle().textContent?.trim()).toBe(progress);
+      expect(row().querySelector(`#${describedBy}`)?.textContent).toBe(progress);
+      expect(toggle().getAttribute('aria-label')).toBe('Disponible: Silpancho');
+    },
+  );
+
+  it('describes nothing extra while it is idle', () => {
+    expect(toggle().getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('closes the question with the escape key on its button', async () => {
+    button('Borrar').click();
+    await fixture.whenStable();
+
+    button('Borrar').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+
+    expect(row().querySelector('[role="group"]')).toBeNull();
+    expect(document.activeElement).toBe(button('Borrar'));
+  });
+
+  it('keeps the question open but ignores it while another change is on its way', async () => {
+    button('Borrar').click();
+    await fixture.whenStable();
+    host.locked.set(true);
+    await fixture.whenStable();
+
+    button('Sí, borrar').click();
+
+    expect(button('Sí, borrar').getAttribute('aria-disabled')).toBe('true');
+    expect(host.deletions).toBe(0);
+  });
+
   it('says that it is deleting the product', async () => {
     host.working.set('deletion');
     await fixture.whenStable();

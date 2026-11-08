@@ -73,7 +73,7 @@ describe('CategoryForm', () => {
   }
 
   it('starts with the current name and the focus on it', () => {
-    expect(form().querySelector('h3')?.textContent).toContain('Renombrar Bebidas');
+    expect(form().querySelector('h2')?.textContent).toContain('Renombrar Bebidas');
     expect(nameField().value).toBe('Bebidas');
     expect(document.activeElement).toBe(nameField());
   });
@@ -113,7 +113,16 @@ describe('CategoryForm', () => {
     await submit();
 
     expect(button('Guardando…').getAttribute('aria-disabled')).toBe('true');
+    expect(button('Cancelar').getAttribute('aria-disabled')).toBe('true');
     expect(host.saved).toEqual([]);
+  });
+
+  it('offers cancel before saving, in the order of the tab key', () => {
+    const labels = Array.from(form().querySelectorAll('button')).map((candidate) =>
+      candidate.textContent?.trim(),
+    );
+
+    expect(labels).toEqual(['Cancelar', 'Guardar nombre']);
   });
 
   it('marks the name rejected by the backend and takes the focus to it', async () => {

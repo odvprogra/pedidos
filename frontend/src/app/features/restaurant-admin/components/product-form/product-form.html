@@ -66,14 +66,8 @@
       />
     </app-form-field>
 
-    @let categoryError = errorOf('categoryId');
-    <app-form-field label="Categoría" fieldId="product-category" [error]="categoryError">
-      <select
-        appTextInput
-        id="product-category"
-        formControlName="categoryId"
-        [attr.aria-invalid]="categoryError !== null"
-      >
+    <app-form-field label="Categoría" fieldId="product-category">
+      <select appTextInput id="product-category" formControlName="categoryId">
         @for (category of categories(); track category.id) {
           <option [ngValue]="category.id">{{ category.name }}</option>
         }
@@ -85,14 +79,21 @@
     <app-alert class="block">{{ message }}</app-alert>
   }
 
-  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    <button appSecondaryButton type="button" (click)="cancelled.emit()">Cancelar</button>
+  <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+    <button
+      appSecondaryButton
+      type="button"
+      [attr.aria-disabled]="saving()"
+      (click)="cancelled.emit()"
+    >
+      Cancelar
+    </button>
     <button appButton type="submit" [attr.aria-disabled]="saving()">
       @if (saving()) {
         <app-spinner />
         Guardando…
       } @else {
-        Guardar producto
+        {{ submitLabel() }}
       }
     </button>
   </div>

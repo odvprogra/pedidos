@@ -36,7 +36,7 @@ const SILPANCHO: Product = {
 })
 class Host {
   categories = CATEGORIES;
-  categoryId: number | null = 5;
+  categoryId = 5;
   product: Product | null = null;
   readonly saving = signal(false);
   readonly errors = signal<FieldViolation[]>([]);
@@ -165,7 +165,16 @@ describe('ProductForm', () => {
       await submit();
 
       expect(form().querySelector('button[type="submit"]')?.textContent).toContain('Guardando…');
+      expect(form().querySelector('button[type="button"]')?.getAttribute('aria-disabled')).toBe(
+        'true',
+      );
       expect(host.saved).toEqual([]);
+    });
+
+    it('offers to add the product', () => {
+      expect(form().querySelector('button[type="submit"]')?.textContent).toContain(
+        'Agregar producto',
+      );
     });
 
     it('shows a problem that does not belong to a field', async () => {
@@ -193,6 +202,12 @@ describe('ProductForm', () => {
       expect(field('price').value).toBe('45,50');
       expect((field('category') as HTMLSelectElement).selectedOptions[0].textContent).toContain(
         'Platos fuertes',
+      );
+    });
+
+    it('offers to save the changes', () => {
+      expect(form().querySelector('button[type="submit"]')?.textContent).toContain(
+        'Guardar cambios',
       );
     });
 

@@ -21,10 +21,12 @@
         tone="danger"
         type="button"
         [id]="'delete-category-' + category().id"
+        [working]="deleting()"
         [attr.aria-disabled]="unavailable()"
         [attr.aria-expanded]="confirming()"
         [attr.aria-controls]="confirming() ? idPrefix() + '-confirm' : null"
         (click)="toggleConfirmation()"
+        (keydown.escape)="dismiss()"
       >
         @if (deleting()) {
           <app-spinner />
@@ -44,6 +46,7 @@
         [question]="'¿Borrar la categoría ' + category().name + '?'"
         consequence="Desaparece de tu menú. Puedes volver a crearla cuando quieras."
         confirmLabel="Sí, borrar"
+        [disabled]="unavailable()"
         (confirmed)="confirmDeletion()"
         (cancelled)="closeConfirmation()"
       />
@@ -53,6 +56,7 @@
         [question]="'Todavía no puedes borrar ' + category().name"
         [consequence]="notEmptyConsequence()"
         cancelLabel="Entendido"
+        tone="warning"
         (cancelled)="closeConfirmation()"
       />
     }

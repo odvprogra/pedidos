@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
@@ -46,6 +47,7 @@ type PageState =
 type RegistrationField = 'name' | 'description' | 'address';
 
 interface Notice {
+  id: number;
   tone: AlertTone;
   message: string;
 }
@@ -93,10 +95,18 @@ export class MyRestaurantPage implements OnInit {
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   private readonly loadError = viewChild(LoadError);
   private readonly menu = signal<Catalog | null>(null);
+  private readonly arrivedFromAnotherPage = Boolean(
+    inject(Router).currentNavigation()?.previousNavigation,
+  );
+  private noticeCount = 0;
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly notice = signal<Notice | null>(null);
+  protected readonly notices = computed(() => {
+    const current = this.notice();
+    return current ? [current] : [];
+  });
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
@@ -129,7 +139,7 @@ export class MyRestaurantPage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.load(false);
+    this.load(this.arrivedFromAnotherPage);
   }
 
   protected errorOf(field: RegistrationField): string | null {
@@ -157,20 +167,17 @@ export class MyRestaurantPage implements OnInit {
         this.submitting.set(false);
         this.state.set({ status: 'ready', restaurant });
         this.menu.set({ categories: [] });
-        this.notice.set({
-          tone: 'success',
-          message: `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
-        });
+        this.notify(
+          'success',
+          `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
+        );
         this.focusHeading();
       },
       error: (error: unknown) => {
         this.submitting.set(false);
         const problem = toProblemDetails(error);
         if (isAlreadyRegistered(problem)) {
-          this.notice.set({
-            tone: 'warning',
-            message: 'Ya tenías un restaurante registrado. Te mostramos sus datos.',
-          });
+          this.notify('warning', 'Ya tenías un restaurante registrado. Te mostramos sus datos.');
           this.load(true);
           return;
         }
@@ -193,16 +200,13 @@ export class MyRestaurantPage implements OnInit {
       next: () => {
         this.toggling.set(false);
         this.state.set({ status: 'ready', restaurant: { ...restaurant, open } });
-        this.notice.set({ tone: 'success', message: openingDone(open, restaurant.name) });
+        this.notify('success', openingDone(open, restaurant.name));
       },
       error: (error: unknown) => {
         this.toggling.set(false);
         const problem = toProblemDetails(error);
         const outdated = isSuspended(problem) || isNotRegistered(problem);
-        this.notice.set({
-          tone: outdated ? 'warning' : 'danger',
-          message: describeRestaurantError(problem),
-        });
+        this.notify(outdated ? 'warning' : 'danger', describeRestaurantError(problem));
         if (outdated) {
           this.load(true);
         }
@@ -227,6 +231,11 @@ export class MyRestaurantPage implements OnInit {
         );
       },
     });
+  }
+
+  private notify(tone: AlertTone, message: string): void {
+    this.noticeCount += 1;
+    this.notice.set({ id: this.noticeCount, tone, message });
   }
 
   private loadMenu(): void {

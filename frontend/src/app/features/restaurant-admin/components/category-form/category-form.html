@@ -5,7 +5,7 @@
   (ngSubmit)="submit()"
   (keydown.escape)="cancelled.emit()"
 >
-  <h3 id="category-form-title" class="font-extrabold">{{ heading() }}</h3>
+  <h2 id="category-form-title" class="text-lg font-extrabold wrap-anywhere">{{ heading() }}</h2>
 
   @let error = nameError();
   <app-form-field
@@ -28,8 +28,15 @@
     <app-alert class="block">{{ message }}</app-alert>
   }
 
-  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    <button appSecondaryButton type="button" (click)="cancelled.emit()">Cancelar</button>
+  <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+    <button
+      appSecondaryButton
+      type="button"
+      [attr.aria-disabled]="saving()"
+      (click)="cancelled.emit()"
+    >
+      Cancelar
+    </button>
     <button appButton type="submit" [attr.aria-disabled]="saving()">
       @if (saving()) {
         <app-spinner />

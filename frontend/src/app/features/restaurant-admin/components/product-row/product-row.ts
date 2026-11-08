@@ -40,6 +40,17 @@ export class ProductRow {
   protected readonly unavailable = computed(() => this.working() !== null || this.locked());
   protected readonly price = computed(() => formatPrice(this.product().price));
   protected readonly idPrefix = computed(() => `product-${this.product().id}`);
+  protected readonly progress = computed(() => {
+    if (this.working() !== 'availability') {
+      return null;
+    }
+    return this.product().available ? 'Marcando como agotado…' : 'Marcando como disponible…';
+  });
+  protected readonly switchCursor = computed(() =>
+    this.working() === 'availability'
+      ? 'aria-disabled:cursor-wait'
+      : 'aria-disabled:cursor-not-allowed',
+  );
 
   protected toggleAvailability(): void {
     if (!this.unavailable()) {
@@ -58,6 +69,12 @@ export class ProductRow {
       this.closeConfirmation();
     } else if (!this.unavailable()) {
       this.confirming.set(true);
+    }
+  }
+
+  protected dismiss(): void {
+    if (this.confirming()) {
+      this.closeConfirmation();
     }
   }
 

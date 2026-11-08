@@ -51,6 +51,7 @@ type Working =
   { kind: 'category'; id: number } | { kind: 'product'; id: number; task: ProductTask };
 
 interface Notice {
+  id: number;
   tone: AlertTone;
   message: string;
 }
@@ -78,7 +79,11 @@ export class CatalogPage implements OnInit {
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   private readonly loadError = viewChild(LoadError);
+  private readonly arrivedFromAnotherPage = Boolean(
+    this.router.currentNavigation()?.previousNavigation,
+  );
   private returnFocusTo: string | null = null;
+  private noticeCount = 0;
 
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
@@ -88,6 +93,10 @@ export class CatalogPage implements OnInit {
   protected readonly formAlert = signal<string | null>(null);
   protected readonly working = signal<Working | null>(null);
   protected readonly notice = signal<Notice | null>(null);
+  protected readonly notices = computed(() => {
+    const current = this.notice();
+    return current ? [current] : [];
+  });
   protected readonly catalog = computed(() => {
     const current = this.state();
     return current.status === 'ready' ? current.catalog : null;
@@ -98,7 +107,7 @@ export class CatalogPage implements OnInit {
   protected readonly busy = computed(() => this.saving() || this.working() !== null);
 
   ngOnInit(): void {
-    this.load(false);
+    this.load(this.arrivedFromAnotherPage);
   }
 
   protected retry(): void {
@@ -297,12 +306,12 @@ export class CatalogPage implements OnInit {
     } else if (isMenuOutdated(problem)) {
       this.reload(problem);
     } else {
-      this.notice.set({ tone: 'danger', message: describeCatalogError(problem) });
+      this.notify('danger', describeCatalogError(problem));
     }
   }
 
   private reload(problem: ProblemDetails): void {
-    this.notice.set({ tone: 'warning', message: describeCatalogError(problem) });
+    this.notify('warning', describeCatalogError(problem));
     this.load(true);
   }
 
@@ -342,7 +351,12 @@ export class CatalogPage implements OnInit {
   }
 
   private announce(message: string): void {
-    this.notice.set({ tone: 'success', message });
+    this.notify('success', message);
+  }
+
+  private notify(tone: AlertTone, message: string): void {
+    this.noticeCount += 1;
+    this.notice.set({ id: this.noticeCount, tone, message });
   }
 
   private categoryName(categoryId: number): string {

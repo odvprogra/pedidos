@@ -93,10 +93,13 @@ describe('ConfirmPanel', () => {
     expect(button('Entendido')).toBeTruthy();
   });
 
-  it('uses the colors of its tone', async () => {
-    host.tone.set('success');
+  it.each([
+    ['success', 'bg-success-soft'],
+    ['warning', 'bg-warning-soft'],
+  ] as const)('uses the colors of the %s tone', async (tone, background) => {
+    host.tone.set(tone);
     await fixture.whenStable();
 
-    expect(panel().classList).toContain('bg-success-soft');
+    expect(panel().classList).toContain(background);
   });
 });

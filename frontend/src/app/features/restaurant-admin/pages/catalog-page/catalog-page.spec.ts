@@ -216,6 +216,21 @@ describe('CatalogPage', () => {
       expect(document.activeElement).toBe(button('Reintentar'));
     });
 
+    it('leaves the focus alone when the app opens on the menu', async () => {
+      await showMenu();
+
+      expect(document.activeElement).not.toBe(heading());
+    });
+
+    it('takes the focus to the title when the owner comes from another page', async () => {
+      await showMenu();
+      await harness.navigateByUrl('/mi-restaurante');
+      await harness.navigateByUrl('/mi-restaurante/menu');
+      await showMenu();
+
+      expect(document.activeElement).toBe(heading());
+    });
+
     it('sends an owner without a restaurant to register it', async () => {
       failWith(CATALOG_URL, 404, 'restaurant.not_found');
       await stable();
@@ -304,6 +319,27 @@ describe('CatalogPage', () => {
       httpTesting.expectNone(`${CATEGORIES_URL}/5`);
       expect(page().querySelector('form')).toBeNull();
       expect(document.activeElement).toBe(byId('rename-category-5'));
+    });
+
+    it('opens the form of a new category after the last one', async () => {
+      await showMenu();
+
+      await click(button('Nueva categoría'));
+
+      const position = section('Bebidas').compareDocumentPosition(
+        byId('category-name') as HTMLElement,
+      );
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(byId('new-category')).toBeNull();
+    });
+
+    it('names the category after its form while it is renamed', async () => {
+      await showMenu();
+
+      await click(button('Renombrar', section('Bebidas')));
+
+      expect(section('Bebidas').getAttribute('aria-labelledby')).toBe('category-form-title');
+      expect(byId('category-form-title')?.textContent).toContain('Renombrar Bebidas');
     });
 
     it('keeps a single form open', async () => {
@@ -511,6 +547,23 @@ describe('CatalogPage', () => {
       expect(page().querySelector('app-alert[dismissible] [role="alert"]')?.textContent).toContain(
         'Detalle del servidor',
       );
+    });
+
+    it('announces the same failure again as a new notice', async () => {
+      const toggle = (): HTMLButtonElement =>
+        productRow('Silpancho').querySelector('button[role="switch"]') as HTMLButtonElement;
+      await click(toggle());
+      failWith(`${PRODUCTS_URL}/10/mark-sold-out`, 500);
+      await stable();
+      const first = page().querySelector('app-alert[dismissible]');
+
+      await click(toggle());
+      failWith(`${PRODUCTS_URL}/10/mark-sold-out`, 500);
+      await stable();
+
+      const second = page().querySelector('app-alert[dismissible]');
+      expect(second?.textContent).toContain('Detalle del servidor');
+      expect(second).not.toBe(first);
     });
 
     it('deletes a product after the confirmation', async () => {

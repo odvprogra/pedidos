@@ -98,7 +98,7 @@ describe('Header', () => {
     await fixture.whenStable();
 
     const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
-    expect(link.getAttribute('aria-current')).toBe('page');
+    expect(link.getAttribute('aria-current')).toBe('true');
   });
 
   it.each([
@@ -123,16 +123,20 @@ describe('Header', () => {
     expect(text()).toContain('Dueño de restaurante');
   });
 
-  it('marks the restaurant link while the owner is in its restaurant', async () => {
-    session.signIn(OWNER);
-    await TestBed.inject(Router).navigateByUrl('/mi-restaurante');
-    await fixture.whenStable();
+  it.each(['/mi-restaurante', '/mi-restaurante/menu'])(
+    'marks the restaurant link while the owner is in %s',
+    async (url) => {
+      session.signIn(OWNER);
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
 
-    const link = fixture.nativeElement.querySelector(
-      'a[href="/mi-restaurante"]',
-    ) as HTMLAnchorElement;
-    expect(link.getAttribute('aria-current')).toBe('page');
-  });
+      const link = fixture.nativeElement.querySelector(
+        'a[href="/mi-restaurante"]',
+      ) as HTMLAnchorElement;
+      expect(link.classList).toContain('bg-brand-strong');
+      expect(link.getAttribute('aria-current')).toBe('true');
+    },
+  );
 
   it.each([
     ['a customer', ANA],

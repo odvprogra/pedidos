@@ -4,5 +4,5 @@ import { MyRestaurantPage } from './pages/my-restaurant-page/my-restaurant-page'
 
 export const RESTAURANT_ADMIN_ROUTES: Routes = [
   { path: '', component: MyRestaurantPage, title: 'Mi restaurante | Pedidos' },
-  { path: 'menu', component: CatalogPage, title: 'Mi menú | Pedidos' },
+  { path: 'menu', component: CatalogPage, title: 'Tu menú | Pedidos' },
 ];

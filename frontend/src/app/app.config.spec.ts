@@ -176,6 +176,21 @@ describe('appConfig', () => {
       expect(harness.routeNativeElement?.textContent).toContain('Todavía no tiene productos');
     });
 
+    it('takes the focus to the restaurant when the owner comes back from its menu', async () => {
+      await startWith(LUIS);
+      const harness = await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      await harness.navigateByUrl('/mi-restaurante');
+      httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(document.activeElement).toBe(harness.routeNativeElement?.querySelector('h1'));
+    });
+
     it('shows its menu to an owner', async () => {
       await startWith(LUIS);
 

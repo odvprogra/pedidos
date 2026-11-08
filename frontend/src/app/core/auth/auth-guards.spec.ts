@@ -81,6 +81,12 @@ describe('auth guards', () => {
 
       expect(await visit('/mi-restaurante')).toBe('/admin');
     });
+
+    it('sends an owner to its restaurant from a page of another role', async () => {
+      session.signIn(OWNER);
+
+      expect(await visit('/admin')).toBe('/mi-restaurante');
+    });
   });
 
   describe('guestGuard', () => {
@@ -100,6 +106,12 @@ describe('auth guards', () => {
       session.signIn(ADMIN);
 
       expect(await visit('/ingresar')).toBe('/admin');
+    });
+
+    it('sends an owner with a session to its restaurant', async () => {
+      session.signIn(OWNER);
+
+      expect(await visit('/ingresar')).toBe('/mi-restaurante');
     });
   });
 });

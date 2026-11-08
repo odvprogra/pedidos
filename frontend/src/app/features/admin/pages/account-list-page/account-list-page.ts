@@ -14,6 +14,7 @@ import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { AccountRow } from '../../components/account-row/account-row';
@@ -31,7 +32,7 @@ interface Notice {
 
 @Component({
   selector: 'app-account-list-page',
-  imports: [AccountRow, Alert, LoadError, Pagination],
+  imports: [AccountRow, Alert, EmptyState, LoadError, Pagination],
   templateUrl: './account-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

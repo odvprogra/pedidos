@@ -58,30 +58,27 @@
     />
   } @else if (result(); as result) {
     @if (result.items.length === 0) {
-      <div
-        class="mt-6 grid justify-items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center"
+      <app-empty-state
+        class="mt-6 block"
+        heading="Todavía no hay cuentas"
+        message="Cuando alguien se registre como cliente o dueño de restaurante, va a aparecer aquí."
       >
-        <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
-          <svg
-            aria-hidden="true"
-            class="size-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.25"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="9" cy="8" r="3.5" />
-            <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-            <path d="M19 8v6M16 11h6" />
-          </svg>
-        </span>
-        <h2 class="text-lg font-extrabold">Todavía no hay cuentas</h2>
-        <p class="max-w-md text-muted">
-          Cuando alguien se registre como cliente o dueño de restaurante, va a aparecer aquí.
-        </p>
-      </div>
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="9" cy="8" r="3.5" />
+          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+          <path d="M19 8v6M16 11h6" />
+        </svg>
+      </app-empty-state>
     } @else {
       <div
         class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"

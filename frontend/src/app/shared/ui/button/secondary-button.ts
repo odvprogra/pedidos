@@ -11,7 +11,7 @@ const TONES: Record<SecondaryButtonTone, string> = {
 };
 
 @Directive({
-  selector: 'button[appSecondaryButton]',
+  selector: 'button[appSecondaryButton], a[appSecondaryButton]',
   host: {
     class:
       'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border bg-surface px-3.5 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:opacity-60 aria-disabled:hover:bg-surface',

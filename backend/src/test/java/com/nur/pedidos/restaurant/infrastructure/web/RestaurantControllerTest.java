@@ -20,9 +20,12 @@ import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
 import com.nur.pedidos.shared.infrastructure.security.SecurityConfig;
 import java.time.Instant;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -133,12 +136,8 @@ class RestaurantControllerTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"name, 121", "description, 301", "address, 201"})
-    void rejectsAFieldLongerThanItsColumn(String field, int length) {
-        String body = """
-                {"name": "La Casona", "address": "Calle Sucre 245", "%s": "%s"}
-                """.formatted(field, "a".repeat(length));
-
+    @MethodSource("fieldsLongerThanTheirColumn")
+    void rejectsAFieldLongerThanItsColumn(String body, String field) {
         var response = mvc.post()
                 .uri("/api/v1/restaurants")
                 .with(sessionOf("OWNER", 7L))
@@ -156,16 +155,13 @@ class RestaurantControllerTest {
     @Test
     void acceptsEachFieldAtItsLimit() {
         when(registerRestaurant.execute(any())).thenReturn(laCasona(false, false));
-        String body = """
-                {"name": "%s", "description": "%s", "address": "%s"}
-                """.formatted("a".repeat(120), "b".repeat(300), "c".repeat(200));
 
         var response = mvc.post()
                 .uri("/api/v1/restaurants")
                 .with(sessionOf("OWNER", 7L))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body);
+                .content(registration("a".repeat(120), "b".repeat(300), "c".repeat(200)));
 
         assertThat(response).hasStatus(HttpStatus.CREATED);
     }
@@ -398,6 +394,23 @@ class RestaurantControllerTest {
                 .extractingPath("$.code")
                 .isEqualTo("csrf_invalid");
         verifyNoInteractions(openRestaurant, closeRestaurant);
+    }
+
+    static Stream<Arguments> fieldsLongerThanTheirColumn() {
+        return Stream.of(
+                Arguments.of(registration("a".repeat(121), null, "Calle Sucre 245"), "name"),
+                Arguments.of(registration("La Casona", "a".repeat(301), "Calle Sucre 245"), "description"),
+                Arguments.of(registration("La Casona", null, "a".repeat(201)), "address"));
+    }
+
+    private static String registration(String name, String description, String address) {
+        return """
+                {"name": %s, "description": %s, "address": %s}
+                """.formatted(quoted(name), quoted(description), quoted(address));
+    }
+
+    private static String quoted(String value) {
+        return value == null ? "null" : '"' + value + '"';
     }
 
     private static Restaurant laCasona(boolean open, boolean suspended) {

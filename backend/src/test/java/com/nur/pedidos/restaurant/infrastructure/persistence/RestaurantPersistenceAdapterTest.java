@@ -80,6 +80,16 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void keepsTheSuspensionOfARestaurant() {
+        adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+
+        assertThat(adapter.findByOwnerId(7L))
+                .get()
+                .extracting(Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(false, true);
+    }
+
+    @Test
     void rejectsASecondRestaurantForTheSameOwner() {
         adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
 

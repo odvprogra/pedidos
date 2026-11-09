@@ -43,7 +43,7 @@ class OrderFlowTest {
         assertThat(order)
                 .extracting(OrderView::restaurantId, OrderView::restaurantName, OrderView::status, OrderView::total)
                 .containsExactly(menu.restaurantId(), "La Casona", "PLACED", new BigDecimal("121.50"));
-        assertThat(order.placedAt()).isNotNull();
+        assertThat(order.placedAt()).isNotNull().isEqualTo(order.updatedAt());
         assertThat(order.items())
                 .containsExactly(
                         new ItemView(
@@ -92,6 +92,79 @@ class OrderFlowTest {
                 .expectBody()
                 .jsonPath("$.code")
                 .isEqualTo("order.restaurant_unavailable");
+    }
+
+    @Test
+    void aCustomerFollowsTheirPendingOrderAndCancelsIt() {
+        Menu menu = openRestaurantWithMenu("marta@pedido.com");
+        Account customer = register("sofia@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+
+        customer.get("/api/v1/orders")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(1)
+                .jsonPath("$.items[0].id")
+                .isEqualTo(orderId)
+                .jsonPath("$.items[0].status")
+                .isEqualTo("PLACED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.status")
+                .isEqualTo("CANCELLED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+
+        customer.get("/api/v1/orders/" + orderId)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.status")
+                .isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void aCustomerCannotSeeNorCancelTheOrderOfAnotherCustomer() {
+        Menu menu = openRestaurantWithMenu("hugo@pedido.com");
+        Long orderId = place(register("vale@pedido.com", "CUSTOMER"), menu);
+        Account intruder = register("tomas@pedido.com", "CUSTOMER");
+
+        intruder.get("/api/v1/orders/" + orderId)
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        intruder.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        intruder.get("/api/v1/orders")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+    }
+
+    private Long place(Account customer, Menu menu) {
+        return customer.post("/api/v1/orders", silpanchoFrom(menu))
+                .expectStatus()
+                .isCreated()
+                .expectBody(IdView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
     }
 
     private static OrderBody silpanchoFrom(Menu menu) {
@@ -212,5 +285,6 @@ class OrderFlowTest {
             String status,
             BigDecimal total,
             Instant placedAt,
+            Instant updatedAt,
             List<ItemView> items) {}
 }

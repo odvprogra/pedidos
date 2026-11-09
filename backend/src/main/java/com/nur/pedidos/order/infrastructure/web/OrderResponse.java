@@ -13,6 +13,7 @@ record OrderResponse(
         OrderStatus status,
         BigDecimal total,
         Instant placedAt,
+        Instant updatedAt,
         List<OrderItemResponse> items) {
 
     static OrderResponse from(Order order) {
@@ -23,6 +24,7 @@ record OrderResponse(
                 order.getStatus(),
                 order.getTotal(),
                 order.getPlacedAt(),
+                order.getUpdatedAt(),
                 order.getItems().stream().map(OrderItemResponse::from).toList());
     }
 }

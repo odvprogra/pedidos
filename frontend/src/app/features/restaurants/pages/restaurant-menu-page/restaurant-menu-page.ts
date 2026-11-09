@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { canShop } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { describeUnits } from '@core/cart/cart';
 import { CartStore } from '@core/cart/cart-store';
@@ -76,10 +77,7 @@ export class RestaurantMenuPage {
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly announcement = signal('');
-  protected readonly canOrder = computed(() => {
-    const account = this.session.account();
-    return account === null || account.role === 'CUSTOMER';
-  });
+  protected readonly canOrder = computed(() => canShop(this.session.account()));
   protected readonly otherRestaurant = computed(() => {
     const inCart = this.cart.restaurant();
     const shown = this.shownRestaurant();
@@ -121,8 +119,11 @@ export class RestaurantMenuPage {
   }
 
   protected replace(restaurant: Restaurant, product: Product): void {
+    const previous = this.cart.restaurant()?.name;
     this.cart.replaceWith(restaurant, product);
-    this.announceAdded(product);
+    this.announcement.set(
+      `Vaciaste el carrito de ${previous} y agregaste ${product.name}. Tienes ${describeUnits(this.cart.count())}.`,
+    );
   }
 
   private announceAdded(product: Product): void {

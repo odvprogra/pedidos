@@ -39,10 +39,10 @@ export class MenuItem {
   protected readonly price = computed(() => formatPrice(this.product().price));
   protected readonly idPrefix = computed(() => `menu-product-${this.product().id}`);
   protected readonly nameId = computed(() => `${this.idPrefix()}-name`);
+  protected readonly inCartId = computed(() => `${this.idPrefix()}-in-cart`);
   protected readonly atMaximum = computed(() => this.quantityInCart() >= MAX_QUANTITY);
-  protected readonly addable = computed(
-    () => this.product().available && this.restaurantOpen() && !this.atMaximum(),
-  );
+  protected readonly orderable = computed(() => this.product().available && this.restaurantOpen());
+  protected readonly addable = computed(() => this.orderable() && !this.atMaximum());
   protected readonly replacementQuestion = computed(
     () => `¿Vaciar tu carrito de ${this.otherRestaurant()}?`,
   );

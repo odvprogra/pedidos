@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { CartItem, MAX_QUANTITY, lineSubtotal } from '@core/cart/cart';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { formatPrice } from '@shared/utils/format-price';
@@ -10,6 +18,8 @@ import { formatPrice } from '@shared/utils/format-price';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CartLine {
+  private readonly removeButton = viewChild.required<ElementRef<HTMLButtonElement>>('removeButton');
+
   readonly item = input.required<CartItem>();
   readonly locked = input(false);
   readonly quantityChange = output<number>();
@@ -20,6 +30,10 @@ export class CartLine {
   protected readonly subtotal = computed(() => formatPrice(lineSubtotal(this.item())));
   protected readonly atMinimum = computed(() => this.item().quantity <= 1);
   protected readonly atMaximum = computed(() => this.item().quantity >= MAX_QUANTITY);
+
+  focusRemoveButton(): void {
+    this.removeButton().nativeElement.focus();
+  }
 
   protected decrease(): void {
     if (!this.locked() && !this.atMinimum()) {

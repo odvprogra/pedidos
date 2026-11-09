@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '@core/auth/auth-guards';
 import { ADMIN_SEGMENT, MY_RESTAURANT_SEGMENT } from '@core/auth/auth-paths';
-import { CART_SEGMENT } from '@core/cart/cart';
+import { CART_SEGMENT } from '@core/cart/cart-paths';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'restaurantes' },

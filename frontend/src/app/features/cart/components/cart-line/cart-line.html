@@ -39,7 +39,7 @@
         </svg>
         <span class="sr-only">Una unidad menos</span>
       </button>
-      <span class="min-w-8 text-center font-extrabold" aria-live="polite" data-quantity>
+      <span class="min-w-8 text-center font-extrabold" data-quantity>
         {{ item().quantity }}
       </span>
       <button
@@ -65,6 +65,7 @@
     </div>
 
     <button
+      #removeButton
       appSecondaryButton
       tone="danger"
       type="button"

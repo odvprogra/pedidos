@@ -13,10 +13,14 @@
         <p class="mt-0.5 text-sm wrap-anywhere text-muted">{{ description }}</p>
       }
       @if (canOrder() && quantityInCart() > 0) {
-        <p class="mt-2 flex items-center gap-1.5 text-sm font-bold text-success" data-in-cart>
+        <p
+          class="mt-2 flex items-start gap-1.5 text-sm font-bold text-success"
+          data-in-cart
+          [id]="inCartId()"
+        >
           <svg
             aria-hidden="true"
-            class="size-4"
+            class="mt-0.5 size-4 shrink-0"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -26,10 +30,12 @@
           >
             <path d="m5 12.5 4.5 4.5L19 7.5" />
           </svg>
-          {{ quantityInCart() }} en tu carrito
-          @if (atMaximum()) {
-            <span class="font-semibold text-muted">· máximo por pedido</span>
-          }
+          <span>
+            {{ quantityInCart() }} en tu carrito
+            @if (atMaximum()) {
+              <span class="font-semibold text-muted">· máximo por pedido</span>
+            }
+          </span>
         </p>
       }
     </div>
@@ -45,8 +51,10 @@
         <button
           #addButton
           type="button"
-          class="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand-soft px-3.5 text-sm font-bold text-brand transition hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted aria-expanded:bg-brand aria-expanded:text-white"
-          [disabled]="!addable()"
+          class="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand-soft px-3.5 text-sm font-bold text-brand-strong transition hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted aria-disabled:cursor-not-allowed aria-disabled:bg-canvas aria-disabled:text-muted aria-expanded:bg-brand aria-expanded:text-white"
+          [disabled]="!orderable()"
+          [attr.aria-disabled]="orderable() && atMaximum() ? true : null"
+          [attr.aria-describedby]="quantityInCart() > 0 ? inCartId() : null"
           [attr.aria-expanded]="otherRestaurant() && addable() ? confirming() : null"
           [attr.aria-controls]="confirming() ? idPrefix() + '-replace' : null"
           (click)="add()"

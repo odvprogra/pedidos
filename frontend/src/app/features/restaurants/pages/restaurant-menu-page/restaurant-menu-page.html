@@ -26,7 +26,11 @@
       <div class="grid gap-4 lg:sticky lg:top-24">
         <app-restaurant-profile [restaurant]="page.restaurant" />
         @if (cartHere(); as cart) {
-          <app-cart-summary [units]="cart.units" [subtotal]="cart.subtotal" />
+          <app-cart-summary
+            class="hidden lg:block"
+            [units]="cart.units"
+            [subtotal]="cart.subtotal"
+          />
         }
       </div>
 
@@ -80,8 +84,9 @@
         }
       </div>
     </div>
-    @if (cartHere()) {
+    @if (cartHere(); as cart) {
       <div class="h-20 lg:hidden" aria-hidden="true"></div>
+      <app-cart-summary class="lg:hidden" [units]="cart.units" [subtotal]="cart.subtotal" />
     }
   } @else if (page.status === 'missing') {
     <div

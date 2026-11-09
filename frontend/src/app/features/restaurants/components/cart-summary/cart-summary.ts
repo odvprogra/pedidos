@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CART_PATH, describeUnits } from '@core/cart/cart';
+import { describeUnits } from '@core/cart/cart';
+import { CART_PATH } from '@core/cart/cart-paths';
 import { Button } from '@shared/ui/button/button';
 import { formatPrice } from '@shared/utils/format-price';
 

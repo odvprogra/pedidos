@@ -1,5 +1,3 @@
-export const CART_SEGMENT = 'carrito';
-export const CART_PATH = `/${CART_SEGMENT}`;
 export const MAX_QUANTITY = 99;
 
 export interface CartRestaurant {

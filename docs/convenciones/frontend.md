@@ -12,7 +12,7 @@ Se sigue la guía de estilo de Angular 2025: archivos sin sufijo de tipo para co
 | Página (enrutada)       | `pages/restaurant-list-page/restaurant-list-page.ts` | `RestaurantListPage` |
 | Componente              | `components/restaurant-card/restaurant-card.ts`      | `RestaurantCard`     |
 | Cliente HTTP            | `data-access/restaurant-api.ts`                      | `RestaurantApi`      |
-| Estado compartido       | `data-access/cart-store.ts`                          | `CartStore`          |
+| Estado compartido       | `data-access/menu-store.ts`                          | `MenuStore`          |
 | Modelo                  | `models/restaurant.ts`                               | `Restaurant`         |
 | Rutas de la feature     | `restaurants.routes.ts`                              | `RESTAURANTS_ROUTES` |
 | Componente reutilizable | `shared/ui/badge/badge.ts`                           | `Badge`              |
@@ -78,8 +78,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Agregar algo que no se puede, como un producto agotado o de un restaurante cerrado, es un botón
   con `disabled`: el motivo ya está a la vista. Un paso de cantidad que llegó a su límite (1 o 99)
   usa `aria-disabled`, para no perder el foco mientras se toca.
-- Lo que se agrega sin cambiar de pantalla se anuncia en una región `aria-live="polite"` fija de la
-  página ("Agregaste Silpancho al carrito. Tienes 3 productos."), no con un aviso visible.
+- Lo que cambia el carrito sin cambiar de pantalla (agregar, cambiar una cantidad, quitar) se anuncia
+  en una región `aria-live="polite"` fija de la página ("Agregaste Silpancho al carrito. Tienes 3
+  productos."), no con un aviso visible. Al quitar una línea, el foco pasa al "Quitar" de la
+  siguiente, o al de la anterior si era la última; con el carrito vacío, al título.
+- Una barra fija abajo, como "Ver carrito" en el menú del celular, lleva `data-cart-bar`, que agranda
+  el margen de scroll inferior para que no tape el elemento con el foco, y va al final del DOM para
+  que el Tab la alcance después del contenido.
 - Un estado corto (Abierto, Cerrado, Agotado, Suspendida) es un `app-badge` (`@shared/ui`) con su
   `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
   bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el

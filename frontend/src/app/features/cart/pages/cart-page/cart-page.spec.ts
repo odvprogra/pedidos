@@ -136,7 +136,7 @@ describe('CartPage', () => {
 
       expect(lines()).toEqual(['Silpancho', 'Limonada']);
       expect(link('La Casona').getAttribute('href')).toBe('/restaurantes/4');
-      expect(textOf('[data-cart-units]')).toBe('3 productos');
+      expect(textOf('[data-cart-units]')).toBe('3');
       expect(textOf('[data-cart-subtotal]')).toBe('Bs 100,50');
       expect(text()).toContain('Retiras en Calle Sucre 245');
     });
@@ -148,15 +148,29 @@ describe('CartPage', () => {
 
       expect(cart.quantityOf(10)).toBe(3);
       expect(textOf('[data-cart-subtotal]')).toBe('Bs 145,50');
+      expect(textOf('[data-cart-announcement]')).toBe(
+        'Silpancho: 3 unidades. Subtotal estimado Bs 145,50.',
+      );
     });
 
-    it('removes a product and keeps the focus on the page', async () => {
+    it('removes a product, says so and takes the focus to the next one', async () => {
       await openAs(ANA);
 
       await click(button('Quitar Silpancho'));
 
       expect(lines()).toEqual(['Limonada']);
-      expect(document.activeElement).toBe(page().querySelector('h1'));
+      expect(textOf('[data-cart-announcement]')).toBe(
+        'Quitaste Silpancho del carrito. Tienes 1 producto.',
+      );
+      expect(document.activeElement).toBe(button('Quitar Limonada'));
+    });
+
+    it('takes the focus to the previous product when the last one is removed', async () => {
+      await openAs(ANA);
+
+      await click(button('Quitar Limonada'));
+
+      expect(document.activeElement).toBe(button('Quitar Silpancho'));
     });
 
     it('shows the empty cart once the last product is removed', async () => {
@@ -166,7 +180,9 @@ describe('CartPage', () => {
       await click(button('Quitar Limonada'));
 
       expect(text()).toContain('Tu carrito está vacío');
+      expect(textOf('[data-cart-announcement]')).toBe('Quitaste Limonada. Tu carrito quedó vacío.');
       expect(cart.restaurant()).toBeNull();
+      expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
     it('asks a visitor to log in and come back to the cart', async () => {
@@ -185,6 +201,19 @@ describe('CartPage', () => {
       expect(alert()?.textContent).toContain('Solo las cuentas de cliente pueden hacer pedidos');
       expect(text()).not.toContain('Confirmar pedido');
       expect(text()).not.toContain('Ingresar para confirmar');
+    });
+
+    it('lets an owner only empty the cart', async () => {
+      await openAs(OWNER);
+
+      expect(button('Quitar Silpancho').getAttribute('aria-disabled')).toBe('true');
+      expect(text()).not.toContain('Agregar más productos');
+
+      await click(button('Vaciar carrito'));
+
+      expect(cart.count()).toBe(0);
+      expect(text()).toContain('Tu carrito está vacío');
+      expect(document.activeElement).toBe(page().querySelector('h1'));
     });
   });
 
@@ -215,6 +244,7 @@ describe('CartPage', () => {
 
       expect(button('Confirmando pedido…').getAttribute('aria-disabled')).toBe('true');
       expect(page().querySelector('[data-increase]')?.getAttribute('aria-disabled')).toBe('true');
+      expect(textOf('[role="status"]')).toBe('Confirmando tu pedido…');
       httpTesting.expectOne(ORDERS_URL).flush(PLACED);
     });
 

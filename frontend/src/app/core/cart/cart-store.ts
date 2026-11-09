@@ -75,15 +75,14 @@ function readStoredCart(): Cart | null {
   }
 }
 
-function writeStoredCart(cart: Cart | null): boolean {
+function writeStoredCart(cart: Cart | null): void {
   try {
     if (cart) {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } else {
       localStorage.removeItem(CART_STORAGE_KEY);
     }
-    return true;
   } catch {
-    return false;
+    return;
   }
 }

@@ -158,16 +158,20 @@ describe('MenuItem', () => {
       host.quantityInCart.set(2);
       await fixture.whenStable();
 
-      expect(item().querySelector('[data-in-cart]')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        '2 en tu carrito',
-      );
+      const inCart = item().querySelector('[data-in-cart]') as HTMLElement;
+      expect(inCart.textContent?.replace(/\s+/g, ' ').trim()).toBe('2 en tu carrito');
+      expect(addButton()?.getAttribute('aria-describedby')).toBe(inCart.id);
     });
 
-    it('stops adding at the maximum quantity of a product', async () => {
+    it('stops adding at the maximum quantity without losing the focus', async () => {
       host.quantityInCart.set(99);
       await fixture.whenStable();
 
-      expect(addButton()?.disabled).toBe(true);
+      await click(addButton());
+
+      expect(addButton()?.disabled).toBe(false);
+      expect(addButton()?.getAttribute('aria-disabled')).toBe('true');
+      expect(host.adds).toBe(0);
       expect(text()).toContain('99 en tu carrito · máximo por pedido');
     });
   });

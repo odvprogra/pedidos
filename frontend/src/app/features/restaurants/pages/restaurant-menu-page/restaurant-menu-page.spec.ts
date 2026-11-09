@@ -375,6 +375,23 @@ describe('RestaurantMenuPage', () => {
       expect(summary()?.textContent?.replace(/\s+/g, ' ')).toContain('Bs 45,00');
     });
 
+    it('leaves the bar of the phone after the menu, where the tab order reaches it', async () => {
+      await open('4');
+      await respond();
+
+      await add('Silpancho');
+
+      const summaries = page().querySelectorAll('app-cart-summary');
+      const articles = page().querySelectorAll('article');
+      const phoneBar = summaries[summaries.length - 1];
+      expect(summaries).toHaveLength(2);
+      expect(phoneBar.classList).toContain('lg:hidden');
+      expect(
+        articles[articles.length - 1].compareDocumentPosition(phoneBar) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
     it('does not let a sold out product be added', async () => {
       await open('4');
       await respond();
@@ -421,7 +438,9 @@ describe('RestaurantMenuPage', () => {
 
       expect(cart.restaurant()?.name).toBe('La Casona');
       expect(cart.items().map((item) => item.name)).toEqual(['Silpancho']);
-      expect(announcement()).toBe('Agregaste Silpancho al carrito. Tienes 1 producto.');
+      expect(announcement()).toBe(
+        'Vaciaste el carrito de El Fogón y agregaste Silpancho. Tienes 1 producto.',
+      );
     });
   });
 });

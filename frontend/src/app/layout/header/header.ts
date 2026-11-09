@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ROLE_LABELS, Role } from '@core/auth/account';
+import { ROLE_LABELS, Role, canShop } from '@core/auth/account';
 import { ADMIN_PATH, LOG_IN_PATH, MY_RESTAURANT_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
-import { CART_PATH, describeUnits } from '@core/cart/cart';
+import { describeUnits } from '@core/cart/cart';
+import { CART_PATH } from '@core/cart/cart-paths';
 import { CartStore } from '@core/cart/cart-store';
 
 interface RoleLink {
@@ -35,7 +36,7 @@ export class Header {
   protected readonly status = this.session.status;
   protected readonly account = this.session.account;
   protected readonly showsCart = computed(
-    () => this.status() === 'anonymous' || this.account()?.role === 'CUSTOMER',
+    () => this.status() !== 'loading' && canShop(this.account()),
   );
   protected readonly cartCount = this.cart.count;
   protected readonly cartBadge = computed(() =>

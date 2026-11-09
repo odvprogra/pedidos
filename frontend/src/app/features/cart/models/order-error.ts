@@ -16,7 +16,10 @@ const MESSAGES = new Map<string, string>([
   ],
   ['access_denied', 'Solo las cuentas de cliente pueden hacer pedidos.'],
   ['csrf_invalid', 'No pudimos validar tu solicitud. Intenta de nuevo.'],
-  ['validation_failed', 'No pudimos leer tu carrito. Vacíalo y vuelve a armarlo.'],
+  [
+    'validation_failed',
+    'No pudimos leer tu carrito. Quita los productos y vuelve a agregarlos desde el menú.',
+  ],
 ]);
 
 export function isProductUnavailable(problem: ProblemDetails): boolean {

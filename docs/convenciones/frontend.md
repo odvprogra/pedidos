@@ -65,10 +65,18 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   producto, es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras
   trabaja queda con `aria-disabled` y dice qué está haciendo.
 - Elegir qué parte de una lista ver, como "En curso" o "Terminados" en los pedidos del dueño, son
-  botones con `aria-pressed` dentro de un `role="group"` con nombre. Cambiar de filtro vuelve a la
-  primera página y lleva el foco al título, como cambiar de página.
+  botones con `aria-pressed` dentro de un `role="group"` con nombre: un riel `bg-surface` con borde
+  y el elegido en `bg-brand` con texto blanco. Cambiar de filtro vuelve a la primera página y lleva
+  el foco al título, como cambiar de página.
 - Una lista que otros cambian mientras se mira, como los pedidos del dueño, tiene un botón
   "Actualizar" que la vuelve a pedir en la misma página y con el mismo filtro. No se consulta sola.
+  Mientras trabaja dice "Actualizando…", el foco se queda en el botón y el resultado se anuncia en
+  una región `aria-live="polite"` ("Lista actualizada: 4 pedidos en curso.").
+- Un botón que hace un paso y deja en su lugar el botón del paso siguiente, como "Aceptar" y
+  "Marcar listo", ignora el segundo clic de un doble clic (`MouseEvent.detail > 1`). Así un doble
+  toque no hace dos pasos. Si el paso falla, el foco se queda en el botón que se tocó.
+  Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
+  al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
 - El resultado de una acción se anuncia en un `app-alert dismissible` fijo bajo el header, con
   `data-sticky-notice`: `tone="success"` (que usa `role="status"`) o el tono de error. Ese atributo
   agranda el margen de scroll de la página para que el aviso no tape el elemento con el foco. Cada

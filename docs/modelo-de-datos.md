@@ -225,20 +225,31 @@ stateDiagram-v2
     CANCELLED --> [*]
 ```
 
-| Estado      | En la interfaz     | Método del dominio |
-| ----------- | ------------------ | ------------------ |
-| `PLACED`    | Pendiente          | `Order.place(...)` |
-| `ACCEPTED`  | En preparación     | `accept()`         |
-| `READY`     | Listo para retirar | `markReady()`      |
-| `PICKED_UP` | Retirado           | `markPickedUp()`   |
-| `REJECTED`  | Rechazado          | `reject()`         |
-| `CANCELLED` | Cancelado          | `cancel()`         |
+| Estado      | En la interfaz     | Método del dominio  |
+| ----------- | ------------------ | ------------------- |
+| `PLACED`    | Pendiente          | `Order.place(...)`  |
+| `ACCEPTED`  | En preparación     | `accept(now)`       |
+| `READY`     | Listo para retirar | `markReady(now)`    |
+| `PICKED_UP` | Retirado           | `markPickedUp(now)` |
+| `REJECTED`  | Rechazado          | `reject(now)`       |
+| `CANCELLED` | Cancelado          | `cancel(now)`       |
 
-- Solo esas transiciones son válidas. Cualquier otra responde `409` con `order.invalid_transition`.
+- Solo esas transiciones son válidas. Cualquier otra responde `409` con `order.invalid_transition`,
+  también repetir la misma: aceptar un pedido aceptado o cancelar uno cancelado. Las decide
+  `OrderStatus.canBecome(next)`, y `Order` no cambia nada si la transición no vale.
 - El cliente solo ve y cancela sus pedidos, y el dueño solo los de su restaurante. Si no, `403` con
-  `order.not_owner`.
+  `order.not_owner`. Un pedido que no existe responde `404` con `order.not_found`. El caso de uso
+  revisa primero que exista, después la pertenencia y por último el estado.
 - Cada transición actualiza `updated_at`. La hora sale de un `Clock`, así los tests la fijan.
 - Una vez aceptado, el pedido ya no se cancela.
+- Dos cambios a la vez sobre el mismo pedido, como el cliente que cancela mientras el dueño acepta,
+  no se pisan: el caso de uso lee el pedido con `findByIdForUpdate`, que bloquea la fila
+  (`select ... for no key update`) hasta el final de la transacción. El segundo espera, lee el estado
+  nuevo y recibe el `409`. No hace falta una columna de versión.
+
+La lista del cliente (`customer_id = ? order by placed_at desc, id desc`) usa
+`orders_customer_id_idx`. Un cliente tiene pocos pedidos, así que ordenarlos no necesita un índice
+propio.
 
 ## Referencias entre módulos
 

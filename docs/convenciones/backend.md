@@ -30,8 +30,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Los value objects y datos inmutables son `record`.
 - Las entidades tienen un constructor con todos los campos (para reconstruirlas desde la base) y
   métodos de fábrica con nombre del negocio para crearlas (`Restaurant.register(...)`).
-- No hay setters. Los cambios de estado son métodos con intención: `order.confirm()`,
-  `restaurant.open()`. Ahí se validan las reglas.
+- No hay setters. Los cambios de estado son métodos con intención: `order.accept(now)`,
+  `restaurant.open()`. Ahí se validan las reglas. Si el cambio guarda la hora, la recibe del caso de
+  uso, que la toma del `Clock`.
 - Lombok: solo `@Getter`. Nunca `@Data`, `@Setter` ni `@Builder` en el dominio.
 - Las reglas rotas se lanzan como `DomainException` con un código estable
   (`"order.empty"`, `"restaurant.name_required"`). Se crea una subclase propia solo cuando el error

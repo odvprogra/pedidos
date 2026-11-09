@@ -17,6 +17,10 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
 
+- Un bloqueo de la base, como el de `findByIdForUpdate` en los pedidos, se prueba con dos
+  transacciones reales en un `@SpringBootTest` (`OrderLockingTest`): una toma la fila y espera un
+  `CountDownLatch`, y la otra tiene que quedar esperando hasta que la primera termina. Sin el
+  bloqueo el test falla, porque la segunda no espera.
 - Nombre del método: describe el comportamiento en inglés, en camelCase:
   `rejectsAnOrderWithoutItems`, `returnsNotFoundWhenTheRestaurantDoesNotExist`.
 - Una conducta por test. Preparación, acción y verificación separadas por líneas en blanco.

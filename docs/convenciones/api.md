@@ -270,11 +270,14 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
 ## Pedidos
 
 El cliente confirma el carrito y el pedido queda pendiente en el restaurante. No hay envío ni pago:
-lo retira en el local.
+lo retira en el local. Después sigue sus pedidos y puede cancelar uno mientras está pendiente.
 
-| Operación           | Ruta                  | Acceso  | Respuesta                                           |
-| ------------------- | --------------------- | ------- | --------------------------------------------------- |
-| Confirmar un pedido | `POST /api/v1/orders` | Cliente | `201` + `Location: /api/v1/orders/{id}` + el pedido |
+| Operación           | Ruta                                | Acceso  | Respuesta                                           |
+| ------------------- | ----------------------------------- | ------- | --------------------------------------------------- |
+| Confirmar un pedido | `POST /api/v1/orders`               | Cliente | `201` + `Location: /api/v1/orders/{id}` + el pedido |
+| Listar los propios  | `GET /api/v1/orders?page=0&size=20` | Cliente | `200` + una página de pedidos                       |
+| Ver uno propio      | `GET /api/v1/orders/{id}`           | Cliente | `200` + el pedido                                   |
+| Cancelar uno propio | `POST /api/v1/orders/{id}/cancel`   | Cliente | `200` + el pedido cancelado                         |
 
 ```json
 { "restaurantId": 4, "items": [{ "productId": 10, "quantity": 2 }, { "productId": 12, "quantity": 1 }] }
@@ -288,6 +291,7 @@ lo retira en el local.
   "status": "PLACED",
   "total": 100.50,
   "placedAt": "2026-11-08T15:00:00Z",
+  "updatedAt": "2026-11-08T15:00:00Z",
   "items": [
     { "productId": 10, "productName": "Silpancho", "unitPrice": 45.00, "quantity": 2, "subtotal": 90.00 },
     { "productId": 12, "productName": "Limonada", "unitPrice": 10.50, "quantity": 1, "subtotal": 10.50 }
@@ -309,10 +313,29 @@ lo retira en el local.
 - Un restaurante que no existe, está suspendido o está cerrado responde lo mismo,
   `order.restaurant_unavailable`, y un producto que no existe, es de otro restaurante o está agotado,
   `order.product_unavailable`. El mensaje no dice cuál de los casos fue.
-- El pedido nace en `PLACED`, con `placedAt` en UTC. Cada línea copia el nombre y el precio que el
-  producto tiene al confirmar, y `subtotal` y `total` los calcula el backend.
-- Un dueño o un admin reciben `403` con `access_denied`. El `Location` apunta a la ruta del pedido,
-  que todavía no tiene `GET`: llega con el historial de pedidos.
+- El pedido nace en `PLACED`, con `placedAt` y `updatedAt` iguales y en UTC. Cada línea copia el
+  nombre y el precio que el producto tiene al confirmar, y `subtotal` y `total` los calcula el
+  backend.
+- Un dueño o un admin reciben `403` con `access_denied` en todas las rutas de esta tabla. El
+  `Location` apunta a `GET /api/v1/orders/{id}`.
+
+### Historial del cliente
+
+- La lista trae solo los pedidos del cliente de la sesión, con sus ítems y la misma forma que el
+  pedido de arriba. Van los más nuevos primero (por `placedAt` descendente y, si coinciden, por `id`
+  descendente), así un pedido recién confirmado aparece arriba de la primera página.
+- `updatedAt` es la hora del último cambio de estado; mientras el pedido está pendiente, es igual a
+  `placedAt`.
+- Ver o cancelar un pedido que no existe responde `404` con `order.not_found`; uno de otro cliente,
+  `403` con `order.not_owner`. Se revisa en ese orden, y recién después el estado: un pedido aceptado
+  de otro cliente responde `403`, no `409`. Un id que no es número responde `400` con
+  `validation_failed` y el campo `id`.
+- Cancelar solo se puede con el pedido en `PLACED`. En cualquier otro estado, también si ya estaba
+  cancelado, responde `409` con `order.invalid_transition` y el pedido no cambia. Los nombres y las
+  transiciones de cada estado están en
+  [modelo-de-datos.md](../modelo-de-datos.md#estados).
+- Cancelar responde `200` con el pedido actualizado, no `204`: así la interfaz muestra el estado y la
+  hora que guardó el backend sin repetir sus reglas.
 
 ## Paginación
 

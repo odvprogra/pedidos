@@ -11,24 +11,29 @@ frontend/src/app/features/restaurant-admin/
 ├── restaurant-admin.routes.ts
 ├── pages/
 │   ├── my-restaurant-page/     La ficha del restaurante, o el registro si todavía no tiene
-│   └── catalog-page/           El menú: categorías y productos editados en el lugar
+│   ├── catalog-page/           El menú: categorías y productos editados en el lugar
+│   └── orders-page/            Los pedidos del restaurante: "En curso" y "Terminados"
 ├── components/
-│   ├── restaurant-card/        La ficha con su insignia, el interruptor y el enlace al menú
+│   ├── restaurant-card/        La ficha con su insignia, el interruptor y los enlaces al menú y a los pedidos
 │   ├── registration-steps/     La guía de tres pasos al lado del registro
 │   ├── category-header/        Nombre de la categoría, renombrar y borrar con confirmación
 │   ├── category-form/          Formulario de una categoría
 │   ├── product-row/            Un producto con su interruptor, Editar y Borrar
-│   └── product-form/           Formulario de un producto
+│   ├── product-form/           Formulario de un producto
+│   └── order-card/             Un pedido con sus ítems y el paso siguiente según el estado
 ├── data-access/
 │   ├── restaurant-api.ts
-│   └── catalog-api.ts
+│   ├── catalog-api.ts
+│   └── order-api.ts
 └── models/
     ├── restaurant.ts           La forma del JSON
     ├── restaurant-status.ts    Estado y textos, en funciones puras
     ├── restaurant-error.ts     Qué hacer y qué decir con cada `code` del backend
     ├── catalog.ts              El menú y sus cambios, en funciones puras
     ├── catalog-error.ts
-    └── price.ts                Leer y validar un precio escrito con coma o punto
+    ├── price.ts                Leer y validar un precio escrito con coma o punto
+    ├── order.ts                El pedido, los filtros y los pasos de cada estado
+    └── order-error.ts
 ```
 
 ## Piezas compartidas

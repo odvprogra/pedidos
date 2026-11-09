@@ -55,12 +55,20 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
   mismo panel lo explica en tono de aviso y solo ofrece "Entendido". El botón "Cancelar" del panel
   puede decir lo que se mantiene ("Mantener pedido") cuando la acción misma se llama cancelar.
+- Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
+  se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
+  confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.
 - Al confirmar, el panel se cierra y el botón que lo abrió dice qué está haciendo ("Cancelando…")
   con `aria-disabled` y el foco, hasta que llega la respuesta. Si el backend responde que el recurso
   ya cambió (`409`), se avisa en tono `warning` y se vuelve a pedir, para mostrar cómo está ahora.
 - Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante o agotar un
   producto, es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras
   trabaja queda con `aria-disabled` y dice qué está haciendo.
+- Elegir qué parte de una lista ver, como "En curso" o "Terminados" en los pedidos del dueño, son
+  botones con `aria-pressed` dentro de un `role="group"` con nombre. Cambiar de filtro vuelve a la
+  primera página y lleva el foco al título, como cambiar de página.
+- Una lista que otros cambian mientras se mira, como los pedidos del dueño, tiene un botón
+  "Actualizar" que la vuelve a pedir en la misma página y con el mismo filtro. No se consulta sola.
 - El resultado de una acción se anuncia en un `app-alert dismissible` fijo bajo el header, con
   `data-sticky-notice`: `tone="success"` (que usa `role="status"`) o el tono de error. Ese atributo
   agranda el margen de scroll de la página para que el aviso no tape el elemento con el foco. Cada

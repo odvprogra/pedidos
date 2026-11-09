@@ -1,9 +1,11 @@
 package com.nur.pedidos.order.infrastructure.persistence;
 
 import com.nur.pedidos.order.domain.model.Order;
+import com.nur.pedidos.order.domain.model.OrderStatus;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,8 +37,23 @@ class OrderPersistenceAdapter implements OrderRepository {
 
     @Override
     public PageResult<Order> findPageOfCustomer(Long customerId, int page, int size) {
-        Page<OrderEntity> entities =
-                jpaRepository.findAllByCustomerId(customerId, PageRequest.of(page, size, NEWEST_FIRST));
+        return pageOf(jpaRepository.findAllByCustomerId(customerId, newestFirst(page, size)), page, size);
+    }
+
+    @Override
+    public PageResult<Order> findPageOfRestaurant(Long restaurantId, Set<OrderStatus> statuses, int page, int size) {
+        PageRequest request = newestFirst(page, size);
+        Page<OrderEntity> entities = statuses.isEmpty()
+                ? jpaRepository.findAllByRestaurantId(restaurantId, request)
+                : jpaRepository.findAllByRestaurantIdAndStatusIn(restaurantId, statuses, request);
+        return pageOf(entities, page, size);
+    }
+
+    private static PageRequest newestFirst(int page, int size) {
+        return PageRequest.of(page, size, NEWEST_FIRST);
+    }
+
+    private static PageResult<Order> pageOf(Page<OrderEntity> entities, int page, int size) {
         return new PageResult<>(
                 entities.map(OrderEntity::toDomain).getContent(), page, size, entities.getTotalElements());
     }

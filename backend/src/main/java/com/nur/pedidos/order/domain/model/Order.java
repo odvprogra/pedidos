@@ -87,6 +87,10 @@ public class Order {
         return this.customerId.equals(customerId);
     }
 
+    public boolean belongsTo(Long restaurantId) {
+        return this.restaurantId.equals(restaurantId);
+    }
+
     private void moveTo(OrderStatus next, Instant now) {
         if (!status.canBecome(next)) {
             throw new InvalidOrderTransitionException();

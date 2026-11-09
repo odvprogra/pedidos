@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 @Import(TestcontainersConfiguration.class)
 class OrderFlowTest {
 
+    private static final String MINE = "/api/v1/restaurants/mine/orders";
+
     @Autowired
     private RestTestClient client;
 
@@ -155,6 +157,93 @@ class OrderFlowTest {
                 .expectBody()
                 .jsonPath("$.totalItems")
                 .isEqualTo(0);
+    }
+
+    @Test
+    void anOrderGoesFromPlacedToPickedUpEvenAfterTheRestaurantCloses() {
+        Menu menu = openRestaurantWithMenu("nora@pedido.com");
+        Account customer = register("leo@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+
+        menu.owner()
+                .get(MINE + "?status=PLACED")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(1)
+                .jsonPath("$.items[0].id")
+                .isEqualTo(orderId);
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/accept"), "ACCEPTED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+        menu.owner().act("/api/v1/restaurants/mine/close").expectStatus().isNoContent();
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-ready"), "READY");
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-picked-up"), "PICKED_UP");
+
+        expectStatus(customer.get("/api/v1/orders/" + orderId), "PICKED_UP");
+        menu.owner()
+                .get(MINE + "?status=PLACED&status=ACCEPTED&status=READY")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+    }
+
+    @Test
+    void theOwnerCannotAcceptAnOrderTheCustomerAlreadyCancelled() {
+        Menu menu = openRestaurantWithMenu("olga@pedido.com");
+        Account customer = register("mateo@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+        expectStatus(customer.act("/api/v1/orders/" + orderId + "/cancel"), "CANCELLED");
+
+        menu.owner()
+                .act(MINE + "/" + orderId + "/accept")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+
+        expectStatus(customer.get("/api/v1/orders/" + orderId), "CANCELLED");
+    }
+
+    @Test
+    void anOwnerCannotSeeNorChangeTheOrdersOfAnotherRestaurant() {
+        Menu menu = openRestaurantWithMenu("gina@pedido.com");
+        Long orderId = place(register("raul@pedido.com", "CUSTOMER"), menu);
+        Menu other = openRestaurantWithMenu("ivan@pedido.com");
+
+        other.owner()
+                .act(MINE + "/" + orderId + "/reject")
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        other.owner()
+                .get(MINE)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+        menu.owner()
+                .get(MINE)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.items[0].status")
+                .isEqualTo("PLACED");
+    }
+
+    private static void expectStatus(RestTestClient.ResponseSpec response, String status) {
+        response.expectStatus().isOk().expectBody().jsonPath("$.status").isEqualTo(status);
     }
 
     private Long place(Account customer, Menu menu) {

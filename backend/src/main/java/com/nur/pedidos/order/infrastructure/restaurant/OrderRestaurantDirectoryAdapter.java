@@ -3,6 +3,7 @@ package com.nur.pedidos.order.infrastructure.restaurant;
 import com.nur.pedidos.order.domain.exception.RestaurantUnavailableException;
 import com.nur.pedidos.order.domain.model.RestaurantSnapshot;
 import com.nur.pedidos.order.domain.port.RestaurantDirectory;
+import com.nur.pedidos.restaurant.application.GetOwnRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.GetVisibleRestaurantUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 class OrderRestaurantDirectoryAdapter implements RestaurantDirectory {
 
     private final GetVisibleRestaurantUseCase getVisibleRestaurant;
+    private final GetOwnRestaurantUseCase getOwnRestaurant;
 
     @Override
     public RestaurantSnapshot restaurantTakingOrders(Long restaurantId) {
@@ -22,6 +24,11 @@ class OrderRestaurantDirectoryAdapter implements RestaurantDirectory {
             throw new RestaurantUnavailableException();
         }
         return new RestaurantSnapshot(restaurant.getId(), restaurant.getName());
+    }
+
+    @Override
+    public Long restaurantIdOf(Long ownerId) {
+        return getOwnRestaurant.execute(ownerId).getId();
     }
 
     private Restaurant visibleRestaurant(Long restaurantId) {

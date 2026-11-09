@@ -2,11 +2,13 @@ package com.nur.pedidos.order.application;
 
 import com.nur.pedidos.order.domain.model.Order;
 import com.nur.pedidos.order.domain.model.OrderItem;
+import com.nur.pedidos.order.domain.model.OrderStatus;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 
@@ -41,6 +43,14 @@ class InMemoryOrderRepository implements OrderRepository {
     @Override
     public PageResult<Order> findPageOfCustomer(Long customerId, int page, int size) {
         return pageOf(order -> order.isPlacedBy(customerId), page, size);
+    }
+
+    @Override
+    public PageResult<Order> findPageOfRestaurant(Long restaurantId, Set<OrderStatus> statuses, int page, int size) {
+        return pageOf(
+                order -> order.belongsTo(restaurantId) && (statuses.isEmpty() || statuses.contains(order.getStatus())),
+                page,
+                size);
     }
 
     List<Order> all() {

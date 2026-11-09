@@ -135,6 +135,14 @@ class OrderTest {
         assertThat(order.isPlacedBy(8L)).isFalse();
     }
 
+    @Test
+    void knowsTheRestaurantItBelongsTo() {
+        Order order = orderIn(OrderStatus.PLACED);
+
+        assertThat(order.belongsTo(4L)).isTrue();
+        assertThat(order.belongsTo(5L)).isFalse();
+    }
+
     static Stream<Arguments> validTransitions() {
         return Stream.of(
                 Arguments.of(OrderStatus.PLACED, Action.ACCEPT, OrderStatus.ACCEPTED),

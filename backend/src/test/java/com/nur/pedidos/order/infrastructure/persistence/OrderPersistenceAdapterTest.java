@@ -13,6 +13,7 @@ import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -231,6 +232,51 @@ class OrderPersistenceAdapterTest {
                 .containsExactly(List.of("Limonada"), List.of("Silpancho"));
     }
 
+    @Test
+    void listsOnlyTheOrdersOfTheRestaurantWithTheNewestFirst() {
+        Order older = adapter.save(at(4L, OrderStatus.PICKED_UP, "2026-11-07T12:00:00Z"));
+        adapter.save(at(5L, OrderStatus.PLACED, "2026-11-08T13:00:00Z"));
+        Order newer = adapter.save(at(4L, OrderStatus.PLACED, "2026-11-08T12:00:00Z"));
+        flushAndClear();
+
+        PageResult<Order> page = adapter.findPageOfRestaurant(4L, Set.of(), 0, 20);
+
+        assertThat(page.items()).extracting(Order::getId).containsExactly(newer.getId(), older.getId());
+        assertThat(page.totalItems()).isEqualTo(2);
+    }
+
+    @Test
+    void keepsOnlyTheRequestedStatusesWithTheirRealTotals() {
+        Order placed = adapter.save(at(4L, OrderStatus.PLACED, "2026-11-08T12:00:00Z"));
+        Order accepted = adapter.save(at(4L, OrderStatus.ACCEPTED, "2026-11-08T11:00:00Z"));
+        Order ready = adapter.save(at(4L, OrderStatus.READY, "2026-11-08T10:00:00Z"));
+        adapter.save(at(4L, OrderStatus.PICKED_UP, "2026-11-08T09:00:00Z"));
+        adapter.save(at(4L, OrderStatus.CANCELLED, "2026-11-08T08:00:00Z"));
+        adapter.save(at(5L, OrderStatus.PLACED, "2026-11-08T13:00:00Z"));
+        flushAndClear();
+        Set<OrderStatus> inProgress = Set.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.READY);
+
+        PageResult<Order> first = adapter.findPageOfRestaurant(4L, inProgress, 0, 2);
+        PageResult<Order> second = adapter.findPageOfRestaurant(4L, inProgress, 1, 2);
+
+        assertThat(first.items()).extracting(Order::getId).containsExactly(placed.getId(), accepted.getId());
+        assertThat(second.items()).extracting(Order::getId).containsExactly(ready.getId());
+        assertThat(first)
+                .extracting(PageResult::totalItems, PageResult::totalPages)
+                .containsExactly(3L, 2);
+    }
+
+    @Test
+    void returnsAnEmptyPageWhenNoOrderHasTheRequestedStatus() {
+        adapter.save(at(4L, OrderStatus.PICKED_UP, "2026-11-08T12:00:00Z"));
+        flushAndClear();
+
+        PageResult<Order> page = adapter.findPageOfRestaurant(4L, Set.of(OrderStatus.PLACED), 0, 20);
+
+        assertThat(page.items()).isEmpty();
+        assertThat(page.totalItems()).isZero();
+    }
+
     private void flushAndClear() {
         entityManager.flush();
         entityManager.clear();
@@ -244,6 +290,20 @@ class OrderPersistenceAdapterTest {
     private static Order order(String total, OrderItem... items) {
         return new Order(
                 null, 7L, 4L, "La Casona", OrderStatus.PLACED, new BigDecimal(total), NOW, NOW, List.of(items));
+    }
+
+    private static Order at(Long restaurantId, OrderStatus status, String placedAt) {
+        Instant at = Instant.parse(placedAt);
+        return new Order(
+                null,
+                7L,
+                restaurantId,
+                "La Casona",
+                status,
+                new BigDecimal("45.00"),
+                at,
+                at,
+                List.of(item(10L, "Silpancho", "45.00", 1)));
     }
 
     private static Order placedBy(Long customerId, String placedAt) {

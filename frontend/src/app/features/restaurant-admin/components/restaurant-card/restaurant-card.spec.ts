@@ -163,4 +163,28 @@ describe('RestaurantCard', () => {
       expect(menuLink()).toBeTruthy();
     });
   });
+
+  describe('the orders', () => {
+    function ordersLink(): HTMLAnchorElement | null {
+      return card().querySelector('a[href$="/pedidos"]');
+    }
+
+    it('leads to the orders of the restaurant below the menu', () => {
+      const links = Array.from(card().querySelectorAll('a'), (link) => link.getAttribute('href'));
+
+      expect(ordersLink()?.textContent).toContain('Pedidos');
+      expect(links.indexOf(ordersLink()?.getAttribute('href') ?? '')).toBeGreaterThan(
+        links.findIndex((href) => href?.endsWith('/menu')),
+      );
+    });
+
+    it.each([
+      ['closed', { open: false }],
+      ['suspended', { suspended: true }],
+    ])('stays available while the restaurant is %s', async (_case, change) => {
+      await show(change);
+
+      expect(ordersLink()).toBeTruthy();
+    });
+  });
 });

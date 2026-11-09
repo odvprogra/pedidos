@@ -1,0 +1,163 @@
+<section class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+  <a
+    routerLink=".."
+    class="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+    Mi restaurante
+  </a>
+
+  <header class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Panel del restaurante</p>
+      <h1
+        #heading
+        tabindex="-1"
+        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+      >
+        Pedidos
+      </h1>
+      <p class="mt-2 text-muted">
+        Acepta los pedidos nuevos y márcalos listos para que los retiren.
+      </p>
+    </div>
+    <button
+      appSecondaryButton
+      type="button"
+      class="self-start sm:self-auto"
+      [working]="loading()"
+      [attr.aria-disabled]="busy()"
+      (click)="refresh()"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 11a8 8 0 1 0-2.3 5.6" />
+        <path d="M20 4v7h-7" />
+      </svg>
+      Actualizar
+    </button>
+  </header>
+
+  <div role="group" aria-label="Qué pedidos ver" class="mt-6 inline-flex rounded-xl bg-line p-1">
+    @for (option of filters; track option.filter) {
+      <button
+        type="button"
+        class="min-h-11 rounded-lg px-4 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-wait aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:shadow-sm"
+        [attr.aria-pressed]="filter() === option.filter"
+        [attr.aria-disabled]="busy() && filter() !== option.filter"
+        (click)="show(option.filter)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  @for (shown of notices(); track shown.id) {
+    <div class="sticky top-20 z-5 mt-4" data-sticky-notice>
+      <app-alert
+        class="block rounded-xl shadow-md"
+        dismissible
+        [tone]="shown.tone"
+        (dismissed)="notice.set(null)"
+      >
+        {{ shown.message }}
+      </app-alert>
+    </div>
+  }
+
+  @if (problem(); as problem) {
+    <app-load-error
+      class="mt-6 block"
+      heading="No pudimos cargar los pedidos"
+      [message]="problem"
+      (retry)="retry()"
+    />
+  } @else if (result(); as result) {
+    @if (result.items.length === 0) {
+      <app-empty-state class="mt-6 block" [heading]="empty().heading" [message]="empty().message">
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+          <path d="M9 8h6" />
+          <path d="M9 12h6" />
+        </svg>
+      </app-empty-state>
+    } @else {
+      <ul
+        role="list"
+        class="mt-6 grid gap-4 transition-opacity"
+        [class.opacity-60]="loading()"
+        [attr.aria-busy]="loading()"
+      >
+        @for (order of result.items; track order.id) {
+          <li>
+            <app-order-card
+              [order]="order"
+              [working]="workingOn(order)"
+              [locked]="busy()"
+              (acted)="run(order, $event)"
+            />
+          </li>
+        }
+      </ul>
+
+      @if (result.totalPages > 1) {
+        <app-pagination
+          class="mt-8 block"
+          [page]="result.page"
+          [totalPages]="result.totalPages"
+          [disabled]="busy()"
+          (pageChange)="goTo($event)"
+        />
+      }
+    }
+  } @else {
+    <div class="mt-6 grid gap-4" role="status">
+      <span class="sr-only">Cargando los pedidos…</span>
+      @for (placeholder of placeholders; track placeholder) {
+        <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+          <div class="flex items-center justify-between border-b border-line bg-canvas px-5 py-4">
+            <div class="h-5 w-28 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+            <div
+              class="h-5 w-20 animate-pulse rounded-full bg-line motion-reduce:animate-none"
+            ></div>
+          </div>
+          <div class="grid gap-3 px-5 py-4">
+            <div
+              class="h-4 w-48 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div class="h-4 w-36 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

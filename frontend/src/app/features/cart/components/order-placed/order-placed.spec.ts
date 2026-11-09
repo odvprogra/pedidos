@@ -58,11 +58,16 @@ describe('OrderPlaced', () => {
     expect(text()).toContain('Retíralo en Calle Sucre 245');
   });
 
-  it('offers to keep exploring restaurants', () => {
-    const link = page().querySelector('a') as HTMLAnchorElement;
+  it('links first to the order it just placed and then to the restaurants', () => {
+    const links = Array.from(page().querySelectorAll('a'), (link) => [
+      link.textContent?.trim(),
+      link.getAttribute('href'),
+    ]);
 
-    expect(link.textContent?.trim()).toBe('Seguir explorando');
-    expect(link.getAttribute('href')).toBe('/restaurantes');
+    expect(links).toEqual([
+      ['Ver mi pedido', '/pedidos/42'],
+      ['Seguir explorando', '/restaurantes'],
+    ]);
   });
 
   it('takes the focus to its title', () => {

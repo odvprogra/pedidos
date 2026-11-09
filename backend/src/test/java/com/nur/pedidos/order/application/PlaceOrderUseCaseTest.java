@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import com.nur.pedidos.order.domain.exception.ProductUnavailableException;
 import com.nur.pedidos.order.domain.exception.RestaurantUnavailableException;
 import com.nur.pedidos.order.domain.model.Order;
 import com.nur.pedidos.order.domain.model.OrderItem;
@@ -85,7 +84,7 @@ class PlaceOrderUseCaseTest {
                 new PlaceOrderCommand(7L, LA_CASONA, List.of(new OrderLine(10L, 1), new OrderLine(20L, 1)));
 
         assertThatThrownBy(() -> placeOrder.execute(command))
-                .isInstanceOf(ProductUnavailableException.class)
+                .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("order.product_unavailable");
         assertThat(orderRepository.all()).isEmpty();
@@ -96,7 +95,7 @@ class PlaceOrderUseCaseTest {
         PlaceOrderCommand command =
                 new PlaceOrderCommand(7L, LA_CASONA, List.of(new OrderLine(10L, 1), new OrderLine(11L, 1)));
 
-        assertThatThrownBy(() -> placeOrder.execute(command)).isInstanceOf(ProductUnavailableException.class);
+        assertThatThrownBy(() -> placeOrder.execute(command)).isInstanceOf(DomainException.class);
         assertThat(orderRepository.all()).isEmpty();
     }
 

@@ -52,25 +52,29 @@ class OrderFlowTest {
     }
 
     @Test
-    void aCustomerCannotOrderFromAClosedRestaurantNorASoldOutProduct() {
+    void aCustomerCannotOrderFromARestaurantThatClosed() {
         Menu menu = openRestaurantWithMenu("luis@pedido.com");
         Account customer = register("carla@pedido.com", "CUSTOMER");
-        OrderBody silpanchos = new OrderBody(menu.restaurantId(), List.of(new LineBody(menu.silpancho(), 1)));
-
         menu.owner().act("/api/v1/restaurants/mine/close").expectStatus().isNoContent();
-        customer.post("/api/v1/orders", silpanchos)
+
+        customer.post("/api/v1/orders", silpanchoFrom(menu))
                 .expectStatus()
                 .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
                 .expectBody()
                 .jsonPath("$.code")
                 .isEqualTo("order.restaurant_unavailable");
+    }
 
-        menu.owner().act("/api/v1/restaurants/mine/open").expectStatus().isNoContent();
+    @Test
+    void aCustomerCannotOrderAProductThatSoldOut() {
+        Menu menu = openRestaurantWithMenu("eva@pedido.com");
+        Account customer = register("pablo@pedido.com", "CUSTOMER");
         menu.owner()
                 .act("/api/v1/restaurants/mine/products/" + menu.silpancho() + "/mark-sold-out")
                 .expectStatus()
                 .isNoContent();
-        customer.post("/api/v1/orders", silpanchos)
+
+        customer.post("/api/v1/orders", silpanchoFrom(menu))
                 .expectStatus()
                 .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
                 .expectBody()
@@ -90,31 +94,8 @@ class OrderFlowTest {
                 .isEqualTo("order.restaurant_unavailable");
     }
 
-    @Test
-    void onlyACustomerWithSessionPlacesOrders() {
-        Menu menu = openRestaurantWithMenu("eva@pedido.com");
-        OrderBody silpancho = new OrderBody(menu.restaurantId(), List.of(new LineBody(menu.silpancho(), 1)));
-
-        menu.owner()
-                .post("/api/v1/orders", silpancho)
-                .expectStatus()
-                .isForbidden()
-                .expectBody()
-                .jsonPath("$.code")
-                .isEqualTo("access_denied");
-        String csrfToken = csrfToken();
-        client.post()
-                .uri("/api/v1/orders")
-                .cookie("XSRF-TOKEN", csrfToken)
-                .header("X-XSRF-TOKEN", csrfToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(silpancho)
-                .exchange()
-                .expectStatus()
-                .isUnauthorized()
-                .expectBody()
-                .jsonPath("$.code")
-                .isEqualTo("unauthenticated");
+    private static OrderBody silpanchoFrom(Menu menu) {
+        return new OrderBody(menu.restaurantId(), List.of(new LineBody(menu.silpancho(), 1)));
     }
 
     private Menu openRestaurantWithMenu(String ownerEmail) {

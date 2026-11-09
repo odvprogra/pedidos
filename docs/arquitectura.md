@@ -114,7 +114,8 @@ transacción ya quedó marcada para rollback, pero la nueva excepción la termin
 commit. Lo que no se hace es atraparla y seguir. `ProductCatalog.productsOf(restaurantId)` lo
 implementa `ProductCatalogAdapter`, en `order/infrastructure/catalog`, con los productos de
 `GetVisibleCatalogUseCase`: un producto de otro restaurante no está en ese menú, así que no se puede
-pedir. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
+pedir. Si el restaurante se suspende entre las dos lecturas, traduce la `RestaurantNotFoundException`
+de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
 `ProductSnapshot`), y el dominio de `order` no conoce los modelos de los otros módulos.
 
 Los adaptadores son beans de Spring, y el nombre del bean sale del de la clase. Por eso el de `order`

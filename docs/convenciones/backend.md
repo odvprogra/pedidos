@@ -47,7 +47,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
   devuelve requests, responses ni entidades JPA.
 - Si no encuentra algo, lanza la excepción del módulo. Los puertos devuelven `Optional`, nunca
   `null`. La excepción es el puerto hacia otro módulo: su adaptador deja pasar la excepción del caso
-  de uso que llama, como `RestaurantNotFoundException` en `catalog`, por la razón que explica
+  de uso que llama, como `RestaurantNotFoundException` en `catalog`, o la traduce a una excepción
+  del propio módulo y la relanza, como `RestaurantUnavailableException` en `order`. Nunca la atrapa
+  para seguir, por la razón que explica
   [arquitectura.md](../arquitectura.md#comunicación-entre-módulos).
 
 ## Infraestructura

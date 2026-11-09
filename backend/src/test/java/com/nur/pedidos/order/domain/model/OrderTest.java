@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import com.nur.pedidos.order.domain.exception.ProductUnavailableException;
+import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -68,7 +68,7 @@ class OrderTest {
         OrderLines lines = lines(new OrderLine(10L, 1), new OrderLine(20L, 1));
 
         assertThatThrownBy(() -> Order.place(7L, LA_CASONA, lines, MENU, NOW))
-                .isInstanceOf(ProductUnavailableException.class)
+                .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("order.product_unavailable");
     }
@@ -78,7 +78,7 @@ class OrderTest {
         OrderLines lines = lines(new OrderLine(10L, 1), new OrderLine(11L, 1));
 
         assertThatThrownBy(() -> Order.place(7L, LA_CASONA, lines, MENU, NOW))
-                .isInstanceOf(ProductUnavailableException.class)
+                .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("order.product_unavailable");
     }

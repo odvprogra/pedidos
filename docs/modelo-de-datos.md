@@ -179,7 +179,9 @@ sesión; confirmar exige el rol `CUSTOMER`.
 | `unit_price`   | `numeric(12,2)` | no   | Copia del precio al confirmar, `check > 0` |
 | `quantity`     | `integer`       | no   | `check (quantity between 1 and 99)`        |
 
-`unique (order_id, product_id)`: un producto aparece una sola vez por pedido. `Order` y sus ítems
+`unique (order_id, product_id)`: un producto aparece una sola vez por pedido. Como ese único
+(`order_items_order_id_product_id_key`) empieza por `order_id`, esa columna no lleva un índice
+aparte; `product_id` sí (`order_items_product_id_idx`). `Order` y sus ítems
 son un agregado que se guarda y se carga junto. Es la única relación JPA del modelo; las demás
 claves foráneas se mapean como columnas `Long`.
 
@@ -208,7 +210,7 @@ no cambia los pedidos ya confirmados.
 
 ### Estados
 
-No hay envío: el cliente retira el pedido en el local.
+No hay envío ni pago en la app: el cliente retira el pedido en el local y lo paga ahí.
 
 ```mermaid
 stateDiagram-v2

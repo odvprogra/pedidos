@@ -1,6 +1,6 @@
 package com.nur.pedidos.order.domain.model;
 
-import com.nur.pedidos.order.domain.exception.ProductUnavailableException;
+import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -64,7 +64,7 @@ public class Order {
 
     private static ProductSnapshot orderable(ProductSnapshot product) {
         if (product == null || !product.available()) {
-            throw new ProductUnavailableException();
+            throw new DomainException("order.product_unavailable", "Un producto del pedido ya no está disponible");
         }
         return product;
     }

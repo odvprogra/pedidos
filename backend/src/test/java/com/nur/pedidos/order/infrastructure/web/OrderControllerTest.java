@@ -10,7 +10,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import com.nur.pedidos.order.application.PlaceOrderCommand;
 import com.nur.pedidos.order.application.PlaceOrderUseCase;
-import com.nur.pedidos.order.domain.exception.ProductUnavailableException;
 import com.nur.pedidos.order.domain.exception.RestaurantUnavailableException;
 import com.nur.pedidos.order.domain.model.Order;
 import com.nur.pedidos.order.domain.model.OrderItem;
@@ -226,7 +225,10 @@ class OrderControllerTest {
                                 "order.duplicate_product", "Un producto aparece más de una vez en el pedido"),
                         "order.duplicate_product"),
                 Arguments.of(new RestaurantUnavailableException(), "order.restaurant_unavailable"),
-                Arguments.of(new ProductUnavailableException(), "order.product_unavailable"));
+                Arguments.of(
+                        new DomainException(
+                                "order.product_unavailable", "Un producto del pedido ya no está disponible"),
+                        "order.product_unavailable"));
     }
 
     static Stream<Arguments> ordersLeftToTheBusinessRules() {

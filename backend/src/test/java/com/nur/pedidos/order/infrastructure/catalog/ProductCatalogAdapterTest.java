@@ -9,6 +9,7 @@ import com.nur.pedidos.catalog.application.GetVisibleCatalogUseCase;
 import com.nur.pedidos.catalog.domain.model.Catalog;
 import com.nur.pedidos.catalog.domain.model.Category;
 import com.nur.pedidos.catalog.domain.model.Product;
+import com.nur.pedidos.order.domain.exception.RestaurantUnavailableException;
 import com.nur.pedidos.order.domain.model.ProductSnapshot;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import java.math.BigDecimal;
@@ -37,9 +38,12 @@ class ProductCatalogAdapterTest {
     }
 
     @Test
-    void letsTheHiddenRestaurantErrorReachTheCaller() {
+    void turnsAHiddenRestaurantIntoAnUnavailableOne() {
         when(getVisibleCatalog.execute(4L)).thenThrow(new RestaurantNotFoundException());
 
-        assertThatThrownBy(() -> catalog.productsOf(4L)).isInstanceOf(RestaurantNotFoundException.class);
+        assertThatThrownBy(() -> catalog.productsOf(4L))
+                .isInstanceOf(RestaurantUnavailableException.class)
+                .extracting("code")
+                .isEqualTo("order.restaurant_unavailable");
     }
 }

@@ -32,7 +32,7 @@
   >
     <div class="flex items-center justify-between gap-3 border-b border-line bg-canvas px-5 py-4">
       <h2 id="placed-order-number" class="text-lg font-extrabold">Pedido #{{ order().id }}</h2>
-      <app-badge data-status>{{ statusLabel() }}</app-badge>
+      <app-order-status-badge data-status [status]="order().status" />
     </div>
     <ul role="list" class="divide-y divide-line">
       @for (item of items(); track item.productId) {

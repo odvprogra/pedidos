@@ -7,14 +7,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Badge } from '@shared/ui/badge/badge';
 import { Button } from '@shared/ui/button/button';
+import { OrderStatusBadge } from '@shared/ui/order-status-badge/order-status-badge';
 import { formatPrice } from '@shared/utils/format-price';
-import { Order, STATUS_LABELS } from '../../models/order';
+import { Order } from '../../models/order';
 
 @Component({
   selector: 'app-order-placed',
-  imports: [RouterLink, Badge, Button],
+  imports: [RouterLink, Button, OrderStatusBadge],
   templateUrl: './order-placed.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,7 +24,6 @@ export class OrderPlaced {
   readonly order = input.required<Order>();
   readonly address = input.required<string>();
 
-  protected readonly statusLabel = computed(() => STATUS_LABELS[this.order().status]);
   protected readonly total = computed(() => formatPrice(this.order().total));
   protected readonly items = computed(() =>
     this.order().items.map((item) => ({ ...item, subtotalLabel: formatPrice(item.subtotal) })),

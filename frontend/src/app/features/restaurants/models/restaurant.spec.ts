@@ -1,27 +1,4 @@
-import { countRestaurants, openingLabel, openingTone, parseRestaurantId } from './restaurant';
-
-describe('parseRestaurantId', () => {
-  it.each([
-    ['4', 4],
-    ['120', 120],
-    ['999999999999999', 999999999999999],
-  ])('reads the id %s', (text, id) => {
-    expect(parseRestaurantId(text)).toBe(id);
-  });
-
-  it.each([
-    ['a word', 'abc'],
-    ['zero', '0'],
-    ['a leading zero', '04'],
-    ['a negative number', '-4'],
-    ['a decimal', '4.5'],
-    ['spaces', ' 4 '],
-    ['an empty text', ''],
-    ['a number too long to be exact', '9999999999999999'],
-  ])('rejects %s', (_case, text) => {
-    expect(parseRestaurantId(text)).toBeNull();
-  });
-});
+import { countRestaurants, openingLabel, openingTone } from './restaurant';
 
 describe('the restaurant copy', () => {
   it('names whether a restaurant is open', () => {

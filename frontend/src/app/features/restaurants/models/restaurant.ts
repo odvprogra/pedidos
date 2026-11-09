@@ -8,12 +8,6 @@ export interface Restaurant {
   open: boolean;
 }
 
-const RESTAURANT_ID = /^[1-9]\d{0,14}$/;
-
-export function parseRestaurantId(text: string): number | null {
-  return RESTAURANT_ID.test(text) ? Number(text) : null;
-}
-
 export function openingLabel(open: boolean): string {
   return open ? 'Abierto' : 'Cerrado';
 }

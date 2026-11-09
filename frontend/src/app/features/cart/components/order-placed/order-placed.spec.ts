@@ -10,6 +10,7 @@ const ORDER: Order = {
   status: 'PLACED',
   total: 100.5,
   placedAt: '2026-11-08T15:00:00Z',
+  updatedAt: '2026-11-08T15:00:00Z',
   items: [
     { productId: 10, productName: 'Silpancho', unitPrice: 45, quantity: 2, subtotal: 90 },
     { productId: 12, productName: 'Limonada', unitPrice: 10.5, quantity: 1, subtotal: 10.5 },

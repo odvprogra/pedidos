@@ -35,6 +35,7 @@ class CancelOrderUseCaseTest {
         assertThat(orderRepository.get(pending.getId()))
                 .extracting(Order::getStatus, Order::getPlacedAt, Order::getUpdatedAt)
                 .containsExactly(OrderStatus.CANCELLED, PLACED_AT, NOW);
+        assertThat(orderRepository.lockedIds()).containsExactly(pending.getId());
     }
 
     @Test

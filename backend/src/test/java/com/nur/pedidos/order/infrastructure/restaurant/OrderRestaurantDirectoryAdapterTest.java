@@ -65,8 +65,19 @@ class OrderRestaurantDirectoryAdapterTest {
                 .isEqualTo("restaurant.not_found");
     }
 
+    @Test
+    void givesTheIdOfTheRestaurantOfTheOwnerEvenWhenItIsSuspended() {
+        when(getOwnRestaurant.execute(7L)).thenReturn(laCasona(false, true));
+
+        assertThat(directory.restaurantIdOf(7L)).isEqualTo(4L);
+    }
+
     private static Restaurant laCasona(boolean open) {
+        return laCasona(open, false);
+    }
+
+    private static Restaurant laCasona(boolean open, boolean suspended) {
         return new Restaurant(
-                4L, 7L, "La Casona", null, "Calle Sucre 245", open, false, Instant.parse("2026-11-08T15:00:00Z"));
+                4L, 7L, "La Casona", null, "Calle Sucre 245", open, suspended, Instant.parse("2026-11-08T15:00:00Z"));
     }
 }

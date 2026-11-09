@@ -44,6 +44,7 @@ class RejectOrderUseCaseTest {
         assertThat(orderRepository.get(saved.getId()))
                 .extracting(Order::getStatus, Order::getPlacedAt, Order::getUpdatedAt)
                 .containsExactly(OrderStatus.REJECTED, PLACED_AT, NOW);
+        assertThat(orderRepository.lockedIds()).containsExactly(saved.getId());
     }
 
     @Test

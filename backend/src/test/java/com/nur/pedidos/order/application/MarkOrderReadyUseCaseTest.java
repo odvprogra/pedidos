@@ -44,6 +44,7 @@ class MarkOrderReadyUseCaseTest {
         assertThat(orderRepository.get(saved.getId()))
                 .extracting(Order::getStatus, Order::getPlacedAt, Order::getUpdatedAt)
                 .containsExactly(OrderStatus.READY, PLACED_AT, NOW);
+        assertThat(orderRepository.lockedIds()).containsExactly(saved.getId());
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.nur.pedidos.order.domain.model.OrderItem;
 import com.nur.pedidos.order.domain.model.OrderStatus;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.shared.domain.model.PageResult;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ class InMemoryOrderRepository implements OrderRepository {
             Comparator.comparing(Order::getPlacedAt).thenComparing(Order::getId).reversed();
 
     private final TreeMap<Long, Order> orders = new TreeMap<>();
+    private final List<Long> lockedIds = new ArrayList<>();
     private long orderSequence;
     private long itemSequence;
 
@@ -37,6 +39,7 @@ class InMemoryOrderRepository implements OrderRepository {
 
     @Override
     public Optional<Order> findByIdForUpdate(Long id) {
+        lockedIds.add(id);
         return findById(id);
     }
 
@@ -59,6 +62,10 @@ class InMemoryOrderRepository implements OrderRepository {
 
     Order get(Long id) {
         return findById(id).orElseThrow();
+    }
+
+    List<Long> lockedIds() {
+        return List.copyOf(lockedIds);
     }
 
     private PageResult<Order> pageOf(Predicate<Order> filter, int page, int size) {

@@ -338,6 +338,35 @@ lo retira en el local. Después sigue sus pedidos y puede cancelar uno mientras 
   hora que guardó el backend sin calcularlos. La interfaz oculta "Cancelar pedido" cuando el estado
   ya no lo permite, pero quien decide es el backend.
 
+## Pedidos del restaurante
+
+El dueño recibe los pedidos de su restaurante y los lleva hasta que el cliente los retira. Como en
+`/mine`, el restaurante sale siempre de la sesión.
+
+| Operación          | Ruta                                                       | Acceso | Respuesta                     |
+| ------------------ | ---------------------------------------------------------- | ------ | ----------------------------- |
+| Listar los pedidos | `GET /api/v1/restaurants/mine/orders?status=PLACED&page=0` | Dueño  | `200` + una página de pedidos |
+| Aceptar            | `POST /api/v1/restaurants/mine/orders/{id}/accept`         | Dueño  | `200` + el pedido             |
+| Rechazar           | `POST /api/v1/restaurants/mine/orders/{id}/reject`         | Dueño  | `200` + el pedido             |
+| Marcar listo       | `POST /api/v1/restaurants/mine/orders/{id}/mark-ready`     | Dueño  | `200` + el pedido             |
+| Entregar           | `POST /api/v1/restaurants/mine/orders/{id}/mark-picked-up` | Dueño  | `200` + el pedido             |
+
+- La lista trae los pedidos del restaurante del dueño con la forma del pedido del cliente, ítems
+  incluidos, y en el mismo orden: los más nuevos primero. `status` es opcional y se puede repetir
+  (`?status=PLACED&status=ACCEPTED&status=READY`): sin él vienen todos. Un estado que no existe
+  responde `400` con `validation_failed` y el campo `status`. La paginación es la de siempre.
+- Cada acción hace una sola transición: aceptar y rechazar desde `PLACED`, marcar listo desde
+  `ACCEPTED` y entregar desde `READY`. En cualquier otro estado, también si el cliente ya canceló o
+  si la acción se repite, responde `409` con `order.invalid_transition` y el pedido no cambia.
+- Un pedido que no existe responde `404` con `order.not_found`; uno de otro restaurante, `403` con
+  `order.not_owner`. Si el dueño todavía no registró su restaurante, todas responden `404` con
+  `restaurant.not_found`, antes de mirar el pedido, igual que `/mine`.
+- El dueño atiende y termina sus pedidos con el restaurante abierto, cerrado o suspendido: cerrar
+  solo corta los pedidos nuevos.
+- Un cliente o un admin reciben `403` con `access_denied`.
+- Si el cliente cancela mientras el dueño acepta, uno de los dos recibe `409`
+  ([ADR-0010](../adr/0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)).
+
 ## Paginación
 
 Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:

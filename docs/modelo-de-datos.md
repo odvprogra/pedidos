@@ -254,6 +254,13 @@ propio. Los ítems de una página se cargan en una sola consulta por `@BatchSize
 `OrderEntity.items`, que coincide con el máximo de `size` de la paginación: si ese máximo sube, el
 lote sube con él.
 
+La lista del dueño (`restaurant_id = ? and status in (...) order by placed_at desc, id desc`) usa
+`orders_restaurant_id_idx` y filtra el estado sobre los pedidos de ese restaurante. Mientras la tabla
+sea chica alcanza; si el historial de un restaurante crece mucho, la lista "En curso" recorre todos
+sus pedidos terminados. Para ese caso queda propuesto, sin crear, un índice
+`orders_restaurant_id_status_idx` sobre `(restaurant_id, status)` que reemplace al de una columna, en
+una migración nueva.
+
 ## Referencias entre módulos
 
 | Columna                                              | Apunta a         | Quién garantiza que existe                               |

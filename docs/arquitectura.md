@@ -115,8 +115,16 @@ commit. Lo que no se hace es atraparla y seguir. `ProductCatalog.productsOf(rest
 implementa `ProductCatalogAdapter`, en `order/infrastructure/catalog`, con los productos de
 `GetVisibleCatalogUseCase`: un producto de otro restaurante no está en ese menú, así que no se puede
 pedir. Si el restaurante se suspende entre las dos lecturas, traduce la `RestaurantNotFoundException`
-de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
-`ProductSnapshot`), y el dominio de `order` no conoce los modelos de los otros módulos.
+de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de
+`order.domain.model` (`RestaurantSnapshot`, `ProductSnapshot`), y el dominio de `order` no conoce
+los modelos de los otros módulos.
+
+Los pedidos del dueño usan el mismo puerto: `RestaurantDirectory.restaurantIdOf(ownerId)` llama a
+`GetOwnRestaurantUseCase`, igual que en `catalog`, y deja pasar su `RestaurantNotFoundException`. Acá
+no se traduce, porque para el dueño "todavía no registraste tu restaurante" es el mismo `404` que en
+`/mine`. El caso de uso compara ese id con el del pedido (`Order.belongsTo`) y, si no coincide,
+responde `order.not_owner`. No mira si el restaurante está abierto: los pedidos en curso se terminan
+igual.
 
 Los adaptadores son beans de Spring, y el nombre del bean sale del de la clase. Por eso el de `order`
 se llama `OrderRestaurantDirectoryAdapter` y no `RestaurantDirectoryAdapter`, que ya usa `catalog`.

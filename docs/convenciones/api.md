@@ -335,7 +335,8 @@ lo retira en el local. Después sigue sus pedidos y puede cancelar uno mientras 
   transiciones de cada estado están en
   [modelo-de-datos.md](../modelo-de-datos.md#estados).
 - Cancelar responde `200` con el pedido actualizado, no `204`: así la interfaz muestra el estado y la
-  hora que guardó el backend sin repetir sus reglas.
+  hora que guardó el backend sin calcularlos. La interfaz oculta "Cancelar pedido" cuando el estado
+  ya no lo permite, pero quien decide es el backend.
 
 ## Paginación
 

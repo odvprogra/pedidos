@@ -199,8 +199,11 @@ src/app/
 - Los pedidos del cliente (`/pedidos` y `/pedidos/:id`, de la feature `orders`) llevan
   `roleGuard('CUSTOMER')`. Sus rutas están en `core/orders` (`ORDERS_PATH`, `orderPath(id)`) porque
   también las usan el header y la confirmación del carrito, que enlaza al pedido recién creado. El
-  nombre y el tono de cada estado salen de `@shared/utils/order-status`, para que `cart`, `orders` y
-  `restaurant-admin` los muestren igual sin importarse entre sí.
+  tipo `OrderStatus` y el nombre de cada estado están en `@shared/utils/order-status`, y la insignia
+  en `app-order-status-badge`, para que `cart`, `orders` y `restaurant-admin` los muestren igual sin
+  importarse entre sí. La interfaz `Order`, en cambio, está en cada feature que la usa: es la forma
+  del JSON que esa feature lee, como `Restaurant` en `restaurants` y en `restaurant-admin`, y un
+  campo nuevo de la API se agrega en cada una.
 - La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
   sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
   quedó en `/estado`, sin enlace en la interfaz.

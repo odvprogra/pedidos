@@ -245,11 +245,14 @@ stateDiagram-v2
 - Dos cambios a la vez sobre el mismo pedido, como el cliente que cancela mientras el dueño acepta,
   no se pisan: el caso de uso lee el pedido con `findByIdForUpdate`, que bloquea la fila
   (`select ... for no key update`) hasta el final de la transacción. El segundo espera, lee el estado
-  nuevo y recibe el `409`. No hace falta una columna de versión.
+  nuevo y recibe el `409`. No hace falta una columna de versión
+  ([ADR-0010](adr/0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)).
 
 La lista del cliente (`customer_id = ? order by placed_at desc, id desc`) usa
 `orders_customer_id_idx`. Un cliente tiene pocos pedidos, así que ordenarlos no necesita un índice
-propio.
+propio. Los ítems de una página se cargan en una sola consulta por `@BatchSize(size = 100)` en
+`OrderEntity.items`, que coincide con el máximo de `size` de la paginación: si ese máximo sube, el
+lote sube con él.
 
 ## Referencias entre módulos
 

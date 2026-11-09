@@ -99,9 +99,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
   bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el
   estado; el color solo lo acompaña.
-- El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), que toma el nombre y el tono
-  de `@shared/utils/order-status`, la única fuente para todas las features. Los tonos siguen el
-  camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,
+- El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
+  las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
+  tono. Los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,
   Listo para retirar en `success`, Retirado y Cancelado en `neutral` (terminados) y Rechazado en
   `danger`.
 

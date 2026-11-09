@@ -1,15 +1,14 @@
-import { ORDER_STATUS_LABELS, orderStatusTone } from './order-status';
+import { ORDER_STATUS_LABELS } from './order-status';
 
 describe('the order status', () => {
-  it.each([
-    ['PLACED', 'Pendiente', 'warning'],
-    ['ACCEPTED', 'En preparación', 'info'],
-    ['READY', 'Listo para retirar', 'success'],
-    ['PICKED_UP', 'Retirado', 'neutral'],
-    ['REJECTED', 'Rechazado', 'danger'],
-    ['CANCELLED', 'Cancelado', 'neutral'],
-  ] as const)('shows %s as "%s" in the %s tone', (status, label, tone) => {
-    expect(ORDER_STATUS_LABELS[status]).toBe(label);
-    expect(orderStatusTone(status)).toBe(tone);
+  it('names each status as the data model says', () => {
+    expect(ORDER_STATUS_LABELS).toEqual({
+      PLACED: 'Pendiente',
+      ACCEPTED: 'En preparación',
+      READY: 'Listo para retirar',
+      PICKED_UP: 'Retirado',
+      REJECTED: 'Rechazado',
+      CANCELLED: 'Cancelado',
+    });
   });
 });

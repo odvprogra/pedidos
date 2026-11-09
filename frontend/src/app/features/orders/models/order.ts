@@ -28,6 +28,10 @@ export function canCancel(order: Order): boolean {
   return order.status === 'PLACED';
 }
 
+export function isInProgress(order: Order): boolean {
+  return order.status === 'PLACED' || order.status === 'ACCEPTED';
+}
+
 export function statusHint(order: Order): string {
   const restaurant = order.restaurantName;
   switch (order.status) {

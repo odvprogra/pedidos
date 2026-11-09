@@ -47,7 +47,7 @@
         <div class="flex items-center gap-2 sm:gap-3">
           @if (roleLink(); as link) {
             <a
-              class="inline-flex size-11 items-center justify-center gap-2 rounded-full text-sm font-bold transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:mr-2 sm:size-auto sm:min-h-11 sm:px-4"
+              class="inline-flex size-11 items-center justify-center gap-2 rounded-full text-sm font-bold transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:mr-2 md:size-auto md:min-h-11 md:px-4"
               routerLinkActive="bg-brand-strong"
               [ariaCurrentWhenActive]="true"
               [routerLink]="link.path"
@@ -78,7 +78,7 @@
                   <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
                 }
               </svg>
-              <span class="sr-only sm:not-sr-only">
+              <span class="sr-only whitespace-nowrap md:not-sr-only">
                 {{ link.label }}
                 @if (link.hiddenDetail) {
                   <span class="sr-only">{{ link.hiddenDetail }}</span>
@@ -92,13 +92,13 @@
           >
             {{ initial() }}
           </span>
-          <p class="sr-only leading-tight sm:not-sr-only">
+          <p class="sr-only leading-tight whitespace-nowrap md:not-sr-only">
             <span class="block font-bold">{{ firstName() }}</span>
             <span class="block text-xs font-semibold">{{ roleLabel() }}</span>
           </p>
           <button
             type="button"
-            class="inline-flex size-11 items-center justify-center gap-2 rounded-full border border-white/40 text-sm font-bold transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-disabled:cursor-wait aria-disabled:opacity-70 sm:ml-2 sm:size-auto sm:min-h-11 sm:px-4"
+            class="inline-flex size-11 items-center justify-center gap-2 rounded-full border border-white/40 text-sm font-bold transition hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-disabled:cursor-wait aria-disabled:opacity-70 md:ml-2 md:size-auto md:min-h-11 md:px-4"
             [attr.aria-disabled]="loggingOut()"
             (click)="logOut()"
           >
@@ -116,7 +116,7 @@
               <path d="M16 17l5-5-5-5" />
               <path d="M21 12H9" />
             </svg>
-            <span class="sr-only sm:not-sr-only">
+            <span class="sr-only whitespace-nowrap md:not-sr-only">
               {{ loggingOut() ? 'Cerrando sesión…' : 'Cerrar sesión' }}
             </span>
           </button>

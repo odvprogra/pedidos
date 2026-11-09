@@ -26,17 +26,19 @@ describe('OrderStatusBadge', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('app-badge > span') as HTMLElement;
   }
 
-  it('names a pending order in the warning tone', () => {
-    expect(pill().textContent?.trim()).toBe('Pendiente');
-    expect(pill().classList).toContain('bg-warning-soft');
-  });
-
-  it('follows the status of the order', async () => {
-    fixture.componentInstance.status.set('READY');
+  it.each([
+    ['PLACED', 'Pendiente', 'bg-warning-soft'],
+    ['ACCEPTED', 'En preparación', 'bg-info-soft'],
+    ['READY', 'Listo para retirar', 'bg-success-soft'],
+    ['PICKED_UP', 'Retirado', 'bg-line'],
+    ['REJECTED', 'Rechazado', 'bg-danger-soft'],
+    ['CANCELLED', 'Cancelado', 'bg-line'],
+  ] as const)('shows %s as "%s" with the %s tone', async (status, label, tone) => {
+    fixture.componentInstance.status.set(status);
     await fixture.whenStable();
 
-    expect(pill().textContent?.trim()).toBe('Listo para retirar');
-    expect(pill().classList).toContain('bg-success-soft');
+    expect(pill().textContent?.trim()).toBe(label);
+    expect(pill().classList).toContain(tone);
   });
 
   it('takes the size of a row', async () => {

@@ -1,5 +1,5 @@
 import { OrderStatus } from '@shared/utils/order-status';
-import { Order, canCancel, countOrders, describeItems, statusHint } from './order';
+import { Order, canCancel, countOrders, describeItems, isInProgress, statusHint } from './order';
 
 function orderIn(status: OrderStatus): Order {
   return {
@@ -39,6 +39,22 @@ describe('the order of a customer', () => {
     ];
 
     expect(statuses.filter((status) => canCancel(orderIn(status)))).toEqual(['PLACED']);
+  });
+
+  it('is in progress while it is pending or being prepared', () => {
+    const statuses: OrderStatus[] = [
+      'PLACED',
+      'ACCEPTED',
+      'READY',
+      'PICKED_UP',
+      'REJECTED',
+      'CANCELLED',
+    ];
+
+    expect(statuses.filter((status) => isInProgress(orderIn(status)))).toEqual([
+      'PLACED',
+      'ACCEPTED',
+    ]);
   });
 
   it.each([

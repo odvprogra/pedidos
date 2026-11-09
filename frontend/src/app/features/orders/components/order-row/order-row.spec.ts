@@ -36,6 +36,15 @@ describe('OrderRow', () => {
     expect(row().querySelector('a')?.getAttribute('href')).toBe('/pedidos/42');
   });
 
+  it('gives the link a short name with the number, the restaurant and the status', () => {
+    const link = row().querySelector('a') as HTMLAnchorElement;
+    const details = row().querySelector(`#${link.getAttribute('aria-describedby')}`);
+
+    expect(link.getAttribute('aria-label')).toBe('Pedido #42 de La Casona, Listo para retirar');
+    expect(details?.textContent?.replace(/\s+/g, ' ')).toContain('3 productos');
+    expect(details?.textContent?.replace(/\s+/g, ' ')).toContain('Total: Bs 100,50');
+  });
+
   it('names the order by its number and its restaurant', () => {
     expect(row().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
       'Pedido #42 · La Casona',

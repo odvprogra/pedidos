@@ -1,6 +1,8 @@
 <a
   class="group flex items-center gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:gap-4 sm:p-5"
   [routerLink]="path()"
+  [attr.aria-label]="label()"
+  [attr.aria-describedby]="detailsId()"
 >
   <span
     aria-hidden="true"
@@ -18,13 +20,17 @@
       </h2>
       <app-order-status-badge size="sm" data-status [status]="order().status" />
     </div>
-    <p class="mt-1 text-sm text-muted">
-      <time [attr.datetime]="order().placedAt">{{ placedAt() }}</time>
-      <span aria-hidden="true"> · </span>
-      <span class="sr-only">, </span>
-      {{ items() }}
-    </p>
-    <p class="mt-1 font-extrabold" data-total><span class="sr-only">Total: </span>{{ total() }}</p>
+    <div [id]="detailsId()">
+      <p class="mt-1 text-sm text-muted">
+        <time class="whitespace-nowrap" [attr.datetime]="order().placedAt">{{ placedAt() }}</time>
+        <span aria-hidden="true"> · </span>
+        <span class="sr-only">, </span>
+        <span class="whitespace-nowrap">{{ items() }}</span>
+      </p>
+      <p class="mt-1 font-extrabold" data-total>
+        <span class="sr-only">Total: </span>{{ total() }}
+      </p>
+    </div>
   </div>
 
   <svg

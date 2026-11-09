@@ -130,6 +130,26 @@ describe('OrderDetailPage', () => {
       expect(link.textContent).toContain('La Casona');
     });
 
+    it.each(['PLACED', 'ACCEPTED'] as const)(
+      'reminds that an order in %s is picked up and paid at the restaurant',
+      async (orderStatus) => {
+        await openWith({ ...PENDING, status: orderStatus });
+
+        expect(page().querySelector('[data-pickup-note]')?.textContent?.trim()).toBe(
+          'Lo retiras en el local y lo pagas ahí.',
+        );
+      },
+    );
+
+    it.each(['READY', 'PICKED_UP', 'REJECTED', 'CANCELLED'] as const)(
+      'leaves the pickup reminder out of an order in %s',
+      async (orderStatus) => {
+        await openWith({ ...PENDING, status: orderStatus });
+
+        expect(page().querySelector('[data-pickup-note]')).toBeNull();
+      },
+    );
+
     it('says when the order was placed and hides the last change while there is none', async () => {
       await openWith(PENDING);
 
@@ -210,7 +230,7 @@ describe('OrderDetailPage', () => {
       await fixture.whenStable();
 
       expect(text()).toContain('¿Cancelar el pedido #42?');
-      expect(text()).toContain('La Casona deja de verlo y no se puede deshacer.');
+      expect(text()).toContain('La Casona ya no lo va a preparar. Esto no se puede deshacer.');
       expect(document.activeElement).toBe(requireButton('Mantener pedido'));
       expect(requireButton('Cancelar pedido').getAttribute('aria-expanded')).toBe('true');
       httpTesting.expectNone(CANCEL_URL);
@@ -292,6 +312,54 @@ describe('OrderDetailPage', () => {
       expect(button('Cancelar pedido')).toBeUndefined();
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
+
+    it('offers to retry when the order cannot load again after it changed', async () => {
+      await openWith(PENDING);
+      await confirmCancellation();
+
+      httpTesting
+        .expectOne(CANCEL_URL)
+        .flush(
+          { status: 409, detail: 'Conflicto', code: 'order.invalid_transition' },
+          { status: 409, statusText: 'Conflict' },
+        );
+      await fixture.whenStable();
+      httpTesting
+        .expectOne(ORDER_URL)
+        .flush(
+          { status: 500, detail: 'Detalle del servidor' },
+          { status: 500, statusText: 'Error' },
+        );
+      await fixture.whenStable();
+
+      expect(page().querySelector('[role="alert"]')?.textContent).toContain(
+        'No pudimos cargar tu pedido',
+      );
+      expect(button('Cancelar pedido')).toBeUndefined();
+      expect(document.activeElement).toBe(requireButton('Reintentar'));
+    });
+
+    it.each([
+      [404, 'order.not_found'],
+      [403, 'order.not_owner'],
+    ])(
+      'shows that the order is not there when the cancellation answers %s',
+      async (code, problemCode) => {
+        await openWith(PENDING);
+        await confirmCancellation();
+
+        httpTesting
+          .expectOne(CANCEL_URL)
+          .flush(
+            { status: code, detail: 'Detalle', code: problemCode },
+            { status: code, statusText: 'Error' },
+          );
+        await fixture.whenStable();
+
+        expect(page().querySelector('h1')?.textContent?.trim()).toBe('No encontramos este pedido');
+        expect(document.activeElement).toBe(page().querySelector('h1'));
+      },
+    );
 
     it('keeps the order as it was when the cancellation fails', async () => {
       await openWith(PENDING);

@@ -29,7 +29,7 @@ import { formatPrice } from '@shared/utils/format-price';
 import { parseId } from '@shared/utils/parse-id';
 import { Subscription } from 'rxjs';
 import { OrderApi } from '../../data-access/order-api';
-import { Order, canCancel, statusHint } from '../../models/order';
+import { Order, canCancel, isInProgress, statusHint } from '../../models/order';
 import { describeOrderError, isInvalidTransition, isOrderMissing } from '../../models/order-error';
 
 type PageState =
@@ -107,8 +107,9 @@ export class OrderDetailPage {
       total: formatPrice(order.total),
       items: order.items.map((item) => ({ ...item, subtotalLabel: formatPrice(item.subtotal) })),
       cancellable: canCancel(order),
+      inProgress: isInProgress(order),
       question: `¿Cancelar el pedido #${order.id}?`,
-      consequence: `${order.restaurantName} deja de verlo y no se puede deshacer.`,
+      consequence: `${order.restaurantName} ya no lo va a preparar. Esto no se puede deshacer.`,
     };
   });
 
@@ -205,7 +206,8 @@ export class OrderDetailPage {
         this.state.set({ status: 'ready', order });
         this.focusAfterRender(() => this.heading());
       },
-      error: () => this.focusAfterRender(() => this.heading()),
+      error: (error: unknown) =>
+        this.show({ status: 'failed', message: describeOrderError(toProblemDetails(error)) }, true),
     });
   }
 

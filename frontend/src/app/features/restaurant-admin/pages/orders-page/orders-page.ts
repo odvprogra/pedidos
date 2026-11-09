@@ -20,6 +20,7 @@ import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Spinner } from '@shared/ui/spinner/spinner';
 import { Subscription } from 'rxjs';
 import { OrderCard } from '../../components/order-card/order-card';
 import { OrderApi } from '../../data-access/order-api';
@@ -29,6 +30,7 @@ import {
   OrderAction,
   OrderFilter,
   copyFor,
+  countOrdersIn,
   emptyCopyFor,
 } from '../../models/order';
 import { describeOrderError, isOrderChanged } from '../../models/order-error';
@@ -49,7 +51,16 @@ interface PendingAction {
 
 @Component({
   selector: 'app-orders-page',
-  imports: [RouterLink, Alert, EmptyState, LoadError, OrderCard, Pagination, SecondaryButton],
+  imports: [
+    RouterLink,
+    Alert,
+    EmptyState,
+    LoadError,
+    OrderCard,
+    Pagination,
+    SecondaryButton,
+    Spinner,
+  ],
   templateUrl: './orders-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,6 +78,7 @@ export class OrdersPage implements OnInit {
   private request: Subscription | null = null;
   private requestedPage = 0;
   private noticeCount = 0;
+  private readonly shownFilter = signal<OrderFilter>('active');
 
   protected readonly filters = (Object.keys(ORDER_FILTERS) as OrderFilter[]).map((filter) => ({
     filter,
@@ -84,7 +96,15 @@ export class OrdersPage implements OnInit {
     return current ? [current] : [];
   });
   protected readonly busy = computed(() => this.loading() || this.pending() !== null);
-  protected readonly empty = computed(() => emptyCopyFor(this.filter()));
+  protected readonly empty = computed(() => emptyCopyFor(this.shownFilter()));
+  protected readonly refreshing = signal(false);
+  protected readonly announcement = signal('');
+  protected readonly countLabel = computed(() => {
+    const result = this.result();
+    return result && result.totalItems > 0
+      ? countOrdersIn(this.shownFilter(), result.totalItems)
+      : null;
+  });
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.request?.unsubscribe());
@@ -108,7 +128,9 @@ export class OrdersPage implements OnInit {
       return;
     }
     this.notice.set(null);
-    this.load(this.requestedPage, true);
+    this.announcement.set('');
+    this.refreshing.set(true);
+    this.load(this.requestedPage, false);
   }
 
   protected goTo(page: number): void {
@@ -151,7 +173,6 @@ export class OrdersPage implements OnInit {
           this.load(this.requestedPage, true);
         } else {
           this.notify('danger', describeOrderError(problem));
-          this.focusCard(order.id);
         }
       },
     });
@@ -162,33 +183,42 @@ export class OrdersPage implements OnInit {
     this.requestedPage = page;
     this.loading.set(true);
     this.problem.set(null);
-    this.request = this.orderApi
-      .list(ORDER_FILTERS[this.filter()].statuses, page, PAGE_SIZE)
-      .subscribe({
-        next: (result) => {
-          if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
-            this.load(result.totalPages - 1, moveFocus);
-            return;
-          }
-          this.result.set(result);
-          this.loading.set(false);
-          if (moveFocus) {
-            this.focusAfterRender(() => this.heading()?.nativeElement.focus());
-          }
-        },
-        error: (error: unknown) => {
-          const problem = toProblemDetails(error);
-          if (isNotRegistered(problem)) {
-            this.leave();
-            return;
-          }
-          this.problem.set(describeOrderError(problem));
-          this.loading.set(false);
-          if (moveFocus) {
-            this.focusAfterRender(() => this.loadError()?.focus());
-          }
-        },
-      });
+    const filter = this.filter();
+    this.request = this.orderApi.list(ORDER_FILTERS[filter].statuses, page, PAGE_SIZE).subscribe({
+      next: (result) => {
+        if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
+          this.load(result.totalPages - 1, moveFocus);
+          return;
+        }
+        this.shownFilter.set(filter);
+        this.result.set(result);
+        this.loading.set(false);
+        this.finishRefresh(`Lista actualizada: ${countOrdersIn(filter, result.totalItems)}.`);
+        if (moveFocus) {
+          this.focusAfterRender(() => this.heading()?.nativeElement.focus());
+        }
+      },
+      error: (error: unknown) => {
+        const problem = toProblemDetails(error);
+        if (isNotRegistered(problem)) {
+          this.leave();
+          return;
+        }
+        this.problem.set(describeOrderError(problem));
+        this.loading.set(false);
+        this.finishRefresh('');
+        if (moveFocus) {
+          this.focusAfterRender(() => this.loadError()?.focus());
+        }
+      },
+    });
+  }
+
+  private finishRefresh(announcement: string): void {
+    if (this.refreshing()) {
+      this.refreshing.set(false);
+      this.announcement.set(announcement);
+    }
   }
 
   private replace(changed: Order): void {

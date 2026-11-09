@@ -51,7 +51,7 @@ const COPY: Record<OrderAction, ActionCopy> = {
   accept: {
     label: 'Aceptar',
     working: 'Aceptando…',
-    done: (id) => `Aceptaste el pedido #${id}. Ya figura en preparación para el cliente.`,
+    done: (id) => `Aceptaste el pedido #${id}.`,
   },
   reject: {
     label: 'Rechazar',
@@ -61,7 +61,7 @@ const COPY: Record<OrderAction, ActionCopy> = {
   'mark-ready': {
     label: 'Marcar listo',
     working: 'Marcando listo…',
-    done: (id) => `El pedido #${id} está listo. El cliente ya lo ve para retirar.`,
+    done: (id) => `El pedido #${id} está listo para retirar.`,
   },
   'mark-picked-up': {
     label: 'Entregar',
@@ -78,10 +78,17 @@ export function emptyCopyFor(filter: OrderFilter): { heading: string; message: s
   return filter === 'active'
     ? {
         heading: 'No tienes pedidos en curso',
-        message: 'Cuando un cliente confirme un pedido, aparece aquí para que lo aceptes.',
+        message: 'Los pedidos nuevos aparecen aquí. Toca «Actualizar» para ver si llegó alguno.',
       }
     : {
         heading: 'Todavía no hay pedidos terminados',
-        message: 'Aquí quedan los pedidos entregados, rechazados y cancelados.',
+        message: 'Aquí quedan los pedidos retirados, rechazados y cancelados.',
       };
+}
+
+export function countOrdersIn(filter: OrderFilter, total: number): string {
+  const orders = total === 1 ? '1 pedido' : `${total} pedidos`;
+  return filter === 'active'
+    ? `${orders} en curso`
+    : `${orders} ${total === 1 ? 'terminado' : 'terminados'}`;
 }

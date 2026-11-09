@@ -7,8 +7,8 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
   output,
-  signal,
   viewChild,
   viewChildren,
 } from '@angular/core';
@@ -38,7 +38,10 @@ export class OrderCard {
   readonly locked = input(false);
   readonly acted = output<OrderAction>();
 
-  protected readonly confirmingReject = signal(false);
+  protected readonly confirmingReject = linkedSignal({
+    source: () => this.order().status,
+    computation: () => false,
+  });
   protected readonly actions = computed(() =>
     actionsFor(this.order()).map((action) => ({ action, copy: copyFor(action) })),
   );
@@ -57,14 +60,15 @@ export class OrderCard {
     (first ?? this.heading()).nativeElement.focus();
   }
 
-  protected run(action: OrderAction): void {
-    if (this.unavailable()) {
+  protected run(action: OrderAction, event: MouseEvent): void {
+    if (this.unavailable() || event.detail > 1) {
       return;
     }
     if (action === 'reject') {
       this.confirmingReject.update((open) => !open);
       return;
     }
+    this.confirmingReject.set(false);
     this.acted.emit(action);
   }
 

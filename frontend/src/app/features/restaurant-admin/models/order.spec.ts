@@ -1,5 +1,5 @@
 import { OrderStatus } from '@shared/utils/order-status';
-import { ORDER_FILTERS, Order, actionsFor, copyFor, emptyCopyFor } from './order';
+import { ORDER_FILTERS, Order, actionsFor, copyFor, countOrdersIn, emptyCopyFor } from './order';
 
 function orderIn(status: OrderStatus): Order {
   return {
@@ -40,18 +40,28 @@ describe('the orders of the restaurant', () => {
   it.each([
     ['accept', 'Aceptar', 'Aceptando…', 'Aceptaste el pedido #42.'],
     ['reject', 'Rechazar', 'Rechazando…', 'Rechazaste el pedido #42.'],
-    ['mark-ready', 'Marcar listo', 'Marcando listo…', 'El pedido #42 está listo.'],
+    ['mark-ready', 'Marcar listo', 'Marcando listo…', 'El pedido #42 está listo para retirar.'],
     ['mark-picked-up', 'Entregar', 'Entregando…', 'Entregaste el pedido #42.'],
   ] as const)('names the action %s and what it did', (action, label, working, done) => {
     const copy = copyFor(action);
 
     expect(copy.label).toBe(label);
     expect(copy.working).toBe(working);
-    expect(copy.done(42)).toContain(done);
+    expect(copy.done(42)).toBe(done);
   });
 
   it('explains an empty list in the words of each filter', () => {
     expect(emptyCopyFor('active').heading).toBe('No tienes pedidos en curso');
+    expect(emptyCopyFor('active').message).toContain('Toca «Actualizar»');
     expect(emptyCopyFor('finished').heading).toBe('Todavía no hay pedidos terminados');
+  });
+
+  it.each([
+    ['active', 1, '1 pedido en curso'],
+    ['active', 4, '4 pedidos en curso'],
+    ['finished', 1, '1 pedido terminado'],
+    ['finished', 12, '12 pedidos terminados'],
+  ] as const)('counts the %s orders: %i', (filter, total, label) => {
+    expect(countOrdersIn(filter, total)).toBe(label);
   });
 });

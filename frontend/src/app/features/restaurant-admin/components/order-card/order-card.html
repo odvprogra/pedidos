@@ -55,7 +55,7 @@
               [attr.aria-expanded]="confirmingReject()"
               [attr.aria-controls]="confirmingReject() ? confirmId() : null"
               [attr.data-action]="entry.action"
-              (click)="run(entry.action)"
+              (click)="run(entry.action, $event)"
               (keydown.escape)="dismiss()"
             >
               @if (working() === entry.action) {
@@ -73,7 +73,7 @@
               type="button"
               [attr.aria-disabled]="unavailable()"
               [attr.data-action]="entry.action"
-              (click)="run(entry.action)"
+              (click)="run(entry.action, $event)"
             >
               @if (working() === entry.action) {
                 <app-spinner />

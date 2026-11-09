@@ -159,14 +159,45 @@ describe('OrdersPage', () => {
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
-    it('loads the same orders again when the owner asks to refresh them', async () => {
-      await respond(pageOf([order(43, 'PLACED')]));
+    it('keeps the empty message of the shown list while the other one loads', async () => {
+      await respond(pageOf([]));
 
-      button('Actualizar').click();
+      button('Terminados').click();
       await stable();
+
+      expect(text()).toContain('No tienes pedidos en curso');
+      expect(text()).not.toContain('Todavía no hay pedidos terminados');
+      await respond(pageOf([order(40, 'PICKED_UP')]), FINISHED);
+
+      expect(titles()).toEqual(['Pedido #40']);
+    });
+
+    it('loads the same orders again, says so and keeps the focus on the button', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      const refresh = button('Actualizar');
+      refresh.focus();
+
+      refresh.click();
+      await stable();
+
+      expect(refresh.textContent).toContain('Actualizando…');
+      expect(refresh.getAttribute('aria-disabled')).toBe('true');
       await respond(pageOf([order(44, 'PLACED'), order(43, 'PLACED')]));
 
       expect(titles()).toEqual(['Pedido #44', 'Pedido #43']);
+      expect(refresh.textContent).toContain('Actualizar');
+      expect(page().querySelector('[data-refresh-announcement]')?.textContent?.trim()).toBe(
+        'Lista actualizada: 2 pedidos en curso.',
+      );
+      expect(document.activeElement).toBe(refresh);
+    });
+
+    it('counts the orders of the shown list', async () => {
+      await respond(pageOf([order(43, 'PLACED')], 0, 1));
+
+      expect(page().querySelector('[data-total-orders]')?.textContent?.trim()).toBe(
+        '1 pedido en curso',
+      );
     });
 
     it('explains that the orders could not load and loads them again', async () => {
@@ -248,7 +279,7 @@ describe('OrdersPage', () => {
     });
 
     it.each([
-      ['ACCEPTED', 'Marcar listo', 'mark-ready', 'READY', 'El pedido #43 está listo.'],
+      ['ACCEPTED', 'Marcar listo', 'mark-ready', 'READY', 'El pedido #43 está listo para retirar.'],
       ['READY', 'Entregar', 'mark-picked-up', 'PICKED_UP', 'Entregaste el pedido #43.'],
     ] as const)(
       'moves an order in %s with "%s"',
@@ -279,10 +310,12 @@ describe('OrdersPage', () => {
       expect(text()).toContain('No tienes pedidos en curso');
     });
 
-    it('keeps the order as it was when the step fails', async () => {
+    it('keeps the order and the focus where they were when the step fails', async () => {
       await respond(pageOf([order(43, 'PLACED')]));
+      const accept = button('Aceptar', card(43));
+      accept.focus();
 
-      button('Aceptar', card(43)).click();
+      accept.click();
       await stable();
       fail(`${ORDERS_URL}/43/accept`, 500);
       await stable();
@@ -290,7 +323,7 @@ describe('OrdersPage', () => {
       expect(notice()?.getAttribute('role')).toBe('alert');
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('Pendiente');
-      expect(document.activeElement).toBe(button('Rechazar', card(43)));
+      expect(document.activeElement).toBe(button('Aceptar', card(43)));
     });
 
     it('sends an owner whose restaurant disappeared to register it', async () => {

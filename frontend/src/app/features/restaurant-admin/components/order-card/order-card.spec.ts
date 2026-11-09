@@ -117,6 +117,16 @@ describe('OrderCard', () => {
     expect(host.acted).toEqual([action]);
   });
 
+  it('ignores the second click of a double click, so it never runs two steps', async () => {
+    await showIn('ACCEPTED');
+
+    button('Marcar listo').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    button('Marcar listo').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));
+    await fixture.whenStable();
+
+    expect(host.acted).toEqual(['mark-ready']);
+  });
+
   it('asks before rejecting and takes the focus to keeping the order', async () => {
     button('Rechazar').click();
     await fixture.whenStable();
@@ -150,6 +160,27 @@ describe('OrderCard', () => {
     expect(text()).not.toContain('¿Rechazar el pedido #42?');
     expect(document.activeElement).toBe(button('Rechazar'));
     expect(host.acted).toEqual([]);
+  });
+
+  it('closes the question when the owner accepts instead', async () => {
+    button('Rechazar').click();
+    await fixture.whenStable();
+
+    button('Aceptar').click();
+    await fixture.whenStable();
+
+    expect(host.acted).toEqual(['accept']);
+    expect(text()).not.toContain('¿Rechazar el pedido #42?');
+  });
+
+  it('closes the question when the order stops being pending', async () => {
+    button('Rechazar').click();
+    await fixture.whenStable();
+
+    await showIn('CANCELLED');
+
+    expect(text()).not.toContain('¿Rechazar el pedido #42?');
+    expect(card().querySelector('app-confirm-panel')).toBeNull();
   });
 
   it('says what it is doing while a step runs and ignores more taps', async () => {

@@ -169,11 +169,11 @@ describe('RestaurantCard', () => {
       return card().querySelector('a[href$="/pedidos"]');
     }
 
-    it('leads to the orders of the restaurant below the menu', () => {
+    it('leads to the orders of the restaurant before the menu, as the daily task', () => {
       const links = Array.from(card().querySelectorAll('a'), (link) => link.getAttribute('href'));
 
       expect(ordersLink()?.textContent).toContain('Pedidos');
-      expect(links.indexOf(ordersLink()?.getAttribute('href') ?? '')).toBeGreaterThan(
+      expect(links.indexOf(ordersLink()?.getAttribute('href') ?? '')).toBeLessThan(
         links.findIndex((href) => href?.endsWith('/menu')),
       );
     });

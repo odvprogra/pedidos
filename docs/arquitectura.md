@@ -194,7 +194,13 @@ src/app/
   respuesta antes de la primera navegación, así los guards nunca ven el estado cargando. Si `/me`
   falla por cualquier motivo, la app arranca sin sesión.
 - Cada rol tiene su inicio, que da `homeFor(role)`: `/` para el cliente, `/mi-restaurante` para el
-  dueño y `/admin` para el admin. El header le da al dueño y al admin un enlace a su inicio.
+  dueño y `/admin` para el admin. El header le da a cada rol un enlace propio: "Mis pedidos"
+  (`/pedidos`) al cliente, "Mi restaurante" al dueño y "Panel" al admin.
+- Los pedidos del cliente (`/pedidos` y `/pedidos/:id`, de la feature `orders`) llevan
+  `roleGuard('CUSTOMER')`. Sus rutas están en `core/orders` (`ORDERS_PATH`, `orderPath(id)`) porque
+  también las usan el header y la confirmación del carrito, que enlaza al pedido recién creado. El
+  nombre y el tono de cada estado salen de `@shared/utils/order-status`, para que `cart`, `orders` y
+  `restaurant-admin` los muestren igual sin importarse entre sí.
 - La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
   sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
   quedó en `/estado`, sin enlace en la interfaz.

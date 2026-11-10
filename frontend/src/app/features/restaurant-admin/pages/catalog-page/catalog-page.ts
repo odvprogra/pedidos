@@ -16,6 +16,7 @@ import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Observable } from 'rxjs';
 import { CategoryForm } from '../../components/category-form/category-form';
 import { CategoryHeader } from '../../components/category-header/category-header';
@@ -69,6 +70,7 @@ interface Notice {
     LoadError,
     ProductForm,
     ProductRow,
+    Skeleton,
   ],
   templateUrl: './catalog-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

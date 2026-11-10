@@ -20,6 +20,7 @@ import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { AccountRow } from '../../components/account-row/account-row';
 import { AccountApi } from '../../data-access/account-api';
 import { copyFor } from '../../models/account-action';
@@ -37,7 +38,7 @@ interface Notice {
 
 @Component({
   selector: 'app-account-list-page',
-  imports: [AccountRow, Alert, EmptyState, LoadError, Pagination],
+  imports: [AccountRow, Alert, EmptyState, LoadError, Pagination, Skeleton],
   templateUrl: './account-list-page.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

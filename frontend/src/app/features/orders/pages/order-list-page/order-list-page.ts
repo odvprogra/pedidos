@@ -19,6 +19,7 @@ import { Button } from '@shared/ui/button/button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { OrderRow } from '../../components/order-row/order-row';
 import { OrderApi } from '../../data-access/order-api';
 import { Order, countOrders } from '../../models/order';
@@ -28,7 +29,7 @@ const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-order-list-page',
-  imports: [RouterLink, Button, EmptyState, LoadError, OrderRow, Pagination],
+  imports: [RouterLink, Button, EmptyState, LoadError, OrderRow, Pagination, Skeleton],
   templateUrl: './order-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -19,6 +19,7 @@ import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { RestaurantRow } from '../../components/restaurant-row/restaurant-row';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { ModerationAction } from '../../models/moderation-action';
@@ -36,7 +37,7 @@ interface Notice {
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [Alert, EmptyState, LoadError, Pagination, RestaurantRow],
+  imports: [Alert, EmptyState, LoadError, Pagination, RestaurantRow, Skeleton],
   templateUrl: './restaurant-list-page.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

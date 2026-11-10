@@ -23,6 +23,7 @@ import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { describeUnits } from '@shared/utils/describe-units';
 import { parseId } from '@shared/utils/parse-id';
 import { Subscription, forkJoin } from 'rxjs';
@@ -54,6 +55,7 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
     MenuItem,
     RestaurantProfile,
     SecondaryButton,
+    Skeleton,
   ],
   templateUrl: './restaurant-menu-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

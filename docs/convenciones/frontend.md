@@ -42,6 +42,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   "Reintentar", y la página le lleva el foco con su método `focus()`. El vacío es `app-empty-state`
   (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo `emptyStateIcon` y la
   acción, si la hay, como contenido.
+- La carga es un esqueleto con la forma de lo que viene, dentro de un contenedor con
+  `role="status"` y un texto `sr-only` ("Cargando tus pedidos…"). Cada barra es un `div appSkeleton`
+  (`@shared/ui`), que pone el pulso, el color y la pausa con `motion-reduce`; la página le da el
+  tamaño y la forma (`h-4 w-40 rounded`).
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).

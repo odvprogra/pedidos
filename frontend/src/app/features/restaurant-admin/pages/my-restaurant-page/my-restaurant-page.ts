@@ -18,6 +18,7 @@ import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
@@ -80,6 +81,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     LoadError,
     RegistrationSteps,
     RestaurantCard,
+    Skeleton,
     Spinner,
     TextInput,
   ],

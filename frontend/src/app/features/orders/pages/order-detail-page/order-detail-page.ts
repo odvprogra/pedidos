@@ -23,6 +23,7 @@ import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { OrderStatusBadge } from '@shared/ui/order-status-badge/order-status-badge';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { formatDateTime } from '@shared/utils/format-date-time';
 import { formatPrice } from '@shared/utils/format-price';
@@ -59,6 +60,7 @@ const CHANGED_MESSAGE =
     LoadError,
     OrderStatusBadge,
     SecondaryButton,
+    Skeleton,
     Spinner,
   ],
   templateUrl: './order-detail-page.html',

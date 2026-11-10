@@ -56,6 +56,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `app-restaurant-status-badge` (`@shared/ui`) | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
 | `restaurantStatusOf` (`@shared/utils`)       | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
 | `app-spinner` (`@shared/ui`)                 | El indicador dentro de un botón que trabaja                                                |
+| `appSkeleton` (`@shared/ui`)                 | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
 | `validationMessage` (`@shared/utils`)        | El mensaje de un campo, con prioridad para el error del backend                            |
 | `applyFieldErrors` (`@shared/utils`)         | Asigna los `errors[]` del backend a los campos del formulario                              |
 | `focusFirstInvalid` (`@shared/utils`)        | Lleva el foco al primer campo inválido después de renderizar                               |

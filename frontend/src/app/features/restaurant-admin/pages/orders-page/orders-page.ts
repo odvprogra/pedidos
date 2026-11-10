@@ -20,6 +20,7 @@ import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { Subscription } from 'rxjs';
 import { OrderCard } from '../../components/order-card/order-card';
@@ -59,6 +60,7 @@ interface PendingAction {
     OrderCard,
     Pagination,
     SecondaryButton,
+    Skeleton,
     Spinner,
   ],
   templateUrl: './orders-page.html',

@@ -18,6 +18,7 @@ import { toProblemDetails } from '@core/http/problem-details';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { RestaurantTile } from '../../components/restaurant-tile/restaurant-tile';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { Restaurant, countRestaurants } from '../../models/restaurant';
@@ -26,7 +27,7 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [EmptyState, LoadError, Pagination, RestaurantTile],
+  imports: [EmptyState, LoadError, Pagination, RestaurantTile, Skeleton],
   templateUrl: './restaurant-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

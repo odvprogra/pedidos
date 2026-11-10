@@ -265,6 +265,21 @@ describe('RestaurantListPage', () => {
       httpTesting.expectNone('/api/v1/restaurants/4/suspend');
     });
 
+    it('keeps a single question open at a time', async () => {
+      await show(pageOf([LA_CASONA, NAPOLI]));
+
+      buttonIn(rowOf('La Casona'), 'Suspender').click();
+      await fixture.whenStable();
+      buttonIn(rowOf('Pizzería Napoli'), 'Reactivar').click();
+      await fixture.whenStable();
+
+      expect(page().querySelectorAll('ul [role="group"]')).toHaveLength(1);
+      expect(rowOf('Pizzería Napoli').textContent).toContain('¿Reactivar Pizzería Napoli?');
+      expect(rowOf('La Casona').textContent).not.toContain('¿Suspender');
+      expect(buttonIn(rowOf('La Casona'), 'Suspender').getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(buttonIn(rowOf('Pizzería Napoli'), 'Cancelar'));
+    });
+
     it('suspends the restaurant once the admin confirms and shows it closed', async () => {
       await show(pageOf([LA_CASONA]));
 

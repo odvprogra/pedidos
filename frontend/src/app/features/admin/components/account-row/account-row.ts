@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { ROLE_LABELS } from '@core/auth/account';
 import { Badge } from '@shared/ui/badge/badge';
 import { actionFor, copyFor } from '../../models/account-action';
@@ -17,6 +17,7 @@ export class AccountRow {
   readonly isSelf = input(false);
   readonly busy = input(false);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly confirmed = output<ModerationAction>();
 
   protected readonly moderation = computed(() => {

@@ -83,6 +83,7 @@ export class RestaurantMenuPage {
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly announcement = signal('');
+  protected readonly confirmingId = signal<number | null>(null);
   protected readonly canOrder = computed(() => canShop(this.session.account()));
   protected readonly otherRestaurant = computed(() => {
     const inCart = this.cart.restaurant();
@@ -114,6 +115,14 @@ export class RestaurantMenuPage {
     this.load(this.id(), true);
   }
 
+  protected toggleConfirmation(productId: number, open: boolean): void {
+    if (open) {
+      this.confirmingId.set(productId);
+    } else if (this.confirmingId() === productId) {
+      this.confirmingId.set(null);
+    }
+  }
+
   protected quantityOf(product: Product): number {
     return this.cart.quantityOf(product.id);
   }
@@ -141,6 +150,7 @@ export class RestaurantMenuPage {
   private load(idText: string, moveFocus: boolean): void {
     this.loads += 1;
     this.request?.unsubscribe();
+    this.confirmingId.set(null);
     const id = parseId(idText);
     if (id === null) {
       this.show({ status: 'missing' }, moveFocus);

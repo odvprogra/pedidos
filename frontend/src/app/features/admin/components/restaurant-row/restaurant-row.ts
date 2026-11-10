@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
 import { ModerationAction } from '../../models/moderation-action';
 import { actionFor, copyFor } from '../../models/restaurant-action';
@@ -15,6 +15,7 @@ export class RestaurantRow {
   readonly restaurant = input.required<RestaurantSummary>();
   readonly busy = input(false);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly confirmed = output<ModerationAction>();
 
   protected readonly action = computed(() => actionFor(this.restaurant()));

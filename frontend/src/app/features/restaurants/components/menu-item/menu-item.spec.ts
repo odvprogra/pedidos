@@ -21,6 +21,7 @@ const SILPANCHO_SOLD_OUT: Product = { ...SILPANCHO, available: false };
     [restaurantOpen]="restaurantOpen()"
     [quantityInCart]="quantityInCart()"
     [otherRestaurant]="otherRestaurant()"
+    [(confirming)]="confirming"
     (added)="adds = adds + 1"
     (replaced)="replacements = replacements + 1"
   />`,
@@ -32,6 +33,7 @@ class Host {
   readonly restaurantOpen = signal(true);
   readonly quantityInCart = signal(0);
   readonly otherRestaurant = signal<string | null>(null);
+  readonly confirming = signal(false);
   adds = 0;
   replacements = 0;
 }
@@ -213,6 +215,26 @@ describe('MenuItem', () => {
       expect(host.adds).toBe(0);
       expect(item().querySelector('[role="group"]')).toBeNull();
       expect(document.activeElement).toBe(addButton());
+    });
+
+    it('tells the page whether its question is open', async () => {
+      await click(addButton());
+
+      expect(host.confirming()).toBe(true);
+
+      await click(panelButton('Mantener mi carrito'));
+
+      expect(host.confirming()).toBe(false);
+    });
+
+    it('closes its question when the page opens another one', async () => {
+      await click(addButton());
+
+      host.confirming.set(false);
+      await fixture.whenStable();
+
+      expect(item().querySelector('[role="group"]')).toBeNull();
+      expect(addButton()?.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('closes the question when the button is pressed again', async () => {

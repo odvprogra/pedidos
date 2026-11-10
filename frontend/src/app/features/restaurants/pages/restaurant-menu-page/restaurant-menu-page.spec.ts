@@ -419,6 +419,24 @@ describe('RestaurantMenuPage', () => {
       expect(page().querySelectorAll('article > div button')).toHaveLength(0);
     });
 
+    it('keeps a single question about the cart open at a time', async () => {
+      TestBed.inject(CartStore).add(
+        { id: 7, name: 'El Fogón', address: 'Av. Banzer 120' },
+        { id: 20, name: 'Napolitana', price: 70 },
+      );
+      await open('4');
+      await respond();
+
+      await add('Silpancho');
+      await add('Limonada');
+
+      const questions = page().querySelectorAll('[role="group"]');
+      expect(questions).toHaveLength(1);
+      expect(questions[0].textContent).toContain('Si agregas Limonada');
+      expect(addButtonOf('Silpancho').getAttribute('aria-expanded')).toBe('false');
+      expect(addButtonOf('Limonada').getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('asks before replacing a cart of another restaurant', async () => {
       const cart = TestBed.inject(CartStore);
       cart.add(

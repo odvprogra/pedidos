@@ -7,8 +7,8 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import { SecondaryButton, SecondaryButtonTone } from '@shared/ui/button/secondary-button';
@@ -42,9 +42,9 @@ export class ModerationControl {
   readonly panelId = input.required<string>();
   readonly busy = input(false);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly confirmed = output<ModerationAction>();
 
-  protected readonly confirming = signal(false);
   protected readonly tones = computed(() => ACTION_TONES[this.action()]);
   protected readonly unavailable = computed(() => this.busy() || this.locked());
 

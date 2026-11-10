@@ -63,6 +63,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
   mismo panel lo explica en tono de aviso y solo ofrece "Entendido". El botón "Cancelar" del panel
   puede decir lo que se mantiene ("Mantener pedido") cuando la acción misma se llama cancelar.
+- En una lista hay una sola pregunta abierta a la vez: abrir otra cierra la anterior, como en el
+  panel del admin o con "Vaciar y agregar" en el menú. El componente de la fila expone `confirming`
+  como `model()` y la página guarda el id de la que está abierta (`confirmingId`), que vuelve a
+  `null` al cargar otra página de la lista.
 - Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
   se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
   confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.

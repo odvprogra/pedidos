@@ -244,4 +244,37 @@ describe('ModerationList', () => {
       expect(list.notice.shown()).toEqual([]);
     });
   });
+
+  describe('the question before an action', () => {
+    beforeEach(() => {
+      list.start();
+      respond(pageOf([LA_CASONA, EL_FOGON], 0, 45));
+    });
+
+    it('keeps a single question open', () => {
+      list.toggleConfirmation(4, true);
+      list.toggleConfirmation(5, true);
+
+      expect(list.confirmingId()).toBe(5);
+    });
+
+    it('ignores the closing of a question that is no longer open', () => {
+      list.toggleConfirmation(4, true);
+      list.toggleConfirmation(5, true);
+
+      list.toggleConfirmation(4, false);
+      expect(list.confirmingId()).toBe(5);
+
+      list.toggleConfirmation(5, false);
+      expect(list.confirmingId()).toBeNull();
+    });
+
+    it('closes the question when another page loads', () => {
+      list.toggleConfirmation(4, true);
+
+      list.goTo(1);
+
+      expect(list.confirmingId()).toBeNull();
+    });
+  });
 });

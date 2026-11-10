@@ -40,6 +40,7 @@ export class ModerationList<T extends Moderated> {
   readonly loading = signal(true);
   readonly problem = signal<string | null>(null);
   readonly pendingId = signal<number | null>(null);
+  readonly confirmingId = signal<number | null>(null);
   readonly notice = new NoticeSlot();
   readonly busy = computed(() => this.loading() || this.pendingId() !== null);
 
@@ -61,6 +62,14 @@ export class ModerationList<T extends Moderated> {
 
   retry(): void {
     this.load(this.requestedPage, true);
+  }
+
+  toggleConfirmation(id: number, open: boolean): void {
+    if (open) {
+      this.confirmingId.set(id);
+    } else if (this.confirmingId() === id) {
+      this.confirmingId.set(null);
+    }
   }
 
   run(action: ModerationAction, item: T): void {
@@ -89,6 +98,7 @@ export class ModerationList<T extends Moderated> {
     this.requestedPage = page;
     this.loading.set(true);
     this.problem.set(null);
+    this.confirmingId.set(null);
     this.source
       .list(page, MODERATION_PAGE_SIZE)
       .pipe(takeUntilDestroyed(this.destroyRef))

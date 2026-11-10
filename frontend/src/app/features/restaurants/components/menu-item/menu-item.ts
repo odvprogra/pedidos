@@ -7,8 +7,8 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import { MAX_QUANTITY } from '@core/cart/cart';
@@ -32,10 +32,10 @@ export class MenuItem {
   readonly restaurantOpen = input(true);
   readonly quantityInCart = input(0);
   readonly otherRestaurant = input<string | null>(null);
+  readonly confirming = model(false);
   readonly added = output();
   readonly replaced = output();
 
-  protected readonly confirming = signal(false);
   protected readonly price = computed(() => formatPrice(this.product().price));
   protected readonly idPrefix = computed(() => `menu-product-${this.product().id}`);
   protected readonly nameId = computed(() => `${this.idPrefix()}-name`);

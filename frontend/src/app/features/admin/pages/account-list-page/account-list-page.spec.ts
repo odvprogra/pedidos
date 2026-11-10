@@ -256,6 +256,21 @@ describe('AccountListPage', () => {
       httpTesting.expectNone('/api/v1/accounts/7/suspend');
     });
 
+    it('keeps a single question open at a time', async () => {
+      await show(pageOf([ANA, LUIS]));
+
+      buttonIn(rowOf('Ana Rojas'), 'Suspender').click();
+      await fixture.whenStable();
+      buttonIn(rowOf('Luis Pérez'), 'Reactivar').click();
+      await fixture.whenStable();
+
+      expect(page().querySelectorAll('ul [role="group"]')).toHaveLength(1);
+      expect(rowOf('Luis Pérez').textContent).toContain('¿Reactivar la cuenta de Luis Pérez?');
+      expect(rowOf('Ana Rojas').textContent).not.toContain('¿Suspender');
+      expect(buttonIn(rowOf('Ana Rojas'), 'Suspender').getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(buttonIn(rowOf('Luis Pérez'), 'Cancelar'));
+    });
+
     it('suspends the account once the admin confirms', async () => {
       await show(pageOf([ANA]));
 

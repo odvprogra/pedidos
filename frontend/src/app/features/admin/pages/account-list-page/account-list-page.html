@@ -84,6 +84,8 @@
               [isSelf]="account.id === ownId()"
               [busy]="list.pendingId() === account.id"
               [locked]="list.busy() && list.pendingId() !== account.id"
+              [confirming]="list.confirmingId() === account.id"
+              (confirmingChange)="list.toggleConfirmation(account.id, $event)"
               (confirmed)="list.run($event, account)"
             />
           </li>

@@ -28,6 +28,7 @@
     [panelId]="confirmId()"
     [busy]="busy()"
     [locked]="locked()"
+    [(confirming)]="confirming"
     (confirmed)="confirmed.emit($event)"
   />
 </div>

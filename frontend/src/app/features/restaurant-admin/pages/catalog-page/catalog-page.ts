@@ -10,9 +10,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FieldViolation, ProblemDetails, toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { LoadError } from '@shared/ui/load-error/load-error';
@@ -61,8 +62,8 @@ interface Notice {
 @Component({
   selector: 'app-catalog-page',
   imports: [
-    RouterLink,
     Alert,
+    BackLink,
     Button,
     CategoryForm,
     CategoryHeader,

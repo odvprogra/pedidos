@@ -12,10 +12,11 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
@@ -53,8 +54,8 @@ interface PendingAction {
 @Component({
   selector: 'app-orders-page',
   imports: [
-    RouterLink,
     Alert,
+    BackLink,
     EmptyState,
     LoadError,
     OrderCard,

@@ -55,6 +55,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `app-order-status-badge` (`@shared/ui`)      | La insignia de un pedido según su `status`, con su nombre y su tono                        |
 | `app-restaurant-status-badge` (`@shared/ui`) | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
 | `restaurantStatusOf` (`@shared/utils`)       | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
+| `app-back-link` (`@shared/ui`)               | "‹ Mi restaurante": vuelve a `link`, relativo a la ruta de la página                       |
 | `app-spinner` (`@shared/ui`)                 | El indicador dentro de un botón que trabaja                                                |
 | `appSkeleton` (`@shared/ui`)                 | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
 | `validationMessage` (`@shared/utils`)        | El mensaje de un campo, con prioridad para el error del backend                            |

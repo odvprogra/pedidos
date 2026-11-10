@@ -19,6 +19,7 @@ import { canShop } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { CartStore } from '@core/cart/cart-store';
 import { toProblemDetails } from '@core/http/problem-details';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
@@ -48,6 +49,7 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
   selector: 'app-restaurant-menu-page',
   imports: [
     RouterLink,
+    BackLink,
     Button,
     CartSummary,
     EmptyState,

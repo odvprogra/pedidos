@@ -18,6 +18,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ORDERS_PATH } from '@core/orders/order-paths';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
@@ -55,6 +56,7 @@ const CHANGED_MESSAGE =
   imports: [
     RouterLink,
     Alert,
+    BackLink,
     Button,
     ConfirmPanel,
     LoadError,

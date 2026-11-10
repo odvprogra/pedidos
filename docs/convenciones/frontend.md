@@ -95,6 +95,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   El router abre cada página arriba (`withInMemoryScrolling` con `scrollPositionRestoration: 'top'`).
   Eso no se prueba en `TestBed`, porque el router solo lo activa cuando arranca la app; se revisa
   en el navegador.
+- Una página que cuelga de otra (el menú del dueño, el detalle de un pedido) empieza con
+  `app-back-link` (`@shared/ui`), que dice adónde vuelve: `<app-back-link link="..">Mi
+restaurante</app-back-link>`. Un `link` relativo se resuelve desde la ruta de la página.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de

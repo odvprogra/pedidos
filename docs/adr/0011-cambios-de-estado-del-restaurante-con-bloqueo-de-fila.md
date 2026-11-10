@@ -46,5 +46,7 @@ bloqueo, los dos tests fallan.
   cambios llegaran uno después del otro. No cambia el esquema. Pedidos y restaurantes usan el mismo
   criterio, probado contra PostgreSQL real.
 - **Negativas:** el segundo cambio espera al primero, sin tiempo límite, como en ADR-0010.
-  `RestaurantLockingTest` suma otro test que depende de esperar medio segundo. Si ADR-0010 se
-  rechaza, esta también hay que revisarla.
+  `RestaurantLockingTest` suma cuatro tests que dependen de esperar medio segundo. Confirmar un
+  pedido lee el restaurante sin bloqueo, así que un pedido que llega en el mismo instante que la
+  suspensión puede quedar pendiente; el dueño lo termina como cualquier pedido en curso. Si
+  ADR-0010 se rechaza, esta también hay que revisarla.

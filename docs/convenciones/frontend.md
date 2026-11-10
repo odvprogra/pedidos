@@ -68,6 +68,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   botones con `aria-pressed` dentro de un `role="group"` con nombre: un riel `bg-surface` con borde
   y el elegido en `bg-brand` con texto blanco. Cambiar de filtro vuelve a la primera página y lleva
   el foco al título, como cambiar de página.
+- Las secciones de un panel, como Cuentas y Restaurantes en el del admin, se ven con el mismo riel,
+  pero son enlaces dentro de un `nav` con nombre y la actual lleva `aria-current="page"`. Viven en
+  una ruta contenedora con `<router-outlet>`, así la navegación no se repite y el enlace tocado no se
+  destruye; la sección que se abre lleva el foco a su título cuando termina de cargar.
 - Una lista que otros cambian mientras se mira, como los pedidos del dueño, tiene un botón
   "Actualizar" que la vuelve a pedir en la misma página y con el mismo filtro. No se consulta sola.
   Mientras trabaja dice "Actualizando…", el foco se queda en el botón y el resultado se anuncia en

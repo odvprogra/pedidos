@@ -20,7 +20,7 @@ son una guía, no una lista cerrada; un módulo se crea cuando la primera histor
 | Módulo       | Responsabilidad                                         |
 | ------------ | ------------------------------------------------------- |
 | `identity`   | Cuentas, registro, inicio de sesión, roles y suspensión |
-| `restaurant` | Registro y datos de los restaurantes                    |
+| `restaurant` | Registro, datos y suspensión de los restaurantes        |
 | `catalog`    | Productos y categorías del menú de cada local           |
 | `order`      | Carrito confirmado, pedidos y su ciclo de estado        |
 

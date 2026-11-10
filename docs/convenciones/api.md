@@ -7,6 +7,10 @@
 - Acciones que no son CRUD como subrecurso con verbo: `POST /api/v1/orders/{id}/cancel`.
 - Rutas en kebab-case; JSON en camelCase.
 - La verificación del sistema queda fuera de la versión: `GET /api/health`.
+- Si el admin necesita otra vista de una colección que ya es pública, va en
+  `/api/v1/admin/<recurso>`, como `GET /api/v1/admin/restaurants`. Sus acciones siguen en el recurso
+  (`POST /api/v1/restaurants/{id}/suspend`). Una colección que solo ve el admin, como las cuentas, no
+  lleva el prefijo.
 
 ## Métodos y respuestas
 
@@ -325,7 +329,9 @@ Suspender saca un local de la plataforma sin borrar sus datos.
 - Mientras está suspendido:
   - el listado público no lo trae, y el detalle y el menú responden `404`
     ([Restaurantes y menús públicos](#restaurantes-y-menús-públicos));
-  - un pedido nuevo responde `422` con `order.restaurant_unavailable`;
+  - un pedido nuevo responde `422` con `order.restaurant_unavailable`. Confirmar un pedido no bloquea
+    el restaurante, así que uno que llega en el mismo instante que la suspensión puede quedar
+    pendiente; el dueño lo atiende o lo rechaza como cualquier pedido en curso;
   - el dueño lo ve en `/mine`, edita su menú y termina sus pedidos en curso, pero no lo abre;
   - el cliente sigue viendo sus pedidos y puede cancelar uno pendiente.
 - Suspender el restaurante no toca la cuenta del dueño ni sus sesiones, y suspender la cuenta no

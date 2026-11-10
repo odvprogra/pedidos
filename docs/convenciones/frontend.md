@@ -172,7 +172,9 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Validación al salir del campo y mensajes en español debajo de cada campo.
 - El botón principal lleva `appButton`, también un enlace que es la acción principal (como "Ver
   restaurantes" cuando un restaurante no existe). Los secundarios, como "Cancelar", "Editar" o
-  "Borrar", llevan `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el
+  "Borrar", llevan `appSecondaryButton` (`tone="danger"` para borrar). Un secundario que va al
+  lado del principal, como "Seguir explorando" junto a "Ver mi pedido", usa `size="lg"` para tener
+  su misma altura, nunca una clase `min-h-*` suelta. Mientras se envía, el
   principal muestra que está trabajando y usa `aria-disabled` en lugar de `disabled`, para no
   perder el foco; "Cancelar" también queda con `aria-disabled`, y `submit()` ignora los envíos
   repetidos. En el celular los botones van uno debajo del otro, en el mismo orden que el Tab.

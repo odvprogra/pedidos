@@ -61,6 +61,12 @@ export class MenuItem {
     }
   }
 
+  protected dismiss(): void {
+    if (this.confirming()) {
+      this.closeConfirmation();
+    }
+  }
+
   protected closeConfirmation(): void {
     this.confirming.set(false);
     this.focusAddButton();

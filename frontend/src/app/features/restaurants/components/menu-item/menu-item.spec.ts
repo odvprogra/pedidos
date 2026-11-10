@@ -237,6 +237,26 @@ describe('MenuItem', () => {
       expect(addButton()?.getAttribute('aria-expanded')).toBe('false');
     });
 
+    it('closes the question with the escape key on its button', async () => {
+      await click(addButton());
+      addButton()?.focus();
+
+      addButton()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+
+      expect(item().querySelector('[role="group"]')).toBeNull();
+      expect(host.confirming()).toBe(false);
+      expect(document.activeElement).toBe(addButton());
+    });
+
+    it('ignores the escape key while there is no question', async () => {
+      addButton()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+
+      expect(host.confirming()).toBe(false);
+      expect(host.adds).toBe(0);
+    });
+
     it('closes the question when the button is pressed again', async () => {
       await click(addButton());
 

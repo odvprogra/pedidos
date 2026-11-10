@@ -632,6 +632,21 @@ describe('CatalogPage', () => {
       expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
     });
 
+    it('closes the question when the menu loads again', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      const toggle = productRow('Pique macho').querySelector(
+        'button[role="switch"]',
+      ) as HTMLButtonElement;
+
+      await click(toggle);
+      failWith(`${PRODUCTS_URL}/12/mark-available`, 404, 'catalog.product_not_found');
+      await stable();
+      await showMenu();
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('loads the menu again when the product no longer exists', async () => {
       await click(button('Borrar', productRow('Silpancho')));
       await click(button('Sí, borrar'));

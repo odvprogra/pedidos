@@ -8,11 +8,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { Button } from '../button/button';
+import { Announce } from '../live-region/announce';
 import { Spinner } from '../spinner/spinner';
 
 @Component({
   selector: 'app-load-error',
-  imports: [Button, NgTemplateOutlet, Spinner],
+  imports: [Announce, Button, NgTemplateOutlet, Spinner],
   templateUrl: './load-error.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

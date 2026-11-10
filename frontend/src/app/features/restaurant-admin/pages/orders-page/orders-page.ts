@@ -193,7 +193,7 @@ export class OrdersPage implements OnInit {
     this.request = this.orderApi.list(ORDER_FILTERS[filter].statuses, page, PAGE_SIZE).subscribe({
       next: (result) => {
         if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
-          this.load(result.totalPages - 1, moveFocus);
+          this.load(result.totalPages - 1, moveFocus, retrying);
           return;
         }
         this.shownFilter.set(filter);

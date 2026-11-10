@@ -37,9 +37,11 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Los clientes HTTP (`XxxApi`) devuelven `Observable` y no guardan estado.
 - Toda suscripción de una página a un pedido HTTP se corta cuando la página se destruye: si la
   persona sale antes de la respuesta, el pedido se cancela y su respuesta no toca una página que ya
-  no está (ni navega desde ella, como el ingreso). Se hace con `takeUntilDestroyed`; si la página
-  además corta el pedido anterior al pedir otro (el detalle de un pedido, el menú público, los
-  pedidos del dueño), guarda la `Subscription` y la cancela también en `DestroyRef.onDestroy`.
+  no está (ni navega desde ella, como el ingreso). Si lo que se cortó ya había llegado al backend,
+  como un registro, el cambio queda hecho: al volver, la página muestra cómo quedó. Se hace con
+  `takeUntilDestroyed`; si la página además corta el pedido anterior al pedir otro (el detalle de un
+  pedido, el menú público, los pedidos del dueño), guarda la `Subscription` y la cancela también en
+  `DestroyRef.onDestroy`.
 - El estado que comparten varias páginas de una feature va en un `XxxStore` (`@Injectable` con
   señales). Una librería de estado global (NgRx u otra) requiere una ADR.
 - Todas las URLs usan `environment.apiUrl`.
@@ -47,7 +49,8 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   `app-load-error` (`@shared/ui`): recibe el título y el mensaje, emite `retry` al tocar
   "Reintentar", y la página le lleva el foco con su método `focus()`. Al reintentar, la página no
   vuelve al esqueleto: le pasa `[retrying]="true"` y el error queda a la vista, con el botón en
-  "Reintentando…", `aria-disabled` y el foco, que ignora más toques. Si llega la respuesta, el foco
+  "Reintentando…" (que también se anuncia), `aria-disabled` y el foco, que ignora más toques. Si
+  llega la respuesta, el foco
   va al título; si vuelve a fallar, el motivo entra de nuevo como `role="alert"` y se anuncia. Solo
   "Reintentar" deja el error a la vista: cambiar de filtro o de página lo quita como antes. El vacío
   es `app-empty-state` (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo
@@ -62,8 +65,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   app y va después del `<main>` en `app.html`. Una región que entra al DOM con el texto ya puesto no
   se anuncia en todos los lectores de pantalla; por eso el esqueleto y el aviso de éxito no llevan
   `role="status"`. La directiva `appAnnounce` (`@shared/ui`) escribe en la región el texto de su
-  elemento cuando aparece y lo saca cuando se va; `Announcer` le da un id nuevo a cada anuncio, así
-  un mismo mensaje se vuelve a anunciar. Un `app-alert` en `success` se anuncia solo, con
+  elemento cuando aparece y lo saca cuando se va (lee el texto una sola vez: un texto que cambia se
+  anuncia con un elemento nuevo, como hace `NoticeSlot`); `Announcer` le da un id nuevo a cada
+  anuncio, así un mismo mensaje se vuelve a anunciar. Un `app-alert` en `success` se anuncia solo, con
   `appAnnounce`, y no lleva rol; en `danger` y `warning` lleva `role="alert"`, que sí se anuncia al
   entrar. Los specs leen lo anunciado con `TestBed.inject(Announcer).shown()`. El código nuevo
   anuncia con `appAnnounce` o `Announcer`; las regiones `aria-live` de una página que ya existían (el
@@ -134,9 +138,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`notice.show(tone, message)` y `notice.clear()`), que le da un id nuevo a cada aviso. La página
   lo dibuja con `@for (shown of notice.shown(); track shown.id)`: así cada aviso es un nodo nuevo y
   un mismo mensaje repetido se vuelve a anunciar. Al cerrarlo con su "Cerrar aviso", el foco vuelve
-  a donde estaba antes de llegar a ese botón, sin mover la vista; si ese elemento ya no está, va al
-  `h1` de la página, que por eso lleva siempre `tabindex="-1"`. Si el foco no estaba en el aviso, no
-  se mueve.
+  a donde estaba antes de llegar a ese botón, cuando el aviso ya se fue; si ese elemento ya no está,
+  va al `h1` de la página, que por eso lleva siempre `tabindex="-1"`. Si el foco no estaba en el
+  aviso, no se mueve.
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
 - La cabecera de una página es `app-page-header` (`@shared/ui`): la etiqueta (`eyebrow`), el título

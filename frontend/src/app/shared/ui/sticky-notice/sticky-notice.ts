@@ -3,6 +3,8 @@ import {
   Component,
   DOCUMENT,
   ElementRef,
+  EnvironmentInjector,
+  afterNextRender,
   inject,
   input,
   output,
@@ -19,6 +21,7 @@ import { Alert, AlertTone } from '../alert/alert';
 export class StickyNotice {
   private readonly document = inject(DOCUMENT);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly appInjector = inject(EnvironmentInjector);
   private cameFrom: HTMLElement | null = null;
 
   readonly tone = input.required<AlertTone>();
@@ -35,7 +38,7 @@ export class StickyNotice {
       : this.document.querySelector<HTMLElement>('h1');
     this.dismissed.emit();
     if (focusWasHere) {
-      target?.focus({ preventScroll: true });
+      afterNextRender(() => target?.focus(), { injector: this.appInjector });
     }
   }
 }

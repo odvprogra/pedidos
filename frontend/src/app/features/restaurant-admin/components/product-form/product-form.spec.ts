@@ -178,7 +178,7 @@ describe('ProductForm', () => {
     });
 
     it('shows a problem that does not belong to a field', async () => {
-      host.alert.set('No hay conexión con el servidor.');
+      host.alert.set('No hay conexión. Revisa tu internet e intenta de nuevo.');
       await fixture.whenStable();
 
       expect(form().querySelector('[role="alert"]')?.textContent).toContain('No hay conexión');

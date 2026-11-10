@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Announcer } from '../live-region/announcer';
 import { LoadError } from './load-error';
 
 @Component({
@@ -71,6 +72,23 @@ describe('LoadError', () => {
     expect(retryButton().textContent).toContain('Reintentando…');
     expect(retryButton().querySelector('app-spinner')).toBeTruthy();
     expect(retryButton().getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('announces that it is retrying and takes it back when the answer arrives', async () => {
+    const announced = () =>
+      TestBed.inject(Announcer)
+        .shown()
+        .map(({ message }) => message);
+
+    host.retrying.set(true);
+    await fixture.whenStable();
+
+    expect(announced()).toEqual(['Reintentando…']);
+
+    host.retrying.set(false);
+    await fixture.whenStable();
+
+    expect(announced()).toEqual([]);
   });
 
   it('ignores the button while it retries', async () => {

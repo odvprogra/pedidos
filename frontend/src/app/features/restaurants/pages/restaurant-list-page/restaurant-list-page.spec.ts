@@ -173,6 +173,27 @@ describe('RestaurantListPage', () => {
       expect(names()).toEqual(['La Casona']);
     });
 
+    it('keeps retrying in view when the page it retries is empty now', async () => {
+      await respond(pageOf([LA_CASONA], 0, 15));
+      button('Siguiente').click();
+      await fixture.whenStable();
+      await fail(1);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      expectPage(1).flush(pageOf([], 1, 5, 1));
+      await fixture.whenStable();
+
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([LA_CASONA]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(names()).toEqual(['La Casona']);
+    });
+
     it('explains that the server cannot be reached', async () => {
       expectPage(0).error(new ProgressEvent('error'));
       await fixture.whenStable();

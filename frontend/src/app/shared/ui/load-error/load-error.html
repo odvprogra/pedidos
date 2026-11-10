@@ -18,6 +18,7 @@
   @if (retrying()) {
     <div data-reason>
       <ng-container [ngTemplateOutlet]="reason" />
+      <span class="sr-only" appAnnounce>Reintentando…</span>
     </div>
   } @else {
     <div role="alert" data-reason>

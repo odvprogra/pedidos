@@ -19,8 +19,8 @@ Vamos a tener una sola región `role="status"`, `sr-only` y vacía desde que arr
 `app-live-region`, montada en `app.html` después del `<main>`. `Announcer`, un servicio raíz, guarda
 el anuncio vigente con un id nuevo cada vez, así un mismo mensaje se vuelve a anunciar. La directiva
 `appAnnounce` escribe en la región el texto de su elemento cuando aparece y lo saca cuando se va.
-Los esqueletos y la caja de éxito dejan de llevar `role="status"`, para que nada se lea dos veces;
-los errores siguen con `role="alert"`.
+Los esqueletos y la caja de éxito dejan de llevar `role="status"`, para que nada se anuncie dos
+veces; los errores siguen con `role="alert"`.
 
 Las tres piezas viven en `shared/ui/live-region`. En `shared` solo entran servicios de interfaz como
 este: sin reglas de negocio, sin HTTP y sin datos de la sesión.
@@ -42,5 +42,7 @@ este: sin reglas de negocio, sin HTTP y sin datos de la sesión.
   el esqueleto o el aviso, la región queda vacía y no se lee un texto viejo.
 - **Negativas:** `shared/ui` tiene ahora un servicio con estado, y hay que vigilar que no entre ahí
   lógica de negocio. En la primera carga de la app la región y el primer esqueleto aparecen casi a la
-  vez, y ese primer "Cargando…" puede no oírse. El carrito, el menú y "Actualizar" en los pedidos
-  todavía tienen su propia región `aria-live`, que funciona pero queda por pasar a la fija.
+  vez, y ese primer "Cargando…" puede no oírse. Mientras el esqueleto o el aviso están a la vista,
+  su texto está dos veces en el DOM (en su lugar y en la región): quien recorre la página con las
+  flechas lo encuentra dos veces. El carrito, el menú y "Actualizar" en los pedidos todavía tienen
+  su propia región `aria-live`, que funciona pero queda por pasar a la fija.

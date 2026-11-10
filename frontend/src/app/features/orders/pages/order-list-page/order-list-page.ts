@@ -91,7 +91,7 @@ export class OrderListPage implements OnInit {
       .subscribe({
         next: (result) => {
           if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
-            this.load(result.totalPages - 1, moveFocus);
+            this.load(result.totalPages - 1, moveFocus, retrying);
             return;
           }
           this.result.set(result);

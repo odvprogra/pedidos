@@ -11,16 +11,24 @@ import { StickyNotice } from './sticky-notice';
     @if (showRefresh()) {
       <button type="button" id="refresh">Actualizar</button>
     }
-    <app-sticky-notice class="mt-6" [tone]="tone()" (dismissed)="dismissals = dismissals + 1">
-      Suspendiste La Casona.
-    </app-sticky-notice>
+    @if (open()) {
+      <app-sticky-notice class="mt-6" [tone]="tone()" (dismissed)="close()">
+        Suspendiste La Casona.
+      </app-sticky-notice>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Host {
   readonly tone = signal<AlertTone>('success');
   readonly showRefresh = signal(true);
+  readonly open = signal(true);
   dismissals = 0;
+
+  close(): void {
+    this.dismissals += 1;
+    this.open.set(false);
+  }
 }
 
 describe('StickyNotice', () => {
@@ -87,11 +95,12 @@ describe('StickyNotice', () => {
     expect(fixture.componentInstance.dismissals).toBe(1);
   });
 
-  it('returns the focus to where it was before reaching the close button', () => {
+  it('returns the focus to where it was before reaching the close button', async () => {
     refreshButton().focus();
     closeButton().focus();
 
     closeButton().click();
+    await fixture.whenStable();
 
     expect(document.activeElement).toBe(refreshButton());
   });
@@ -103,22 +112,25 @@ describe('StickyNotice', () => {
     await fixture.whenStable();
 
     closeButton().click();
+    await fixture.whenStable();
 
     expect(document.activeElement).toBe(fixture.nativeElement.querySelector('h1'));
   });
 
-  it('takes the focus to the title when it reached the close button from outside the page', () => {
+  it('takes the focus to the title when it reached the close button from outside the page', async () => {
     closeButton().focus();
 
     closeButton().click();
+    await fixture.whenStable();
 
     expect(document.activeElement).toBe(fixture.nativeElement.querySelector('h1'));
   });
 
-  it('leaves the focus alone when it was not on the notice', () => {
+  it('leaves the focus alone when it was not on the notice', async () => {
     refreshButton().focus();
 
     closeButton().click();
+    await fixture.whenStable();
 
     expect(document.activeElement).toBe(refreshButton());
   });

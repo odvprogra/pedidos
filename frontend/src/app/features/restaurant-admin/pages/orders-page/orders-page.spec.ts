@@ -245,6 +245,32 @@ describe('OrdersPage', () => {
       expect(titles()).toEqual(['Pedido #43']);
     });
 
+    it('keeps retrying in view when the page it retries is empty now', async () => {
+      const first = Array.from({ length: 20 }, (_, index) => order(100 + index, 'PLACED'));
+      await respond(pageOf(first, 0, 25));
+      button('Siguiente').click();
+      await stable();
+      expectList(IN_PROGRESS, 1).flush(
+        { status: 500, detail: 'Detalle del servidor' },
+        { status: 500, statusText: 'Error' },
+      );
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await stable();
+      expectList(IN_PROGRESS, 1).flush(pageOf([], 1, 5, 1));
+      await stable();
+
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43']);
+    });
+
     it('sends an owner without a restaurant to register it', async () => {
       fail(
         `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`,

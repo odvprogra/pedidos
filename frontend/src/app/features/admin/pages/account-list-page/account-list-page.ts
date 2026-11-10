@@ -53,8 +53,8 @@ export class AccountListPage implements OnInit {
         .pipe(map(() => ({ ...account, suspended: action === 'suspend' }))),
     copyFor,
     describeError: describeAccountError,
-    heading: this.header,
-    loadError: this.loadError,
+    heading: () => this.header(),
+    loadError: () => this.loadError(),
   });
   protected readonly ownId = computed(() => this.session.account()?.id);
   protected readonly totalLabel = computed(() => {

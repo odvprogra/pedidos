@@ -47,8 +47,8 @@ export class RestaurantListPage implements OnInit {
     apply: (action, restaurant) => this.restaurantApi.apply(action, restaurant.id),
     copyFor,
     describeError: describeRestaurantError,
-    heading: this.header,
-    loadError: this.loadError,
+    heading: () => this.header(),
+    loadError: () => this.loadError(),
   });
   protected readonly totalLabel = computed(() => {
     const total = this.list.result()?.totalItems ?? 0;

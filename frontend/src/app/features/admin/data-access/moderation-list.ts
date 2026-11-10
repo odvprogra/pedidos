@@ -35,12 +35,17 @@ export class ModerationList<T extends Moderated> {
   );
   private readonly source: ModerationSource<T>;
   private requestedPage = 0;
+  private readonly shownPage = signal<Page<T> | null>(null);
+  private readonly fetching = signal(true);
+  private readonly failure = signal<string | null>(null);
+  private readonly working = signal<number | null>(null);
+  private readonly asking = signal<number | null>(null);
 
-  readonly result = signal<Page<T> | null>(null);
-  readonly loading = signal(true);
-  readonly problem = signal<string | null>(null);
-  readonly pendingId = signal<number | null>(null);
-  readonly confirmingId = signal<number | null>(null);
+  readonly result = this.shownPage.asReadonly();
+  readonly loading = this.fetching.asReadonly();
+  readonly problem = this.failure.asReadonly();
+  readonly pendingId = this.working.asReadonly();
+  readonly confirmingId = this.asking.asReadonly();
   readonly notice = new NoticeSlot();
   readonly busy = computed(() => this.loading() || this.pendingId() !== null);
 
@@ -66,9 +71,9 @@ export class ModerationList<T extends Moderated> {
 
   toggleConfirmation(id: number, open: boolean): void {
     if (open) {
-      this.confirmingId.set(id);
+      this.asking.set(id);
     } else if (this.confirmingId() === id) {
-      this.confirmingId.set(null);
+      this.asking.set(null);
     }
   }
 
@@ -76,7 +81,7 @@ export class ModerationList<T extends Moderated> {
     if (this.busy()) {
       return;
     }
-    this.pendingId.set(item.id);
+    this.working.set(item.id);
     this.notice.clear();
     this.source
       .apply(action, item)
@@ -85,34 +90,34 @@ export class ModerationList<T extends Moderated> {
         next: (updated) => {
           this.replace(updated);
           this.notice.show('success', this.source.copyFor(action, updated.name).done);
-          this.pendingId.set(null);
+          this.working.set(null);
         },
         error: (error: unknown) => {
           this.notice.show('danger', this.source.describeError(toProblemDetails(error)));
-          this.pendingId.set(null);
+          this.working.set(null);
         },
       });
   }
 
   private load(page: number, moveFocus: boolean): void {
     this.requestedPage = page;
-    this.loading.set(true);
-    this.problem.set(null);
-    this.confirmingId.set(null);
+    this.fetching.set(true);
+    this.failure.set(null);
+    this.asking.set(null);
     this.source
       .list(page, MODERATION_PAGE_SIZE)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
-          this.result.set(result);
-          this.loading.set(false);
+          this.shownPage.set(result);
+          this.fetching.set(false);
           if (moveFocus) {
             this.focus(() => this.source.heading());
           }
         },
         error: (error: unknown) => {
-          this.problem.set(this.source.describeError(toProblemDetails(error)));
-          this.loading.set(false);
+          this.failure.set(this.source.describeError(toProblemDetails(error)));
+          this.fetching.set(false);
           if (moveFocus) {
             this.focus(() => this.source.loadError());
           }
@@ -121,7 +126,7 @@ export class ModerationList<T extends Moderated> {
   }
 
   private replace(updated: T): void {
-    this.result.update(
+    this.shownPage.update(
       (result) =>
         result && {
           ...result,

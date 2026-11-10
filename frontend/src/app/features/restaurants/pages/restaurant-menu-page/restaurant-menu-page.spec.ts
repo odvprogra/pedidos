@@ -435,6 +435,8 @@ describe('RestaurantMenuPage', () => {
       expect(questions[0].textContent).toContain('Si agregas Limonada');
       expect(addButtonOf('Silpancho').getAttribute('aria-expanded')).toBe('false');
       expect(addButtonOf('Limonada').getAttribute('aria-expanded')).toBe('true');
+      expect(document.activeElement?.textContent?.trim()).toBe('Mantener mi carrito');
+      expect(questions[0].contains(document.activeElement)).toBe(true);
     });
 
     it('asks before replacing a cart of another restaurant', async () => {

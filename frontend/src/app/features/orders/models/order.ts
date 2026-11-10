@@ -1,4 +1,4 @@
-import { describeUnits } from '@core/cart/cart';
+import { describeUnits } from '@shared/utils/describe-units';
 import { OrderStatus } from '@shared/utils/order-status';
 
 export interface OrderItem {

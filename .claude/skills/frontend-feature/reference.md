@@ -62,9 +62,9 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `formatPrice` (`@shared/utils`)              | `Bs 45,00`                                                                                 |
 | `formatDateTime` (`@shared/utils`)           | `8 nov 2026, 11:00` en la hora local                                                       |
 | `parseId` (`@shared/utils`)                  | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
+| `describeUnits` (`@shared/utils`)            | `1 producto`, `3 productos`                                                                |
 | `orderPath`, `ORDERS_PATH` (`@core/orders`)  | Las rutas de los pedidos del cliente                                                       |
 | `CartStore` (`@core/cart`)                   | El carrito de un restaurante, guardado en `localStorage`                                   |
-| `describeUnits` (`@core/cart/cart`)          | `1 producto`, `3 productos`                                                                |
 
 ## Modelo
 

@@ -4,7 +4,6 @@ import {
   MAX_QUANTITY,
   addProduct,
   countUnits,
-  describeUnits,
   estimatedSubtotal,
   lineSubtotal,
   parseCart,
@@ -92,13 +91,6 @@ describe('cart', () => {
 
   it('gives the subtotal of a line', () => {
     expect(lineSubtotal({ productId: 10, name: 'Café', price: 0.1, quantity: 3 })).toBe(0.3);
-  });
-
-  it.each([
-    [1, '1 producto'],
-    [3, '3 productos'],
-  ])('describes %d units as "%s"', (units, text) => {
-    expect(describeUnits(units)).toBe(text);
   });
 
   describe('parseCart', () => {

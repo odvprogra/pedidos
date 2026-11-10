@@ -153,7 +153,8 @@ sesión, así que un dueño nunca ve ni cambia el de otro.
 - Abrir y cerrar son idempotentes: abrir uno abierto o cerrar uno cerrado responde `204` y lo deja
   como estaba.
 - Un restaurante suspendido no se abre: `409` con `restaurant.suspended`. Cerrarlo sí responde
-  `204`. El dueño lo sigue viendo en `/mine`, con `suspended: true`.
+  `204`. El dueño lo sigue viendo en `/mine`, con `suspended: true`. Lo suspende y lo reactiva el
+  admin ([Restaurantes del admin](#restaurantes-del-admin)).
 
 ## Menú del dueño
 
@@ -225,11 +226,11 @@ sale siempre de la sesión.
 Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo son públicas para
 `GET`; registrar un restaurante y todo lo que está bajo `/mine` sigue exigiendo sesión.
 
-| Operación                | Ruta                                     | Acceso  | Respuesta          |
-| ------------------------ | ---------------------------------------- | ------- | ------------------ |
-| Listar restaurantes      | `GET /api/v1/restaurants?page=0&size=20` | Público | `200` + una página |
-| Ver un restaurante       | `GET /api/v1/restaurants/{id}`           | Público | `200` + el recurso |
-| Ver el menú de uno       | `GET /api/v1/restaurants/{id}/catalog`   | Público | `200` + el menú    |
+| Operación           | Ruta                                     | Acceso  | Respuesta          |
+| ------------------- | ---------------------------------------- | ------- | ------------------ |
+| Listar restaurantes | `GET /api/v1/restaurants?page=0&size=20` | Público | `200` + una página |
+| Ver un restaurante  | `GET /api/v1/restaurants/{id}`           | Público | `200` + el recurso |
+| Ver el menú de uno  | `GET /api/v1/restaurants/{id}/catalog`   | Público | `200` + el menú    |
 
 ```json
 {
@@ -266,6 +267,72 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
   `validation_failed`.
 - En `SecurityConfig`, `/api/v1/restaurants/mine/**` se declara antes que las rutas públicas, porque
   `/api/v1/restaurants/*` y `/*/catalog` también coincidirían con `/mine` y `/mine/catalog`.
+
+## Restaurantes del admin
+
+El admin ve todos los restaurantes, también los suspendidos, y los suspende o los reactiva.
+Suspender saca un local de la plataforma sin borrar sus datos.
+
+| Operación             | Ruta                                           | Acceso | Respuesta          |
+| --------------------- | ---------------------------------------------- | ------ | ------------------ |
+| Listar restaurantes   | `GET /api/v1/admin/restaurants?page=0&size=20` | Admin  | `200` + una página |
+| Suspender restaurante | `POST /api/v1/restaurants/{id}/suspend`        | Admin  | `200` + el recurso |
+| Reactivar restaurante | `POST /api/v1/restaurants/{id}/reactivate`     | Admin  | `200` + el recurso |
+
+```json
+{
+  "items": [
+    {
+      "id": 4,
+      "name": "La Casona",
+      "description": "Comida criolla",
+      "address": "Calle Sucre 245",
+      "open": true,
+      "suspended": false
+    },
+    {
+      "id": 5,
+      "name": "Pizzería Napoli",
+      "description": null,
+      "address": "Av. Banzer 120",
+      "open": false,
+      "suspended": true
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalItems": 2,
+  "totalPages": 1
+}
+```
+
+- La lista va en `/admin/restaurants` porque `GET /api/v1/restaurants` es público y trae solo los
+  visibles, con otra forma y otro orden. Es la única ruta bajo `/admin`: la vista del admin sobre una
+  colección que también tiene vista pública. No se abre en `SecurityConfig`; la protege su
+  `@PreAuthorize`. Las acciones van en el recurso, como en las cuentas.
+- La lista trae todos los restaurantes en orden de registro (por `id` ascendente), con la forma del
+  restaurante del dueño. Un local que abre, cierra o se suspende no cambia de lugar. No trae el
+  dueño: `restaurant` solo guarda su id.
+- Suspender también cierra el restaurante. Reactivarlo lo deja cerrado, y el dueño decide cuándo
+  abrir.
+- Las dos acciones responden `200` con el restaurante como quedó, no `204` como las cuentas.
+  Suspender cambia `suspended` y `open`, y así la interfaz muestra lo que guardó el backend sin
+  repetir la regla.
+- Son idempotentes: suspender uno suspendido o reactivar uno activo responde `200` y lo deja como
+  estaba. Uno activo y abierto sigue abierto.
+- Un id que no existe responde `404` con `restaurant.not_found`; uno que no es número, `400` con
+  `validation_failed` y el campo `id`. Un cliente o un dueño reciben `403` con `access_denied`.
+- Mientras está suspendido:
+  - el listado público no lo trae, y el detalle y el menú responden `404`
+    ([Restaurantes y menús públicos](#restaurantes-y-menús-públicos));
+  - un pedido nuevo responde `422` con `order.restaurant_unavailable`;
+  - el dueño lo ve en `/mine`, edita su menú y termina sus pedidos en curso, pero no lo abre;
+  - el cliente sigue viendo sus pedidos y puede cancelar uno pendiente.
+- Suspender el restaurante no toca la cuenta del dueño ni sus sesiones, y suspender la cuenta no
+  toca el restaurante.
+- Si el dueño abre o cierra mientras el admin suspende, el segundo cambio espera al primero
+  ([ADR-0011](../adr/0011-cambios-de-estado-del-restaurante-con-bloqueo-de-fila.md)): una suspensión
+  confirmada no se deshace.
 
 ## Pedidos
 

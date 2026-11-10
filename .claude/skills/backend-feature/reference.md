@@ -25,7 +25,7 @@ public class Restaurant {
     private final String description;
     private final String address;
     private boolean open;
-    private final boolean suspended;
+    private boolean suspended;
     private final Instant createdAt;
 
     public Restaurant(
@@ -69,8 +69,24 @@ public class Restaurant {
         this.open = false;
     }
 
+    public void suspend() {
+        this.suspended = true;
+        this.open = false;
+    }
+
+    public void reactivate() {
+        if (suspended) {
+            this.suspended = false;
+            this.open = false;
+        }
+    }
+
     public boolean isVisible() {
         return !suspended;
+    }
+
+    public boolean acceptsOrders() {
+        return open && !suspended;
     }
 
     private static String stripToNull(String text) {
@@ -96,11 +112,17 @@ public interface RestaurantRepository {
 
     Optional<Restaurant> findById(Long id);
 
+    Optional<Restaurant> findByIdForUpdate(Long id);
+
     Optional<Restaurant> findByOwnerId(Long ownerId);
+
+    Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
 
     PageResult<Restaurant> findVisibleOpenFirst(int page, int size);
+
+    PageResult<Restaurant> findPageInRegistrationOrder(int page, int size);
 }
 ```
 
@@ -173,7 +195,7 @@ public class RegisterRestaurantUseCase {
 
 ## Aplicación: caso de uso que cambia un estado
 
-Busca el recurso del usuario, le pide al dominio el cambio y lo guarda. La regla (un restaurante suspendido no se abre) vive en el modelo.
+Busca el recurso del usuario, le pide al dominio el cambio y lo guarda. La regla (un restaurante suspendido no se abre) vive en el modelo. Lee con `findByOwnerIdForUpdate`, que bloquea la fila hasta el final de la transacción, para que el cambio del dueño y el del admin no se pisen ([ADR-0011](../../../docs/adr/0011-cambios-de-estado-del-restaurante-con-bloqueo-de-fila.md)).
 
 `backend/src/main/java/com/nur/pedidos/restaurant/application/OpenRestaurantUseCase.java`
 
@@ -196,7 +218,7 @@ public class OpenRestaurantUseCase {
     @Transactional
     public void execute(Long ownerId) {
         Restaurant restaurant =
-                restaurantRepository.findByOwnerId(ownerId).orElseThrow(RestaurantNotFoundException::new);
+                restaurantRepository.findByOwnerIdForUpdate(ownerId).orElseThrow(RestaurantNotFoundException::new);
         restaurant.open();
         restaurantRepository.save(restaurant);
     }
@@ -327,14 +349,22 @@ class RestaurantEntity {
 ```java
 package com.nur.pedidos.restaurant.infrastructure.persistence;
 
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 interface RestaurantJpaRepository extends JpaRepository<RestaurantEntity, Long> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<RestaurantEntity> findForUpdateById(Long id);
+
     Optional<RestaurantEntity> findByOwnerId(Long ownerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<RestaurantEntity> findForUpdateByOwnerId(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
 
@@ -364,6 +394,7 @@ import org.springframework.stereotype.Component;
 class RestaurantPersistenceAdapter implements RestaurantRepository {
 
     private static final Sort OPEN_FIRST = Sort.by(Sort.Order.desc("open"), Sort.Order.asc("id"));
+    private static final Sort REGISTRATION_ORDER = Sort.by("id");
 
     private final RestaurantJpaRepository jpaRepository;
 
@@ -378,8 +409,18 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByIdForUpdate(Long id) {
+        return jpaRepository.findForUpdateById(id).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
     public Optional<Restaurant> findByOwnerId(Long ownerId) {
         return jpaRepository.findByOwnerId(ownerId).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId) {
+        return jpaRepository.findForUpdateByOwnerId(ownerId).map(RestaurantEntity::toDomain);
     }
 
     @Override
@@ -389,7 +430,15 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
 
     @Override
     public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
-        Page<RestaurantEntity> entities = jpaRepository.findAllBySuspendedFalse(PageRequest.of(page, size, OPEN_FIRST));
+        return toPageResult(jpaRepository.findAllBySuspendedFalse(PageRequest.of(page, size, OPEN_FIRST)), page, size);
+    }
+
+    @Override
+    public PageResult<Restaurant> findPageInRegistrationOrder(int page, int size) {
+        return toPageResult(jpaRepository.findAll(PageRequest.of(page, size, REGISTRATION_ORDER)), page, size);
+    }
+
+    private static PageResult<Restaurant> toPageResult(Page<RestaurantEntity> entities, int page, int size) {
         return new PageResult<>(
                 entities.map(RestaurantEntity::toDomain).getContent(), page, size, entities.getTotalElements());
     }

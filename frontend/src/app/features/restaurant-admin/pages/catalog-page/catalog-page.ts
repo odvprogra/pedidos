@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   OnInit,
@@ -10,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FieldViolation, ProblemDetails, toProblemDetails } from '@core/http/problem-details';
 import { BackLink } from '@shared/ui/back-link/back-link';
@@ -80,6 +82,7 @@ export class CatalogPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -267,7 +270,7 @@ export class CatalogPage implements OnInit {
     this.saving.set(true);
     this.formErrors.set([]);
     this.formAlert.set(null);
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.saving.set(false);
         this.editing.set(null);
@@ -281,7 +284,7 @@ export class CatalogPage implements OnInit {
   }
 
   private act(request: Observable<void>, done: () => void): void {
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.working.set(null);
         done();
@@ -325,26 +328,29 @@ export class CatalogPage implements OnInit {
   private load(moveFocus: boolean): void {
     this.state.set({ status: 'loading' });
     this.confirmation.close();
-    this.catalogApi.mine().subscribe({
-      next: (catalog) => {
-        this.state.set({ status: 'ready', catalog });
-        if (moveFocus) {
-          this.focusAfterRender(null);
-        }
-      },
-      error: (error: unknown) => {
-        const problem = toProblemDetails(error);
-        if (isNotRegistered(problem)) {
-          this.leave();
-          return;
-        }
-        this.state.set({ status: 'failed', message: describeCatalogError(problem) });
-        this.notice.clear();
-        if (moveFocus) {
-          afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
-        }
-      },
-    });
+    this.catalogApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (catalog) => {
+          this.state.set({ status: 'ready', catalog });
+          if (moveFocus) {
+            this.focusAfterRender(null);
+          }
+        },
+        error: (error: unknown) => {
+          const problem = toProblemDetails(error);
+          if (isNotRegistered(problem)) {
+            this.leave();
+            return;
+          }
+          this.state.set({ status: 'failed', message: describeCatalogError(problem) });
+          this.notice.clear();
+          if (moveFocus) {
+            afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
+          }
+        },
+      });
   }
 
   private leave(): void {

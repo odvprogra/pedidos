@@ -361,6 +361,39 @@ describe('MyRestaurantPage', () => {
     });
   });
 
+  describe('leaving the page', () => {
+    it('cancels the load when the owner leaves', () => {
+      const request = httpTesting.expectOne(MINE_URL);
+
+      fixture.destroy();
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels the menu summary and a change on their way when the owner leaves', async () => {
+      httpTesting.expectOne(MINE_URL).flush(LA_CASONA);
+      await fixture.whenStable();
+      const menu = httpTesting.expectOne(MENU_URL);
+      toggle().click();
+      const opening = httpTesting.expectOne(OPEN_URL);
+
+      fixture.destroy();
+
+      expect(menu.cancelled).toBe(true);
+      expect(opening.cancelled).toBe(true);
+    });
+
+    it('cancels the registration on its way when the owner leaves', async () => {
+      await showMissing();
+      await submitValidForm();
+      const request = httpTesting.expectOne(REGISTER_URL);
+
+      fixture.destroy();
+
+      expect(request.cancelled).toBe(true);
+    });
+  });
+
   describe('opening and closing', () => {
     it('opens a closed restaurant and says so', async () => {
       await showRestaurant();

@@ -239,6 +239,39 @@ describe('CatalogPage', () => {
     });
   });
 
+  describe('leaving the page', () => {
+    it('cancels the load when the owner leaves', async () => {
+      const request = httpTesting.expectOne(CATALOG_URL);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels a change on its way when the owner leaves', async () => {
+      await showMenu();
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Sí, borrar'));
+      const request = httpTesting.expectOne(`${PRODUCTS_URL}/10`);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels a form on its way when the owner leaves', async () => {
+      await showMenu();
+      await click(button('Nueva categoría'));
+      await fill('category-name', 'Postres');
+      await submitForm();
+      const request = httpTesting.expectOne(CATEGORIES_URL);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
+    });
+  });
+
   describe('the categories', () => {
     it('creates a category and offers to add its products', async () => {
       await showMenu();

@@ -35,6 +35,8 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 
 - Estado local con `signal` y `computed`.
 - Los clientes HTTP (`XxxApi`) devuelven `Observable` y no guardan estado.
+- Toda suscripción de una página a un pedido HTTP pasa por `takeUntilDestroyed`: si la persona sale
+  antes de la respuesta, el pedido se cancela y su respuesta no toca una página que ya no está.
 - El estado que comparten varias páginas de una feature va en un `XxxStore` (`@Injectable` con
   señales). Una librería de estado global (NgRx u otra) requiere una ADR.
 - Todas las URLs usan `environment.apiUrl`.

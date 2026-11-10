@@ -40,36 +40,37 @@ frontend/src/app/features/restaurant-admin/
 
 Lo que ya existe y no se vuelve a escribir en una feature:
 
-| Pieza                                        | Para qué                                                                                   |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `toProblemDetails` (`@core/http`)            | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
-| `Page<T>` (`@core/http/page`)                | La forma de una página de la API                                                           |
-| `app-page-header` (`@shared/ui`)             | Etiqueta, `h1` con `focus()` y subtítulo; lo de al lado va como contenido                  |
-| `appCountPill` (`@shared/ui`)                | La píldora del contador ("12 pedidos") junto al título, en una sola línea                  |
-| `app-load-error` (`@shared/ui`)              | El error de carga con "Reintentar" y su método `focus()`                                   |
-| `app-empty-state` (`@shared/ui`)             | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
-| `app-not-found` (`@shared/ui`)               | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |
-| `app-alert` (`@shared/ui`)                   | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
-| `appButton`, `appSecondaryButton`            | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
-| `app-form-field`, `appTextInput`             | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
-| `app-confirm-panel` (`@shared/ui`)           | La confirmación dentro de la fila, sin modal                                               |
-| `app-pagination` (`@shared/ui`)              | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
-| `app-badge` (`@shared/ui`)                   | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
-| `app-order-status-badge` (`@shared/ui`)      | La insignia de un pedido según su `status`, con su nombre y su tono                        |
-| `app-restaurant-status-badge` (`@shared/ui`) | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
-| `restaurantStatusOf` (`@shared/utils`)       | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
-| `app-back-link` (`@shared/ui`)               | "‹ Mi restaurante": vuelve a `link`, relativo a la ruta de la página                       |
-| `app-spinner` (`@shared/ui`)                 | El indicador dentro de un botón que trabaja                                                |
-| `appSkeleton` (`@shared/ui`)                 | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
-| `validationMessage` (`@shared/utils`)        | El mensaje de un campo, con prioridad para el error del backend                            |
-| `applyFieldErrors` (`@shared/utils`)         | Asigna los `errors[]` del backend a los campos del formulario                              |
-| `focusFirstInvalid` (`@shared/utils`)        | Lleva el foco al primer campo inválido después de renderizar                               |
-| `formatPrice` (`@shared/utils`)              | `Bs 45,00`                                                                                 |
-| `formatDateTime` (`@shared/utils`)           | `8 nov 2026, 11:00` en la hora local                                                       |
-| `parseId` (`@shared/utils`)                  | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
-| `describeUnits` (`@shared/utils`)            | `1 producto`, `3 productos`                                                                |
-| `orderPath`, `ORDERS_PATH` (`@core/orders`)  | Las rutas de los pedidos del cliente                                                       |
-| `CartStore` (`@core/cart`)                   | El carrito de un restaurante, guardado en `localStorage`                                   |
+| Pieza                                            | Para qué                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `toProblemDetails` (`@core/http`)                | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
+| `Page<T>` (`@core/http/page`)                    | La forma de una página de la API                                                           |
+| `app-page-header` (`@shared/ui`)                 | Etiqueta, `h1` con `focus()` y subtítulo; lo de al lado va como contenido                  |
+| `appCountPill` (`@shared/ui`)                    | La píldora del contador ("12 pedidos") junto al título, en una sola línea                  |
+| `app-load-error` (`@shared/ui`)                  | El error de carga con "Reintentar" y su método `focus()`                                   |
+| `app-empty-state` (`@shared/ui`)                 | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
+| `app-not-found` (`@shared/ui`)                   | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |
+| `app-sticky-notice`, `NoticeSlot` (`@shared/ui`) | El aviso fijo bajo el header con el resultado de una acción, uno a la vez y con su id      |
+| `app-alert` (`@shared/ui`)                       | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
+| `appButton`, `appSecondaryButton`                | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
+| `app-form-field`, `appTextInput`                 | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
+| `app-confirm-panel` (`@shared/ui`)               | La confirmación dentro de la fila, sin modal                                               |
+| `app-pagination` (`@shared/ui`)                  | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
+| `app-badge` (`@shared/ui`)                       | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
+| `app-order-status-badge` (`@shared/ui`)          | La insignia de un pedido según su `status`, con su nombre y su tono                        |
+| `app-restaurant-status-badge` (`@shared/ui`)     | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
+| `restaurantStatusOf` (`@shared/utils`)           | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
+| `app-back-link` (`@shared/ui`)                   | "‹ Mi restaurante": vuelve a `link`, relativo a la ruta de la página                       |
+| `app-spinner` (`@shared/ui`)                     | El indicador dentro de un botón que trabaja                                                |
+| `appSkeleton` (`@shared/ui`)                     | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
+| `validationMessage` (`@shared/utils`)            | El mensaje de un campo, con prioridad para el error del backend                            |
+| `applyFieldErrors` (`@shared/utils`)             | Asigna los `errors[]` del backend a los campos del formulario                              |
+| `focusFirstInvalid` (`@shared/utils`)            | Lleva el foco al primer campo inválido después de renderizar                               |
+| `formatPrice` (`@shared/utils`)                  | `Bs 45,00`                                                                                 |
+| `formatDateTime` (`@shared/utils`)               | `8 nov 2026, 11:00` en la hora local                                                       |
+| `parseId` (`@shared/utils`)                      | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
+| `describeUnits` (`@shared/utils`)                | `1 producto`, `3 productos`                                                                |
+| `orderPath`, `ORDERS_PATH` (`@core/orders`)      | Las rutas de los pedidos del cliente                                                       |
+| `CartStore` (`@core/cart`)                       | El carrito de un restaurante, guardado en `localStorage`                                   |
 
 ## Modelo
 

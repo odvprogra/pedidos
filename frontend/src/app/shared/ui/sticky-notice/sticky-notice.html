@@ -1,0 +1,8 @@
+<app-alert
+  class="block rounded-xl shadow-md"
+  dismissible
+  [tone]="tone()"
+  (dismissed)="dismissed.emit()"
+>
+  <ng-content />
+</app-alert>

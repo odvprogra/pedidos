@@ -17,7 +17,6 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { ORDERS_PATH } from '@core/orders/order-paths';
 import { toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { BackLink } from '@shared/ui/back-link/back-link';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
@@ -27,6 +26,8 @@ import { NotFound } from '@shared/ui/not-found/not-found';
 import { OrderStatusBadge } from '@shared/ui/order-status-badge/order-status-badge';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { formatDateTime } from '@shared/utils/format-date-time';
 import { formatPrice } from '@shared/utils/format-price';
 import { parseId } from '@shared/utils/parse-id';
@@ -41,12 +42,6 @@ type PageState =
   | { status: 'failed'; message: string }
   | { status: 'ready'; order: Order };
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 const ORDER_TITLE = 'Pedido | Pedidos';
 const MISSING_TITLE = 'Pedido no encontrado | Pedidos';
 const CHANGED_MESSAGE =
@@ -56,7 +51,6 @@ const CHANGED_MESSAGE =
   selector: 'app-order-detail-page',
   imports: [
     RouterLink,
-    Alert,
     BackLink,
     Button,
     ConfirmPanel,
@@ -66,6 +60,7 @@ const CHANGED_MESSAGE =
     SecondaryButton,
     Skeleton,
     Spinner,
+    StickyNotice,
   ],
   templateUrl: './order-detail-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,18 +78,13 @@ export class OrderDetailPage {
   );
   private request: Subscription | null = null;
   private loads = 0;
-  private noticeCount = 0;
 
   readonly id = input.required<string>();
 
   protected readonly ordersPath = ORDERS_PATH;
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly notice = new NoticeSlot();
   protected readonly confirming = signal(false);
   protected readonly cancelling = signal(false);
   protected readonly details = computed(() => {
@@ -156,25 +146,25 @@ export class OrderDetailPage {
     }
     this.confirming.set(false);
     this.cancelling.set(true);
-    this.notice.set(null);
+    this.notice.clear();
     this.focusAfterRender(() => this.cancelButton());
     this.request = this.orderApi.cancel(order.id).subscribe({
       next: (cancelled) => {
         this.cancelling.set(false);
         this.state.set({ status: 'ready', order: cancelled });
-        this.notify('success', `Cancelaste el pedido #${cancelled.id}.`);
+        this.notice.show('success', `Cancelaste el pedido #${cancelled.id}.`);
         this.focusAfterRender(() => this.heading());
       },
       error: (error: unknown) => {
         this.cancelling.set(false);
         const problem = toProblemDetails(error);
         if (isInvalidTransition(problem)) {
-          this.notify('warning', CHANGED_MESSAGE);
+          this.notice.show('warning', CHANGED_MESSAGE);
           this.refresh(order.id);
         } else if (isOrderMissing(problem)) {
           this.show({ status: 'missing' }, true);
         } else {
-          this.notify('danger', describeOrderError(problem));
+          this.notice.show('danger', describeOrderError(problem));
         }
       },
     });
@@ -185,7 +175,7 @@ export class OrderDetailPage {
     this.request?.unsubscribe();
     this.confirming.set(false);
     this.cancelling.set(false);
-    this.notice.set(null);
+    this.notice.clear();
     const id = parseId(idText);
     if (id === null) {
       this.show({ status: 'missing' }, moveFocus);
@@ -220,7 +210,7 @@ export class OrderDetailPage {
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
     if (state.status !== 'ready') {
-      this.notice.set(null);
+      this.notice.clear();
     }
     this.title.setTitle(this.titleOf(state));
     if (moveFocus) {
@@ -243,11 +233,6 @@ export class OrderDetailPage {
     } else {
       this.loadError()?.focus();
     }
-  }
-
-  private notify(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
   }
 
   private focusAfterRender(target: () => ElementRef<HTMLElement> | undefined): void {

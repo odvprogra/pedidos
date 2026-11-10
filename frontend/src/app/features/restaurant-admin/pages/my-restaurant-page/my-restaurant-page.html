@@ -1,17 +1,10 @@
 <section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
   <app-page-header eyebrow="Panel del restaurante" [heading]="title()" [subtitle]="subtitle()" />
 
-  @for (shown of notices(); track shown.id) {
-    <div class="sticky top-20 z-5 mt-6 max-w-2xl" data-sticky-notice>
-      <app-alert
-        class="block rounded-xl shadow-md"
-        dismissible
-        [tone]="shown.tone"
-        (dismissed)="notice.set(null)"
-      >
-        {{ shown.message }}
-      </app-alert>
-    </div>
+  @for (shown of notice.shown(); track shown.id) {
+    <app-sticky-notice class="mt-6 max-w-2xl" [tone]="shown.tone" (dismissed)="notice.clear()">
+      {{ shown.message }}
+    </app-sticky-notice>
   }
 
   @let current = state();

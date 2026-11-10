@@ -85,10 +85,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   toque no hace dos pasos. Si el paso falla, el foco se queda en el botón que se tocó.
   Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
   al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
-- El resultado de una acción se anuncia en un `app-alert dismissible` fijo bajo el header, con
-  `data-sticky-notice`: `tone="success"` (que usa `role="status"`) o el tono de error. Ese atributo
-  agranda el margen de scroll de la página para que el aviso no tape el elemento con el foco. Cada
-  aviso es un nodo nuevo, con su id, así un mismo mensaje repetido se vuelve a anunciar.
+- El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`): un `app-alert
+dismissible` fijo bajo el header, con `data-sticky-notice`, en `tone="success"` (que usa
+  `role="status"`) o en el tono de error. Ese atributo agranda el margen de scroll de la página para
+  que el aviso no tape el elemento con el foco. El aviso de la página vive en un `NoticeSlot`
+  (`notice.show(tone, message)` y `notice.clear()`), que le da un id nuevo a cada aviso. La página
+  lo dibuja con `@for (shown of notice.shown(); track shown.id)`: así cada aviso es un nodo nuevo y
+  un mismo mensaje repetido se vuelve a anunciar.
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
 - La cabecera de una página es `app-page-header` (`@shared/ui`): la etiqueta (`eyebrow`), el título

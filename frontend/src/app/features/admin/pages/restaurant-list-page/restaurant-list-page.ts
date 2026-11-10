@@ -14,13 +14,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { CountPill } from '@shared/ui/page-header/count-pill';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { RestaurantRow } from '../../components/restaurant-row/restaurant-row';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { ModerationAction } from '../../models/moderation-action';
@@ -30,16 +31,9 @@ import { RestaurantSummary } from '../../models/restaurant-summary';
 
 const PAGE_SIZE = 20;
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 @Component({
   selector: 'app-restaurant-list-page',
   imports: [
-    Alert,
     CountPill,
     EmptyState,
     LoadError,
@@ -47,6 +41,7 @@ interface Notice {
     Pagination,
     RestaurantRow,
     Skeleton,
+    StickyNotice,
   ],
   templateUrl: './restaurant-list-page.html',
   host: { class: 'block' },
@@ -62,18 +57,13 @@ export class RestaurantListPage implements OnInit {
     inject(Router).currentNavigation()?.previousNavigation,
   );
   private requestedPage = 0;
-  private noticeCount = 0;
 
   protected readonly placeholders = [1, 2, 3, 4, 5];
   protected readonly result = signal<Page<RestaurantSummary> | null>(null);
   protected readonly loading = signal(true);
   protected readonly problem = signal<string | null>(null);
   protected readonly pendingId = signal<number | null>(null);
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly notice = new NoticeSlot();
   protected readonly busy = computed(() => this.loading() || this.pendingId() !== null);
   protected readonly totalLabel = computed(() => {
     const total = this.result()?.totalItems ?? 0;
@@ -88,7 +78,7 @@ export class RestaurantListPage implements OnInit {
     if (this.busy()) {
       return;
     }
-    this.notice.set(null);
+    this.notice.clear();
     this.load(page, true);
   }
 
@@ -101,18 +91,18 @@ export class RestaurantListPage implements OnInit {
       return;
     }
     this.pendingId.set(restaurant.id);
-    this.notice.set(null);
+    this.notice.clear();
     this.restaurantApi
       .apply(action, restaurant.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.replace(updated);
-          this.announce('success', copyFor(action, updated.name).done);
+          this.notice.show('success', copyFor(action, updated.name).done);
           this.pendingId.set(null);
         },
         error: (error: unknown) => {
-          this.announce('danger', describeRestaurantError(toProblemDetails(error)));
+          this.notice.show('danger', describeRestaurantError(toProblemDetails(error)));
           this.pendingId.set(null);
         },
       });
@@ -151,11 +141,6 @@ export class RestaurantListPage implements OnInit {
           items: result.items.map((item) => (item.id === updated.id ? updated : item)),
         },
     );
-  }
-
-  private announce(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
   }
 
   private focusHeading(): void {

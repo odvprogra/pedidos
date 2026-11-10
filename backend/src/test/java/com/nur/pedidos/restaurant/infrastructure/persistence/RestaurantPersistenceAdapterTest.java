@@ -170,6 +170,67 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void keepsAnOpenRestaurantClosedOnceItIsSuspended() {
+        Restaurant restaurant =
+                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", true, false, NOW));
+        restaurant.suspend();
+
+        adapter.save(restaurant);
+
+        assertThat(adapter.findById(restaurant.getId()))
+                .get()
+                .extracting(Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(false, true);
+    }
+
+    @Test
+    void keepsTheReactivationOfASuspendedRestaurant() {
+        Restaurant restaurant =
+                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+        restaurant.reactivate();
+
+        adapter.save(restaurant);
+
+        assertThat(adapter.findById(restaurant.getId()))
+                .get()
+                .extracting(Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(false, false);
+    }
+
+    @Test
+    void listsEveryRestaurantInRegistrationOrderIncludingTheSuspendedOnes() {
+        save(7L, "La Casona", false, false);
+        save(8L, "El Fogón", true, false);
+        save(9L, "Pizzería Napoli", false, true);
+
+        PageResult<Restaurant> result = adapter.findPageInRegistrationOrder(0, 20);
+
+        assertThat(result.items())
+                .extracting(Restaurant::getName, Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(
+                        tuple("La Casona", false, false),
+                        tuple("El Fogón", true, false),
+                        tuple("Pizzería Napoli", false, true));
+        assertThat(result.totalItems()).isEqualTo(3);
+    }
+
+    @Test
+    void splitsEveryRestaurantInPagesWithTheirRealTotals() {
+        save(7L, "La Casona", true, false);
+        save(8L, "El Fogón", false, true);
+        save(9L, "Sabor Camba", false, false);
+
+        PageResult<Restaurant> secondPage = adapter.findPageInRegistrationOrder(1, 2);
+        PageResult<Restaurant> afterTheLast = adapter.findPageInRegistrationOrder(5, 2);
+
+        assertThat(secondPage.items()).extracting(Restaurant::getName).containsExactly("Sabor Camba");
+        assertThat(secondPage.totalItems()).isEqualTo(3);
+        assertThat(secondPage.totalPages()).isEqualTo(2);
+        assertThat(afterTheLast.items()).isEmpty();
+        assertThat(afterTheLast.totalItems()).isEqualTo(3);
+    }
+
+    @Test
     void rejectsASecondRestaurantForTheSameOwner() {
         adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
 

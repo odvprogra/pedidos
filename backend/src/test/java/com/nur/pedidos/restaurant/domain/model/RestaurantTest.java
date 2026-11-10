@@ -117,6 +117,60 @@ class RestaurantTest {
     }
 
     @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void suspendingAlsoClosesTheRestaurant(boolean open) {
+        Restaurant restaurant = restaurant(open, false);
+
+        restaurant.suspend();
+
+        assertThat(restaurant.isSuspended()).isTrue();
+        assertThat(restaurant.isOpen()).isFalse();
+    }
+
+    @Test
+    void keepsASuspendedRestaurantSuspendedAndClosed() {
+        Restaurant restaurant = restaurant(false, true);
+
+        restaurant.suspend();
+
+        assertThat(restaurant.isSuspended()).isTrue();
+        assertThat(restaurant.isOpen()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void reactivatesASuspendedRestaurantClosed(boolean open) {
+        Restaurant restaurant = restaurant(open, true);
+
+        restaurant.reactivate();
+
+        assertThat(restaurant.isSuspended()).isFalse();
+        assertThat(restaurant.isOpen()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void leavesAnActiveRestaurantAsItWasWhenReactivated(boolean open) {
+        Restaurant restaurant = restaurant(open, false);
+
+        restaurant.reactivate();
+
+        assertThat(restaurant.isSuspended()).isFalse();
+        assertThat(restaurant.isOpen()).isEqualTo(open);
+    }
+
+    @Test
+    void canBeOpenedByItsOwnerOnceItIsReactivated() {
+        Restaurant restaurant = restaurant(false, false);
+        restaurant.suspend();
+        restaurant.reactivate();
+
+        restaurant.open();
+
+        assertThat(restaurant.acceptsOrders()).isTrue();
+    }
+
+    @ParameterizedTest
     @CsvSource({"true, false, true", "false, false, true", "false, true, false", "true, true, false"})
     void isVisibleToCustomersUnlessItIsSuspended(boolean open, boolean suspended, boolean visible) {
         assertThat(restaurant(open, suspended).isVisible()).isEqualTo(visible);

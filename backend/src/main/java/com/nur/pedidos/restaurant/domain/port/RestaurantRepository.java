@@ -15,4 +15,6 @@ public interface RestaurantRepository {
     boolean existsByOwnerId(Long ownerId);
 
     PageResult<Restaurant> findVisibleOpenFirst(int page, int size);
+
+    PageResult<Restaurant> findPageInRegistrationOrder(int page, int size);
 }

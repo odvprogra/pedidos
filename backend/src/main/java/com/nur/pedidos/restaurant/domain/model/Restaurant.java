@@ -14,7 +14,7 @@ public class Restaurant {
     private final String description;
     private final String address;
     private boolean open;
-    private final boolean suspended;
+    private boolean suspended;
     private final Instant createdAt;
 
     public Restaurant(
@@ -56,6 +56,18 @@ public class Restaurant {
 
     public void close() {
         this.open = false;
+    }
+
+    public void suspend() {
+        this.suspended = true;
+        this.open = false;
+    }
+
+    public void reactivate() {
+        if (suspended) {
+            this.suspended = false;
+            this.open = false;
+        }
     }
 
     public boolean isVisible() {

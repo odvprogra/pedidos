@@ -12,8 +12,8 @@ export interface ProblemDetails {
   errors?: FieldViolation[];
 }
 
-const OFFLINE_DETAIL = 'No hay conexión con el servidor. Revisa tu conexión e intenta de nuevo.';
-const FALLBACK_DETAIL = 'No pudimos completar la operación. Intenta de nuevo.';
+const OFFLINE_DETAIL = 'No hay conexión. Revisa tu internet e intenta de nuevo.';
+const FALLBACK_DETAIL = 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.';
 
 export function toProblemDetails(error: unknown): ProblemDetails {
   if (!(error instanceof HttpErrorResponse)) {

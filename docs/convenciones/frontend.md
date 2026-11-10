@@ -49,7 +49,11 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   tamaño y la forma (`h-4 w-40 rounded`).
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
-  Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
+  Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`). Cuando no hay
+  respuesta, `toProblemDetails` (`@core/http`) dice "No hay conexión. Revisa tu internet e intenta
+  de nuevo."; cuando la respuesta no es un Problem Details, "Algo salió mal de nuestro lado. Intenta
+  de nuevo en un momento.". Los textos de error hablan como la persona, sin palabras técnicas
+  (servidor, operación, token, petición).
 - Una lista paginada recibe un `Page<T>` (`@core/http/page`) y usa `app-pagination`
   (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
   queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando

@@ -8,6 +8,7 @@ import { CartStore } from '@core/cart/cart-store';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantMenuPage } from './restaurant-menu-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const RESTAURANT_URL = '/api/v1/restaurants/4';
 const CATALOG_URL = '/api/v1/restaurants/4/catalog';
@@ -72,6 +73,12 @@ describe('RestaurantMenuPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   async function open(id: string): Promise<void> {
     fixture.componentRef.setInput('id', id);
@@ -148,11 +155,11 @@ describe('RestaurantMenuPage', () => {
     it('shows a placeholder while the menu loads', async () => {
       await open('4');
 
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando el menú');
+      expect(announced()).toEqual(['Cargando el menú…']);
 
       await respond();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the restaurant with its categories in the order of the API', async () => {

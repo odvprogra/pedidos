@@ -84,8 +84,8 @@
       }
     }
   } @else {
-    <div class="mt-6 grid gap-3" role="status">
-      <span class="sr-only">Cargando tus pedidos…</span>
+    <div class="mt-6 grid gap-3">
+      <span class="sr-only" appAnnounce>Cargando tus pedidos…</span>
       @for (placeholder of placeholders; track placeholder) {
         <div
           class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5"

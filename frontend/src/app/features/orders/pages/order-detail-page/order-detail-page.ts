@@ -21,6 +21,7 @@ import { BackLink } from '@shared/ui/back-link/back-link';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { NotFound } from '@shared/ui/not-found/not-found';
 import { OrderStatusBadge } from '@shared/ui/order-status-badge/order-status-badge';
@@ -51,6 +52,7 @@ const CHANGED_MESSAGE =
   selector: 'app-order-detail-page',
   imports: [
     RouterLink,
+    Announce,
     BackLink,
     Button,
     ConfirmPanel,

@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { formatDateTime } from '@shared/utils/format-date-time';
 import { Order } from '../../models/order';
 import { OrderDetailPage } from './order-detail-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const ORDER_URL = '/api/v1/orders/42';
 const CANCEL_URL = '/api/v1/orders/42/cancel';
@@ -38,6 +39,12 @@ describe('OrderDetailPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   async function open(id: string): Promise<void> {
     fixture.componentRef.setInput('id', id);
@@ -77,7 +84,7 @@ describe('OrderDetailPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] [role]');
+    return page().querySelector('[data-sticky-notice] app-alert > div');
   }
 
   async function confirmCancellation(): Promise<void> {
@@ -91,12 +98,12 @@ describe('OrderDetailPage', () => {
     it('shows a placeholder while the order loads', async () => {
       await open('42');
 
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando tu pedido');
+      expect(announced()).toEqual(['Cargando tu pedido…']);
 
       httpTesting.expectOne(ORDER_URL).flush(PENDING);
       await fixture.whenStable();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the number, the status and what happens next', async () => {
@@ -315,8 +322,9 @@ describe('OrderDetailPage', () => {
 
       expect(status()).toBe('Cancelado');
       expect(button('Cancelar pedido')).toBeUndefined();
-      expect(notice()?.getAttribute('role')).toBe('status');
+      expect(notice()?.hasAttribute('role')).toBe(false);
       expect(notice()?.textContent).toContain('Cancelaste el pedido #42.');
+      expect(announced()).toEqual(['Cancelaste el pedido #42.']);
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 

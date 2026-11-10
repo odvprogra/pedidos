@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { SessionStore } from '@core/auth/session-store';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { CountPill } from '@shared/ui/page-header/count-pill';
 import { PageHeader } from '@shared/ui/page-header/page-header';
@@ -26,6 +27,7 @@ import { AccountSummary } from '../../models/account-summary';
   selector: 'app-account-list-page',
   imports: [
     AccountRow,
+    Announce,
     CountPill,
     EmptyState,
     LoadError,

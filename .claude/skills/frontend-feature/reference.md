@@ -52,7 +52,8 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `app-empty-state` (`@shared/ui`)                       | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
 | `appSkeleton` (`@shared/ui`)                           | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
 | `app-sticky-notice`, `NoticeSlot` (`@shared/ui`)       | El aviso fijo bajo el header con el resultado de una acción, uno a la vez y con su id      |
-| `app-alert` (`@shared/ui`)                             | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
+| `app-alert` (`@shared/ui`)                             | Avisos: `danger` y `warning` con `role="alert"`, `success` sin rol, `dismissible`          |
+| `app-live-region`, `appAnnounce`, `Announcer`          | La región `role="status"` fija de la app y la directiva que escribe en ella                |
 | `appButton`, `appSecondaryButton` (`@shared/ui`)       | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
 | `app-form-field`, `appTextInput`                       | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
 | `app-confirm-panel`, `ConfirmationSlot` (`@shared/ui`) | La confirmación dentro de la fila, sin modal, y cuál está abierta (una a la vez)           |
@@ -476,6 +477,7 @@ import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
@@ -532,6 +534,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
   imports: [
     ReactiveFormsModule,
     Alert,
+    Announce,
     Button,
     FormField,
     LoadError,
@@ -741,7 +744,7 @@ export class MyRestaurantPage implements OnInit {
 
 ## Página: template con los cuatro estados
 
-Éxito (la ficha), vacío (el registro, porque el dueño todavía no tiene restaurante), error (`app-load-error`) y cargando (un esqueleto con la forma de la ficha y `role="status"`, hecho con barras `appSkeleton`). La cabecera es `app-page-header` y el aviso va fijo bajo el header con `app-sticky-notice`. El formulario usa `app-form-field` y `appTextInput`, y el botón trabaja con `aria-disabled` en lugar de `disabled`.
+Éxito (la ficha), vacío (el registro, porque el dueño todavía no tiene restaurante), error (`app-load-error`) y cargando (un esqueleto con la forma de la ficha, hecho con barras `appSkeleton`, y su texto `sr-only` con `appAnnounce`, que lo anuncia en la región fija). La cabecera es `app-page-header` y el aviso va fijo bajo el header con `app-sticky-notice`. El formulario usa `app-form-field` y `appTextInput`, y el botón trabaja con `aria-disabled` en lugar de `disabled`.
 
 `frontend/src/app/features/restaurant-admin/pages/my-restaurant-page/my-restaurant-page.html`
 
@@ -856,11 +859,8 @@ export class MyRestaurantPage implements OnInit {
       (retry)="retry()"
     />
   } @else {
-    <div
-      class="mt-6 max-w-2xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-      role="status"
-    >
-      <span class="sr-only">Cargando tu restaurante…</span>
+    <div class="mt-6 max-w-2xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+      <span class="sr-only" appAnnounce>Cargando tu restaurante…</span>
       <div appSkeleton class="h-24 sm:h-28"></div>
       <div class="grid gap-3 px-5 pb-6 sm:px-6">
         <div appSkeleton class="-mt-9 size-18 rounded-2xl border-4 border-surface"></div>
@@ -1064,6 +1064,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
@@ -1113,6 +1114,12 @@ describe('MyRestaurantPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -1193,13 +1200,11 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tu restaurante',
-      );
+      expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('offers the registration form when the owner has no restaurant yet', async () => {
@@ -1327,9 +1332,7 @@ describe('MyRestaurantPage', () => {
       expect(status()).toBe('Abierto');
       expect(toggle().getAttribute('aria-checked')).toBe('true');
       expect(toggle().getAttribute('aria-disabled')).toBe('false');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Abriste La Casona. Ya recibe pedidos.',
-      );
+      expect(announced()).toEqual(['Abriste La Casona. Ya recibe pedidos.']);
     });
 
     it('keeps the restaurant as it was when the change fails', async () => {

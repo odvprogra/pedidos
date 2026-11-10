@@ -8,10 +8,11 @@ import {
   output,
 } from '@angular/core';
 import { Alert, AlertTone } from '../alert/alert';
+import { Announce } from '../live-region/announce';
 
 @Component({
   selector: 'app-sticky-notice',
-  imports: [Alert],
+  imports: [Alert, Announce],
   templateUrl: './sticky-notice.html',
   host: { class: 'sticky top-20 z-5 block', 'data-sticky-notice': '' },
   changeDetection: ChangeDetectionStrategy.OnPush,

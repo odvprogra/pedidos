@@ -18,6 +18,7 @@ import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
@@ -61,6 +62,7 @@ type Working =
 @Component({
   selector: 'app-catalog-page',
   imports: [
+    Announce,
     BackLink,
     Button,
     CategoryForm,

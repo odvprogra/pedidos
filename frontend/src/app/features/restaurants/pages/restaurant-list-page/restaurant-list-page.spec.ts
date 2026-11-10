@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantListPage } from './restaurant-list-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const LIST_URL = '/api/v1/restaurants';
 const LA_CASONA: Restaurant = {
@@ -45,6 +46,12 @@ describe('RestaurantListPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -95,13 +102,11 @@ describe('RestaurantListPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurants load', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando restaurantes',
-      );
+      expect(announced()).toEqual(['Cargando restaurantes…']);
 
       await respond(pageOf([LA_CASONA]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows a tile for each restaurant in the order of the API', async () => {

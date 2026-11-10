@@ -6,6 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Catalog, Product } from '../../models/catalog';
 import { CatalogPage } from './catalog-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const CATALOG_URL = '/api/v1/restaurants/mine/catalog';
 const CATEGORIES_URL = '/api/v1/restaurants/mine/categories';
@@ -62,6 +63,12 @@ describe('CatalogPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return harness.routeNativeElement as HTMLElement;
@@ -156,11 +163,11 @@ describe('CatalogPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the menu loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando tu menú');
+      expect(announced()).toEqual(['Cargando tu menú…']);
 
       await showMenu();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the categories in order with their products', async () => {

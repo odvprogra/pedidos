@@ -18,6 +18,7 @@ import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
@@ -74,6 +75,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
   imports: [
     ReactiveFormsModule,
     Alert,
+    Announce,
     Button,
     FormField,
     LoadError,

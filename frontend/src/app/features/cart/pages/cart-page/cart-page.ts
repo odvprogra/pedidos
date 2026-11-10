@@ -25,6 +25,7 @@ import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { describeUnits } from '@shared/utils/describe-units';
 import { formatPrice } from '@shared/utils/format-price';
@@ -50,7 +51,17 @@ const PLACED_TITLE = 'Pedido confirmado | Pedidos';
 
 @Component({
   selector: 'app-cart-page',
-  imports: [RouterLink, Alert, Button, CartLine, EmptyState, OrderPlaced, SecondaryButton, Spinner],
+  imports: [
+    RouterLink,
+    Alert,
+    Announce,
+    Button,
+    CartLine,
+    EmptyState,
+    OrderPlaced,
+    SecondaryButton,
+    Spinner,
+  ],
   templateUrl: './cart-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const MINE_URL = '/api/v1/restaurants/mine';
 const REGISTER_URL = '/api/v1/restaurants';
@@ -52,6 +53,12 @@ describe('MyRestaurantPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -140,13 +147,11 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tu restaurante',
-      );
+      expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the restaurant of the owner', async () => {
@@ -338,9 +343,9 @@ describe('MyRestaurantPage', () => {
       expect(heading().textContent).toContain('Mi restaurante');
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
       expect(status()).toBe('Cerrado');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
+      expect(announced()).toEqual([
         '¡Listo! Registraste La Casona. Está cerrado: ábrelo cuando quieras recibir pedidos.',
-      );
+      ]);
       expect(document.activeElement).toBe(heading());
     });
 
@@ -445,9 +450,7 @@ describe('MyRestaurantPage', () => {
       expect(status()).toBe('Abierto');
       expect(toggle().getAttribute('aria-checked')).toBe('true');
       expect(toggle().getAttribute('aria-disabled')).toBe('false');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Abriste La Casona. Ya recibe pedidos.',
-      );
+      expect(announced()).toEqual(['Abriste La Casona. Ya recibe pedidos.']);
     });
 
     it('closes an open restaurant and says so', async () => {

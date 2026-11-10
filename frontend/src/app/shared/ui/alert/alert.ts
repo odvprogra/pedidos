@@ -15,10 +15,10 @@ const STYLES: Record<AlertTone, string> = {
   success: 'bg-success-soft text-success',
 };
 
-const ROLES: Record<AlertTone, 'alert' | 'status'> = {
+const ROLES: Record<AlertTone, 'alert' | null> = {
   danger: 'alert',
   warning: 'alert',
-  success: 'status',
+  success: null,
 };
 
 @Component({

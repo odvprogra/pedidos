@@ -16,6 +16,7 @@ import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Button } from '@shared/ui/button/button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { CountPill } from '@shared/ui/page-header/count-pill';
 import { PageHeader } from '@shared/ui/page-header/page-header';
@@ -32,6 +33,7 @@ const PAGE_SIZE = 10;
   selector: 'app-order-list-page',
   imports: [
     RouterLink,
+    Announce,
     Button,
     CountPill,
     EmptyState,

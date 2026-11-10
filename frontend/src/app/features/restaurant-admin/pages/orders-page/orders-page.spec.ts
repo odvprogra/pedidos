@@ -8,6 +8,7 @@ import { Page } from '@core/http/page';
 import { OrderStatus } from '@shared/utils/order-status';
 import { Order } from '../../models/order';
 import { OrdersPage } from './orders-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RestaurantStub {}
@@ -64,6 +65,12 @@ describe('OrdersPage', () => {
 
   afterEach(() => httpTesting.verify());
 
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
+
   function page(): HTMLElement {
     return harness.routeNativeElement as HTMLElement;
   }
@@ -101,7 +108,7 @@ describe('OrdersPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] [role]');
+    return page().querySelector('[data-sticky-notice] app-alert > div');
   }
 
   function expectList(statuses: string[], pageNumber = 0) {
@@ -128,13 +135,11 @@ describe('OrdersPage', () => {
 
   describe('the list', () => {
     it('loads the orders in progress first while it shows a placeholder', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando los pedidos',
-      );
+      expect(announced()).toEqual(['Cargando los pedidos…']);
 
       await respond(pageOf([order(43, 'PLACED'), order(42, 'ACCEPTED')]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
       expect(titles()).toEqual(['Pedido #43', 'Pedido #42']);
       expect(button('En curso').getAttribute('aria-pressed')).toBe('true');
       expect(button('Terminados').getAttribute('aria-pressed')).toBe('false');
@@ -279,8 +284,9 @@ describe('OrdersPage', () => {
       await stable();
 
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('En preparación');
-      expect(notice()?.getAttribute('role')).toBe('status');
+      expect(notice()?.hasAttribute('role')).toBe(false);
       expect(notice()?.textContent).toContain('Aceptaste el pedido #43.');
+      expect(announced()).toEqual(['Aceptaste el pedido #43.']);
       expect(document.activeElement).toBe(button('Marcar listo', card(43)));
     });
 

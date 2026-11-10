@@ -53,15 +53,15 @@ describe('Alert', () => {
     expect(alert().classList).toContain('bg-warning-soft');
   });
 
-  it('reports a success politely instead of interrupting', async () => {
+  it('shows a success without interrupting and leaves its announcement to the live region', async () => {
     host.tone.set('success');
     host.message.set('Suspendiste la cuenta de Ana Rojas.');
     await fixture.whenStable();
 
-    const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
+    const box = fixture.nativeElement.querySelector('.bg-success-soft') as HTMLElement;
     expect(alert()).toBeNull();
-    expect(status.textContent).toContain('Suspendiste la cuenta de Ana Rojas.');
-    expect(status.classList).toContain('bg-success-soft');
+    expect(fixture.nativeElement.querySelector('[role]')).toBeNull();
+    expect(box.textContent).toContain('Suspendiste la cuenta de Ana Rojas.');
   });
 
   it('has no close button unless it can be dismissed', () => {

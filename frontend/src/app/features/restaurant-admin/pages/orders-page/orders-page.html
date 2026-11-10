@@ -127,8 +127,8 @@
         }
       }
     } @else {
-      <div class="mt-6 grid gap-4" role="status">
-        <span class="sr-only">Cargando los pedidos…</span>
+      <div class="mt-6 grid gap-4">
+        <span class="sr-only" appAnnounce>Cargando los pedidos…</span>
         @for (placeholder of placeholders; track placeholder) {
           <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             <div class="flex items-center justify-between border-b border-line bg-canvas px-5 py-4">

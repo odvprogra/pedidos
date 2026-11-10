@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertTone } from '../alert/alert';
+import { Announcer } from '../live-region/announcer';
 import { StickyNotice } from './sticky-notice';
 
 @Component({
@@ -41,13 +42,31 @@ describe('StickyNotice', () => {
     expect(notice().classList).toContain('mt-6');
   });
 
-  it('announces a success as a status and a problem as an alert', async () => {
-    expect(notice().querySelector('[role]')?.getAttribute('role')).toBe('status');
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
+  it('announces a success in the live region, without a live role of its own', () => {
+    expect(notice().querySelector('[role]')).toBeNull();
+    expect(announced()).toEqual(['Suspendiste La Casona.']);
+  });
+
+  it('interrupts with a problem as an alert, outside the live region', async () => {
+    fixture.destroy();
+    fixture = TestBed.createComponent(Host);
     fixture.componentInstance.tone.set('danger');
     await fixture.whenStable();
 
     expect(notice().querySelector('[role]')?.getAttribute('role')).toBe('alert');
+    expect(announced()).toEqual([]);
+  });
+
+  it('takes its announcement back when it leaves the page', () => {
+    fixture.destroy();
+
+    expect(announced()).toEqual([]);
   });
 
   it('shows the message', () => {

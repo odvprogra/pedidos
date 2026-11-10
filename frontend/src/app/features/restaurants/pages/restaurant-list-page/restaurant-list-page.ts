@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { CountPill } from '@shared/ui/page-header/count-pill';
 import { PageHeader } from '@shared/ui/page-header/page-header';
@@ -28,7 +29,16 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [CountPill, EmptyState, LoadError, PageHeader, Pagination, RestaurantTile, Skeleton],
+  imports: [
+    Announce,
+    CountPill,
+    EmptyState,
+    LoadError,
+    PageHeader,
+    Pagination,
+    RestaurantTile,
+    Skeleton,
+  ],
   templateUrl: './restaurant-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
 import { RestaurantSummary } from '../../models/restaurant-summary';
 import { RestaurantListPage } from './restaurant-list-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const LA_CASONA: RestaurantSummary = {
   id: 4,
@@ -55,6 +56,12 @@ describe('RestaurantListPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -110,13 +117,11 @@ describe('RestaurantListPage', () => {
 
   describe('the list', () => {
     it('shows a placeholder while the first page loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando restaurantes',
-      );
+      expect(announced()).toEqual(['Cargando restaurantes…']);
 
       await show(pageOf([LA_CASONA]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows every restaurant with its address and status, the suspended ones included', async () => {
@@ -318,9 +323,7 @@ describe('RestaurantListPage', () => {
 
       expect(statusOf('La Casona')).toBe('Suspendido');
       expect(rowOf('La Casona').querySelector('button')?.textContent).toContain('Reactivar');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Suspendiste La Casona. Ya no aparece para los clientes.',
-      );
+      expect(announced()).toEqual(['Suspendiste La Casona. Ya no aparece para los clientes.']);
     });
 
     it('shows the restaurant as the server returns it after the reactivation', async () => {
@@ -334,9 +337,9 @@ describe('RestaurantListPage', () => {
 
       expect(statusOf('Pizzería Napoli')).toBe('Cerrado');
       expect(rowOf('Pizzería Napoli').querySelector('button')?.textContent).toContain('Suspender');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
+      expect(announced()).toEqual([
         'Reactivaste Pizzería Napoli. El restaurante queda cerrado hasta que su dueño lo abra.',
-      );
+      ]);
     });
 
     it('sends a single request when the admin insists', async () => {
@@ -418,7 +421,8 @@ describe('RestaurantListPage', () => {
       (page().querySelector('button[aria-label="Cerrar aviso"]') as HTMLButtonElement).click();
       await fixture.whenStable();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('app-sticky-notice')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('clears the previous message when the admin changes the page', async () => {

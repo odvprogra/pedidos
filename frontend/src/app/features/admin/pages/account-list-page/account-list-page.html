@@ -105,11 +105,8 @@
     }
   }
 } @else {
-  <div
-    class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-    role="status"
-  >
-    <span class="sr-only">Cargando cuentas…</span>
+  <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+    <span class="sr-only" appAnnounce>Cargando cuentas…</span>
     @for (placeholder of placeholders; track placeholder) {
       <div
         class="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 sm:px-6 md:flex md:items-center md:py-5"

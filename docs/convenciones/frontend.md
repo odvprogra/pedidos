@@ -49,10 +49,21 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   "Reintentar" deja el error a la vista: cambiar de filtro o de página lo quita como antes. El vacío
   es `app-empty-state` (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo
   `emptyStateIcon` y la acción, si la hay, como contenido.
-- La carga es un esqueleto con la forma de lo que viene, dentro de un contenedor con
-  `role="status"` y un texto `sr-only` ("Cargando tus pedidos…"). Cada barra es un `div appSkeleton`
-  (`@shared/ui`), que pone el pulso, el color y la pausa con `motion-reduce`; la página le da el
-  tamaño y la forma (`h-4 w-40 rounded`).
+- La carga es un esqueleto con la forma de lo que viene y un texto `sr-only` con `appAnnounce`
+  (`<span class="sr-only" appAnnounce>Cargando tus pedidos…</span>`), que lo anuncia en la región
+  fija mientras el esqueleto está a la vista. Cada barra es un `div appSkeleton` (`@shared/ui`), que
+  pone el pulso, el color y la pausa con `motion-reduce`; la página le da el tamaño y la forma
+  (`h-4 w-40 rounded`).
+- Lo que hay que anunciar sin mover el foco se escribe en una sola región fija:
+  `app-live-region` (`@shared/ui`), un `role="status"` `sr-only` que está vacío desde que arranca la
+  app y va después del `<main>` en `app.html`. Una región que entra al DOM con el texto ya puesto no
+  se anuncia en todos los lectores de pantalla; por eso el esqueleto y el aviso de éxito no llevan
+  `role="status"`. La directiva `appAnnounce` (`@shared/ui`) escribe en la región el texto de su
+  elemento cuando aparece y lo saca cuando se va; `Announcer` le da un id nuevo a cada anuncio, así
+  un mismo mensaje se vuelve a anunciar. Los errores siguen con `role="alert"`, que sí se anuncia al
+  entrar. Los specs leen lo anunciado con `TestBed.inject(Announcer).shown()`. Las regiones
+  `aria-live` que ya existían en una página (el carrito, el menú, "Actualizar" en los pedidos)
+  también están desde el principio y siguen igual.
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`). Cuando no hay
@@ -110,8 +121,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
   al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
 - El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`), un aviso
-  `app-alert dismissible` fijo bajo el header con `data-sticky-notice`, en `tone="success"` (que
-  usa `role="status"`) o en el tono de error. Ese atributo agranda el margen de scroll de la página
+  `app-alert dismissible` fijo bajo el header con `data-sticky-notice`, en `tone="success"` (su
+  texto se anuncia en la región fija con `appAnnounce`, y el aviso no lleva rol) o en el tono de
+  error (`role="alert"`). Ese atributo agranda el margen de scroll de la página
   para que el aviso no tape el elemento con el foco. El aviso de la página vive en un `NoticeSlot`
   (`notice.show(tone, message)` y `notice.clear()`), que le da un id nuevo a cada aviso. La página
   lo dibuja con `@for (shown of notice.shown(); track shown.id)`: así cada aviso es un nodo nuevo y

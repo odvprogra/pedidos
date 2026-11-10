@@ -172,7 +172,8 @@ predecible.
 src/app/
 ├── core/          Servicios únicos de toda la app: autenticación, carrito, interceptores, errores
 ├── shared/
-│   ├── ui/        Componentes visuales reutilizables sin lógica de negocio
+│   ├── ui/        Componentes visuales reutilizables sin lógica de negocio, y lo que los
+│   │              acompaña: ConfirmationSlot, NoticeSlot y el Announcer de la región fija
 │   └── utils/     Funciones puras y pipes
 ├── layout/        Estructura de la app: header, navegación, footer
 └── features/

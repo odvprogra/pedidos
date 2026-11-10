@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
 import { Order } from '../../models/order';
 import { OrderListPage } from './order-list-page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 
 const LIST_URL = '/api/v1/orders';
 
@@ -47,6 +48,12 @@ describe('OrderListPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -99,13 +106,11 @@ describe('OrderListPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the orders load', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tus pedidos',
-      );
+      expect(announced()).toEqual(['Cargando tus pedidos…']);
 
       await respond(pageOf([NEWEST]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows each order in the order of the API with its status', async () => {

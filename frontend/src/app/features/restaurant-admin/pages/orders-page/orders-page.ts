@@ -18,6 +18,7 @@ import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
@@ -50,6 +51,7 @@ interface PendingAction {
 @Component({
   selector: 'app-orders-page',
   imports: [
+    Announce,
     BackLink,
     EmptyState,
     LoadError,

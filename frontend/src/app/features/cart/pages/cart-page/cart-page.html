@@ -118,7 +118,7 @@
 
           <div class="mt-5 grid gap-3">
             @if (placing()) {
-              <p class="sr-only" role="status">Confirmando tu pedido…</p>
+              <p class="sr-only" appAnnounce>Confirmando tu pedido…</p>
             }
             @switch (buyer()) {
               @case ('customer') {

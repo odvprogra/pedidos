@@ -23,6 +23,7 @@ import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { NotFound } from '@shared/ui/not-found/not-found';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
@@ -50,6 +51,7 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
   selector: 'app-restaurant-menu-page',
   imports: [
     RouterLink,
+    Announce,
     BackLink,
     Button,
     CartSummary,

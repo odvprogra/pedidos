@@ -204,8 +204,8 @@
         (retry)="retry()"
       />
     } @else {
-      <div class="mt-6 grid gap-6" role="status">
-        <span class="sr-only">Cargando tu menú…</span>
+      <div class="mt-6 grid gap-6">
+        <span class="sr-only" appAnnounce>Cargando tu menú…</span>
         @for (placeholder of placeholders; track placeholder) {
           <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             <div

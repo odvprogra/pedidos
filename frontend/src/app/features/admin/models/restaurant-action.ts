@@ -13,9 +13,9 @@ export function copyFor(action: ModerationAction, name: string): ModerationCopy 
       working: 'Suspendiendo…',
       question: `¿Suspender ${name}?`,
       consequence:
-        'Los clientes dejan de verlo y no recibe pedidos nuevos. Su dueño puede terminar los pedidos en curso. Puedes reactivarlo cuando quieras.',
+        'Deja de aparecer para los clientes y no recibe pedidos nuevos. Su dueño puede terminar los pedidos en curso. Puedes reactivar el restaurante cuando quieras.',
       confirm: 'Sí, suspender',
-      done: `Suspendiste ${name}. Los clientes ya no lo ven.`,
+      done: `Suspendiste ${name}. Ya no aparece para los clientes.`,
     };
   }
   return {
@@ -23,8 +23,9 @@ export function copyFor(action: ModerationAction, name: string): ModerationCopy 
     target: name,
     working: 'Reactivando…',
     question: `¿Reactivar ${name}?`,
-    consequence: 'Los clientes vuelven a verlo, cerrado hasta que su dueño lo abra.',
+    consequence:
+      'El restaurante vuelve a aparecer para los clientes, pero queda cerrado hasta que su dueño lo abra.',
     confirm: 'Sí, reactivar',
-    done: `Reactivaste ${name}. Vuelve a aparecer, cerrado hasta que su dueño lo abra.`,
+    done: `Reactivaste ${name}. El restaurante queda cerrado hasta que su dueño lo abra.`,
   };
 }

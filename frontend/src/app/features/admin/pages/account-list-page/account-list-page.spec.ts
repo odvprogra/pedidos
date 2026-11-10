@@ -104,16 +104,6 @@ describe('AccountListPage', () => {
   }
 
   describe('the list', () => {
-    it('lets the admin switch to the restaurants of the panel', async () => {
-      await show(pageOf([ANA]));
-
-      const sections = page().querySelector('nav[aria-label="Secciones del panel"]');
-      expect(sections?.textContent).toContain('Cuentas');
-      expect(sections?.querySelector('a[href="/admin/restaurantes"]')?.textContent).toContain(
-        'Restaurantes',
-      );
-    });
-
     it('shows a placeholder while the first page loads', async () => {
       expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando cuentas');
 

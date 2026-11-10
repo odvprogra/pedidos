@@ -1,150 +1,144 @@
-<section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-  <app-admin-nav />
-
-  <header class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-    <div>
-      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">
-        Panel de administración
-      </p>
-      <h1
-        #heading
-        tabindex="-1"
-        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+<header class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Panel de administración</p>
+    <h1
+      #heading
+      tabindex="-1"
+      class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+    >
+      Cuentas
+    </h1>
+    <p class="mt-2 text-muted">Suspende o reactiva a clientes y dueños de restaurante.</p>
+  </div>
+  @if (result()) {
+    <p
+      class="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-surface px-4 py-2 text-sm font-bold whitespace-nowrap shadow-sm sm:self-auto"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4 text-brand"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        Cuentas
-      </h1>
-      <p class="mt-2 text-muted">Suspende o reactiva a clientes y dueños de restaurante.</p>
-    </div>
-    @if (result()) {
-      <p
-        class="inline-flex items-center gap-2 self-start rounded-full bg-surface px-4 py-2 text-sm font-bold shadow-sm sm:self-auto"
-      >
-        <svg
-          aria-hidden="true"
-          class="size-4 text-brand"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.25"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="9" cy="8" r="3.5" />
-          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-          <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5a6.5 6.5 0 0 1 3 5.5" />
-        </svg>
-        {{ totalLabel() }}
-      </p>
-    }
-  </header>
-
-  @for (shown of notices(); track shown.id) {
-    <div class="sticky top-20 z-5 mt-6" data-sticky-notice>
-      <app-alert
-        class="block rounded-xl shadow-md"
-        dismissible
-        [tone]="shown.tone"
-        (dismissed)="notice.set(null)"
-      >
-        {{ shown.message }}
-      </app-alert>
-    </div>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5a6.5 6.5 0 0 1 3 5.5" />
+      </svg>
+      {{ totalLabel() }}
+    </p>
   }
+</header>
 
-  @if (problem(); as problem) {
-    <app-load-error
+@for (shown of notices(); track shown.id) {
+  <div class="sticky top-20 z-5 mt-6" data-sticky-notice>
+    <app-alert
+      class="block rounded-xl shadow-md"
+      dismissible
+      [tone]="shown.tone"
+      (dismissed)="notice.set(null)"
+    >
+      {{ shown.message }}
+    </app-alert>
+  </div>
+}
+
+@if (problem(); as problem) {
+  <app-load-error
+    class="mt-6 block"
+    heading="No pudimos cargar las cuentas"
+    [message]="problem"
+    (retry)="retry()"
+  />
+} @else if (result(); as result) {
+  @if (result.items.length === 0) {
+    <app-empty-state
       class="mt-6 block"
-      heading="No pudimos cargar las cuentas"
-      [message]="problem"
-      (retry)="retry()"
-    />
-  } @else if (result(); as result) {
-    @if (result.items.length === 0) {
-      <app-empty-state
-        class="mt-6 block"
-        heading="Todavía no hay cuentas"
-        message="Cuando alguien se registre como cliente o dueño de restaurante, va a aparecer aquí."
+      heading="Todavía no hay cuentas"
+      message="Cuando alguien se registre como cliente o dueño de restaurante, va a aparecer aquí."
+    >
+      <svg
+        emptyStateIcon
+        aria-hidden="true"
+        class="size-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        <svg
-          emptyStateIcon
-          aria-hidden="true"
-          class="size-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.25"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="9" cy="8" r="3.5" />
-          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-          <path d="M19 8v6M16 11h6" />
-        </svg>
-      </app-empty-state>
-    } @else {
-      <div
-        class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"
-        [class.opacity-60]="loading()"
-        [attr.aria-busy]="loading()"
-      >
-        <div
-          aria-hidden="true"
-          class="hidden border-b border-line bg-canvas px-6 py-3 text-xs font-extrabold tracking-wide text-muted uppercase md:grid md:grid-cols-accounts md:gap-x-4"
-        >
-          <span>Cuenta</span>
-          <span>Rol</span>
-          <span>Estado</span>
-          <span>Acción</span>
-        </div>
-        <ul class="divide-y divide-line">
-          @for (account of result.items; track account.id) {
-            <li>
-              <app-account-row
-                [account]="account"
-                [isSelf]="account.id === ownId()"
-                [busy]="pendingId() === account.id"
-                [locked]="busy() && pendingId() !== account.id"
-                (confirmed)="run($event, account)"
-              />
-            </li>
-          }
-        </ul>
-      </div>
-
-      @if (result.totalPages > 1) {
-        <app-pagination
-          class="mt-6 block"
-          [page]="result.page"
-          [totalPages]="result.totalPages"
-          [disabled]="busy()"
-          (pageChange)="goTo($event)"
-        />
-      }
-    }
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M19 8v6M16 11h6" />
+      </svg>
+    </app-empty-state>
   } @else {
     <div
-      class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-      role="status"
+      class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"
+      [class.opacity-60]="loading()"
+      [attr.aria-busy]="loading()"
     >
-      <span class="sr-only">Cargando cuentas…</span>
-      @for (placeholder of placeholders; track placeholder) {
-        <div class="flex items-center gap-3 border-b border-line px-4 py-5 last:border-b-0 sm:px-6">
+      <div
+        aria-hidden="true"
+        class="hidden border-b border-line bg-canvas px-6 py-3 text-xs font-extrabold tracking-wide text-muted uppercase md:grid md:grid-cols-accounts md:gap-x-4"
+      >
+        <span>Cuenta</span>
+        <span>Rol</span>
+        <span>Estado</span>
+        <span>Acción</span>
+      </div>
+      <ul class="divide-y divide-line">
+        @for (account of result.items; track account.id) {
+          <li>
+            <app-account-row
+              [account]="account"
+              [isSelf]="account.id === ownId()"
+              [busy]="pendingId() === account.id"
+              [locked]="busy() && pendingId() !== account.id"
+              (confirmed)="run($event, account)"
+            />
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (result.totalPages > 1) {
+      <app-pagination
+        class="mt-6 block"
+        [page]="result.page"
+        [totalPages]="result.totalPages"
+        [disabled]="busy()"
+        (pageChange)="goTo($event)"
+      />
+    }
+  }
+} @else {
+  <div
+    class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+    role="status"
+  >
+    <span class="sr-only">Cargando cuentas…</span>
+    @for (placeholder of placeholders; track placeholder) {
+      <div class="flex items-center gap-3 border-b border-line px-4 py-5 last:border-b-0 sm:px-6">
+        <div
+          class="size-10 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none"
+        ></div>
+        <div class="grid flex-1 gap-2">
           <div
-            class="size-10 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none"
+            class="h-3.5 w-40 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
           ></div>
-          <div class="grid flex-1 gap-2">
-            <div
-              class="h-3.5 w-40 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-            ></div>
-            <div
-              class="h-3 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-            ></div>
-          </div>
           <div
-            class="hidden h-11 w-40 animate-pulse rounded-xl bg-line motion-reduce:animate-none md:block"
+            class="h-3 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
           ></div>
         </div>
-      }
-    </div>
-  }
-</section>
+        <div
+          class="hidden h-11 w-40 animate-pulse rounded-xl bg-line motion-reduce:animate-none md:block"
+        ></div>
+      </div>
+    }
+  </div>
+}

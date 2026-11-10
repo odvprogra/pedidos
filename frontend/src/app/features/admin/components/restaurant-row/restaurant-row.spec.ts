@@ -108,7 +108,7 @@ describe('RestaurantRow', () => {
 
     button('Reactivar').click();
     await fixture.whenStable();
-    expect(row().textContent).toContain('cerrado hasta que su dueño lo abra');
+    expect(row().textContent).toContain('queda cerrado hasta que su dueño lo abra');
     button('Sí, reactivar').click();
 
     expect(host.confirmed).toEqual(['reactivate']);

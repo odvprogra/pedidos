@@ -21,7 +21,6 @@ import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { AccountRow } from '../../components/account-row/account-row';
-import { AdminNav } from '../../components/admin-nav/admin-nav';
 import { AccountApi } from '../../data-access/account-api';
 import { copyFor } from '../../models/account-action';
 import { describeAccountError } from '../../models/account-error';
@@ -38,8 +37,9 @@ interface Notice {
 
 @Component({
   selector: 'app-account-list-page',
-  imports: [AccountRow, AdminNav, Alert, EmptyState, LoadError, Pagination],
+  imports: [AccountRow, Alert, EmptyState, LoadError, Pagination],
   templateUrl: './account-list-page.html',
+  host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountListPage implements OnInit {

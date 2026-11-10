@@ -145,14 +145,6 @@ describe('RestaurantListPage', () => {
       expect(rowOf('Pizzería Napoli').querySelector('button')?.textContent).toContain('Reactivar');
     });
 
-    it('lets the admin switch to the accounts of the panel', async () => {
-      await show(pageOf([LA_CASONA]));
-
-      const sections = page().querySelector('nav[aria-label="Secciones del panel"]');
-      expect(sections?.querySelector('a[href="/admin"]')?.textContent).toContain('Cuentas');
-      expect(sections?.textContent).toContain('Restaurantes');
-    });
-
     it('explains that there are no restaurants yet', async () => {
       await show(pageOf([]));
 
@@ -264,7 +256,7 @@ describe('RestaurantListPage', () => {
       await fixture.whenStable();
 
       expect(rowOf('La Casona').textContent).toContain('¿Suspender La Casona?');
-      expect(rowOf('La Casona').textContent).toContain('Los clientes dejan de verlo');
+      expect(rowOf('La Casona').textContent).toContain('Deja de aparecer para los clientes');
 
       buttonIn(rowOf('La Casona'), 'Cancelar').click();
       await fixture.whenStable();
@@ -290,7 +282,7 @@ describe('RestaurantListPage', () => {
       expect(statusOf('La Casona')).toBe('Suspendido');
       expect(rowOf('La Casona').querySelector('button')?.textContent).toContain('Reactivar');
       expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Suspendiste La Casona. Los clientes ya no lo ven.',
+        'Suspendiste La Casona. Ya no aparece para los clientes.',
       );
     });
 
@@ -306,7 +298,7 @@ describe('RestaurantListPage', () => {
       expect(statusOf('Pizzería Napoli')).toBe('Cerrado');
       expect(rowOf('Pizzería Napoli').querySelector('button')?.textContent).toContain('Suspender');
       expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Reactivaste Pizzería Napoli. Vuelve a aparecer, cerrado hasta que su dueño lo abra.',
+        'Reactivaste Pizzería Napoli. El restaurante queda cerrado hasta que su dueño lo abra.',
       );
     });
 

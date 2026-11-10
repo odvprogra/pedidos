@@ -28,16 +28,16 @@ describe('copyFor', () => {
     const copy = copyFor('suspend', 'La Casona');
 
     expect(copy.question).toBe('¿Suspender La Casona?');
-    expect(copy.consequence).toContain('Los clientes dejan de verlo');
+    expect(copy.consequence).toContain('Deja de aparecer para los clientes');
     expect(copy.consequence).toContain('Su dueño puede terminar los pedidos en curso');
-    expect(copy.done).toBe('Suspendiste La Casona. Los clientes ya no lo ven.');
+    expect(copy.done).toBe('Suspendiste La Casona. Ya no aparece para los clientes.');
   });
 
   it('warns that a reactivated restaurant comes back closed', () => {
     const copy = copyFor('reactivate', 'La Casona');
 
     expect(copy.question).toBe('¿Reactivar La Casona?');
-    expect(copy.consequence).toContain('cerrado hasta que su dueño lo abra');
+    expect(copy.consequence).toContain('queda cerrado hasta que su dueño lo abra');
     expect(copy.confirm).toBe('Sí, reactivar');
   });
 });

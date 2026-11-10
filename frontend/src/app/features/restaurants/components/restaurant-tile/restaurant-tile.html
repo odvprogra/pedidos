@@ -35,7 +35,7 @@
         {{ initial() }}
       </span>
       <span class="hidden sm:block">
-        <app-badge data-status [tone]="tone()">{{ statusLabel() }}</app-badge>
+        <app-restaurant-status-badge data-status [restaurant]="status()" />
       </span>
     </div>
 
@@ -47,7 +47,7 @@
           {{ restaurant().name }}
         </h2>
         <span class="shrink-0 sm:hidden">
-          <app-badge size="sm" data-status [tone]="tone()">{{ statusLabel() }}</app-badge>
+          <app-restaurant-status-badge size="sm" data-status [restaurant]="status()" />
         </span>
       </div>
       @if (restaurant().description; as description) {

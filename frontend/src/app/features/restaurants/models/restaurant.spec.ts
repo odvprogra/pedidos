@@ -1,14 +1,19 @@
-import { countRestaurants, openingLabel, openingTone } from './restaurant';
+import { restaurantStatusOf } from '@shared/utils/restaurant-status';
+import { Restaurant, countRestaurants, publicStatus } from './restaurant';
+
+const LA_CASONA: Restaurant = {
+  id: 4,
+  name: 'La Casona',
+  description: null,
+  address: 'Calle Sucre 245',
+  open: true,
+};
 
 describe('the restaurant copy', () => {
-  it('names whether a restaurant is open', () => {
-    expect(openingLabel(true)).toBe('Abierto');
-    expect(openingLabel(false)).toBe('Cerrado');
-  });
-
-  it('paints an open restaurant in green and a closed one in gray', () => {
-    expect(openingTone(true)).toBe('success');
-    expect(openingTone(false)).toBe('neutral');
+  it('shows a listed restaurant as open or closed, never as suspended', () => {
+    expect(publicStatus(LA_CASONA)).toEqual({ open: true, suspended: false });
+    expect(restaurantStatusOf(publicStatus(LA_CASONA))).toBe('open');
+    expect(restaurantStatusOf(publicStatus({ ...LA_CASONA, open: false }))).toBe('closed');
   });
 
   it.each([

@@ -138,7 +138,9 @@ restaurante</app-back-link>`. Un `link` relativo se resuelve desde la ruta de la
   estado; el color solo lo acompaña.
 - El estado de un restaurante es un `app-restaurant-status-badge` (`@shared/ui`), que toma `open` y
   `suspended` y muestra Abierto, Cerrado o Suspendido con `restaurantStatusOf`
-  (`@shared/utils/restaurant-status`). Lo usan la ficha del dueño y el panel del admin.
+  (`@shared/utils/restaurant-status`). Lo usan la ficha del dueño, el panel del admin y la lista y el
+  menú públicos, que le pasan `publicStatus(restaurant)` porque la API pública no devuelve
+  restaurantes suspendidos.
 - El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
   las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
   tono. Los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,

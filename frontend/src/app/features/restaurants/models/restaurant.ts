@@ -1,4 +1,4 @@
-import { BadgeTone } from '@shared/ui/badge/badge';
+import { RestaurantState } from '@shared/utils/restaurant-status';
 
 export interface Restaurant {
   id: number;
@@ -8,12 +8,8 @@ export interface Restaurant {
   open: boolean;
 }
 
-export function openingLabel(open: boolean): string {
-  return open ? 'Abierto' : 'Cerrado';
-}
-
-export function openingTone(open: boolean): BadgeTone {
-  return open ? 'success' : 'neutral';
+export function publicStatus(restaurant: Restaurant): RestaurantState {
+  return { open: restaurant.open, suspended: false };
 }
 
 export function countRestaurants(total: number): string {

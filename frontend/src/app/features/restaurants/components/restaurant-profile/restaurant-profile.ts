@@ -6,12 +6,13 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import { Badge } from '@shared/ui/badge/badge';
-import { Restaurant, openingLabel, openingTone } from '../../models/restaurant';
+import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
+import { RESTAURANT_STATUS_LABELS, restaurantStatusOf } from '@shared/utils/restaurant-status';
+import { Restaurant, publicStatus } from '../../models/restaurant';
 
 @Component({
   selector: 'app-restaurant-profile',
-  imports: [Badge],
+  imports: [RestaurantStatusBadge],
   templateUrl: './restaurant-profile.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -23,8 +24,10 @@ export class RestaurantProfile {
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
-  protected readonly statusLabel = computed(() => openingLabel(this.restaurant().open));
-  protected readonly tone = computed(() => openingTone(this.restaurant().open));
+  protected readonly status = computed(() => publicStatus(this.restaurant()));
+  protected readonly statusLabel = computed(
+    () => RESTAURANT_STATUS_LABELS[restaurantStatusOf(this.status())],
+  );
 
   focus(): void {
     this.name().nativeElement.focus();

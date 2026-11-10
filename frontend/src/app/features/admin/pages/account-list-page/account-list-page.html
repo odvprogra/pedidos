@@ -108,13 +108,17 @@
   >
     <span class="sr-only">Cargando cuentas…</span>
     @for (placeholder of placeholders; track placeholder) {
-      <div class="flex items-center gap-3 border-b border-line px-4 py-5 last:border-b-0 sm:px-6">
-        <div appSkeleton class="size-10 shrink-0 rounded-full"></div>
-        <div class="grid flex-1 gap-2">
-          <div appSkeleton class="h-3.5 w-40 max-w-full rounded"></div>
-          <div appSkeleton class="h-3 w-56 max-w-full rounded"></div>
+      <div
+        class="grid gap-3 border-b border-line px-4 py-5 last:border-b-0 sm:px-6 md:flex md:items-center"
+      >
+        <div class="flex items-center gap-3 md:flex-1">
+          <div appSkeleton class="size-10 shrink-0 rounded-full"></div>
+          <div class="grid flex-1 gap-2">
+            <div appSkeleton class="h-3.5 w-40 max-w-full rounded"></div>
+            <div appSkeleton class="h-3 w-56 max-w-full rounded"></div>
+          </div>
         </div>
-        <div appSkeleton class="hidden h-11 w-40 rounded-xl md:block"></div>
+        <div appSkeleton class="h-11 w-full rounded-xl md:w-40"></div>
       </div>
     }
   </div>

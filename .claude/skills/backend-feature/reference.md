@@ -725,6 +725,16 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByIdForUpdate(Long id) {
+        return findById(id);
+    }
+
+    @Override
+    public Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId) {
+        return findByOwnerId(ownerId);
+    }
+
+    @Override
     public Optional<Restaurant> findByOwnerId(Long ownerId) {
         return restaurants.values().stream()
                 .filter(restaurant -> restaurant.getOwnerId().equals(ownerId))
@@ -739,20 +749,36 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
 
     @Override
     public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
-        List<Restaurant> visible = restaurants.values().stream()
-                .filter(Restaurant::isVisible)
-                .sorted(OPEN_FIRST)
-                .toList();
-        List<Restaurant> items = visible.stream()
-                .skip((long) page * size)
-                .limit(size)
-                .map(restaurant -> copyOf(restaurant, restaurant.getId()))
-                .toList();
-        return new PageResult<>(items, page, size, visible.size());
+        return pageOf(
+                restaurants.values().stream()
+                        .filter(Restaurant::isVisible)
+                        .sorted(OPEN_FIRST)
+                        .toList(),
+                page,
+                size);
+    }
+
+    @Override
+    public PageResult<Restaurant> findPageInRegistrationOrder(int page, int size) {
+        return pageOf(
+                restaurants.values().stream()
+                        .sorted(Comparator.comparing(Restaurant::getId))
+                        .toList(),
+                page,
+                size);
     }
 
     int count() {
         return restaurants.size();
+    }
+
+    private static PageResult<Restaurant> pageOf(List<Restaurant> matching, int page, int size) {
+        List<Restaurant> items = matching.stream()
+                .skip((long) page * size)
+                .limit(size)
+                .map(restaurant -> copyOf(restaurant, restaurant.getId()))
+                .toList();
+        return new PageResult<>(items, page, size, matching.size());
     }
 
     private static Restaurant copyOf(Restaurant restaurant, Long id) {

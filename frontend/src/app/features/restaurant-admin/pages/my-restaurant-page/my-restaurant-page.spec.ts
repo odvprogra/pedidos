@@ -510,6 +510,22 @@ describe('MyRestaurantPage', () => {
 
       expect(notice()).toBe('');
     });
+
+    it('takes the focus back to the switch when the owner closes the notice from it', async () => {
+      await showRestaurant();
+      toggle().focus();
+      toggle().click();
+      httpTesting.expectOne(OPEN_URL).flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+      const close = page().querySelector('button[aria-label="Cerrar aviso"]') as HTMLButtonElement;
+      close.focus();
+
+      close.click();
+      await fixture.whenStable();
+
+      expect(notice()).toBe('');
+      expect(document.activeElement).toBe(toggle());
+    });
   });
 
   describe('the menu', () => {

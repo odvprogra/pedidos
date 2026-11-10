@@ -2,7 +2,8 @@
   class="block rounded-xl shadow-md"
   dismissible
   [tone]="tone()"
-  (dismissed)="dismissed.emit()"
+  (focusin)="remember($event)"
+  (dismissed)="dismiss()"
 >
   <ng-content />
 </app-alert>

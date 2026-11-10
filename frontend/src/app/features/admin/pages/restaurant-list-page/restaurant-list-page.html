@@ -1,0 +1,152 @@
+<section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+  <app-admin-nav />
+
+  <header class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">
+        Panel de administración
+      </p>
+      <h1
+        #heading
+        tabindex="-1"
+        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+      >
+        Restaurantes
+      </h1>
+      <p class="mt-2 text-muted">
+        Suspende un local para sacarlo de la plataforma sin borrar sus datos, o reactívalo.
+      </p>
+    </div>
+    @if (result()) {
+      <p
+        class="inline-flex items-center gap-2 self-start rounded-full bg-surface px-4 py-2 text-sm font-bold shadow-sm sm:self-auto"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4 text-brand"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 9l1.5-5h15L21 9" />
+          <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+          <path d="M5 12v8h14v-8" />
+          <path d="M10 20v-5h4v5" />
+        </svg>
+        {{ totalLabel() }}
+      </p>
+    }
+  </header>
+
+  @for (shown of notices(); track shown.id) {
+    <div class="sticky top-20 z-5 mt-6" data-sticky-notice>
+      <app-alert
+        class="block rounded-xl shadow-md"
+        dismissible
+        [tone]="shown.tone"
+        (dismissed)="notice.set(null)"
+      >
+        {{ shown.message }}
+      </app-alert>
+    </div>
+  }
+
+  @if (problem(); as problem) {
+    <app-load-error
+      class="mt-6 block"
+      heading="No pudimos cargar los restaurantes"
+      [message]="problem"
+      (retry)="retry()"
+    />
+  } @else if (result(); as result) {
+    @if (result.items.length === 0) {
+      <app-empty-state
+        class="mt-6 block"
+        heading="Todavía no hay restaurantes"
+        message="Cuando un dueño registre su restaurante, va a aparecer aquí."
+      >
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 9l1.5-5h15L21 9" />
+          <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+          <path d="M5 12v8h14v-8" />
+          <path d="M10 20v-5h4v5" />
+        </svg>
+      </app-empty-state>
+    } @else {
+      <div
+        class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"
+        [class.opacity-60]="loading()"
+        [attr.aria-busy]="loading()"
+      >
+        <div
+          aria-hidden="true"
+          class="hidden border-b border-line bg-canvas px-6 py-3 text-xs font-extrabold tracking-wide text-muted uppercase md:grid md:grid-cols-restaurants md:gap-x-4"
+        >
+          <span>Restaurante</span>
+          <span>Estado</span>
+          <span>Acción</span>
+        </div>
+        <ul class="divide-y divide-line">
+          @for (restaurant of result.items; track restaurant.id) {
+            <li>
+              <app-restaurant-row
+                [restaurant]="restaurant"
+                [busy]="pendingId() === restaurant.id"
+                [locked]="busy() && pendingId() !== restaurant.id"
+                (confirmed)="run($event, restaurant)"
+              />
+            </li>
+          }
+        </ul>
+      </div>
+
+      @if (result.totalPages > 1) {
+        <app-pagination
+          class="mt-6 block"
+          [page]="result.page"
+          [totalPages]="result.totalPages"
+          [disabled]="busy()"
+          (pageChange)="goTo($event)"
+        />
+      }
+    }
+  } @else {
+    <div
+      class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+      role="status"
+    >
+      <span class="sr-only">Cargando restaurantes…</span>
+      @for (placeholder of placeholders; track placeholder) {
+        <div class="flex items-center gap-3 border-b border-line px-4 py-5 last:border-b-0 sm:px-6">
+          <div
+            class="size-10 shrink-0 animate-pulse rounded-xl bg-line motion-reduce:animate-none"
+          ></div>
+          <div class="grid flex-1 gap-2">
+            <div
+              class="h-3.5 w-40 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div
+              class="h-3 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+          </div>
+          <div
+            class="hidden h-11 w-40 animate-pulse rounded-xl bg-line motion-reduce:animate-none md:block"
+          ></div>
+        </div>
+      }
+    </div>
+  }
+</section>

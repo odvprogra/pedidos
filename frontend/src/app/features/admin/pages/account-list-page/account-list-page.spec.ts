@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
@@ -44,7 +45,7 @@ describe('AccountListPage', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     TestBed.inject(SessionStore).signIn(ADMIN);
@@ -103,6 +104,16 @@ describe('AccountListPage', () => {
   }
 
   describe('the list', () => {
+    it('lets the admin switch to the restaurants of the panel', async () => {
+      await show(pageOf([ANA]));
+
+      const sections = page().querySelector('nav[aria-label="Secciones del panel"]');
+      expect(sections?.textContent).toContain('Cuentas');
+      expect(sections?.querySelector('a[href="/admin/restaurantes"]')?.textContent).toContain(
+        'Restaurantes',
+      );
+    });
+
     it('shows a placeholder while the first page loads', async () => {
       expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando cuentas');
 
@@ -363,6 +374,22 @@ describe('AccountListPage', () => {
       await fixture.whenStable();
 
       expect(page().querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('announces the same failure again as a new notice', async () => {
+      await show(pageOf([ANA]));
+      await confirm('Ana Rojas', 'Suspender', 'Sí, suspender');
+      failWith('/api/v1/accounts/7/suspend', 403, 'csrf_invalid');
+      await fixture.whenStable();
+      const first = page().querySelector('app-alert[dismissible]');
+
+      await confirm('Ana Rojas', 'Suspender', 'Sí, suspender');
+      failWith('/api/v1/accounts/7/suspend', 403, 'csrf_invalid');
+      await fixture.whenStable();
+
+      const second = page().querySelector('app-alert[dismissible]');
+      expect(second?.textContent).toContain('No pudimos validar tu solicitud.');
+      expect(second).not.toBe(first);
     });
 
     it('clears the previous message when another action starts', async () => {

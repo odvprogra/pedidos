@@ -1,27 +1,18 @@
 import { AccountSummary } from './account-summary';
+import { ModerationAction, ModerationCopy } from './moderation-action';
 
-export type AccountAction = 'suspend' | 'reactivate';
-
-export interface AccountActionCopy {
-  label: string;
-  working: string;
-  question: string;
-  consequence: string;
-  confirm: string;
-  done: string;
-}
-
-export function actionFor(account: AccountSummary): AccountAction | null {
+export function actionFor(account: AccountSummary): ModerationAction | null {
   if (account.role === 'ADMIN') {
     return null;
   }
   return account.suspended ? 'reactivate' : 'suspend';
 }
 
-export function copyFor(action: AccountAction, name: string): AccountActionCopy {
+export function copyFor(action: ModerationAction, name: string): ModerationCopy {
   if (action === 'suspend') {
     return {
       label: 'Suspender',
+      target: `la cuenta de ${name}`,
       working: 'Suspendiendo…',
       question: `¿Suspender la cuenta de ${name}?`,
       consequence:
@@ -32,6 +23,7 @@ export function copyFor(action: AccountAction, name: string): AccountActionCopy 
   }
   return {
     label: 'Reactivar',
+    target: `la cuenta de ${name}`,
     working: 'Reactivando…',
     question: `¿Reactivar la cuenta de ${name}?`,
     consequence: 'Podrá volver a ingresar con su correo y su contraseña.',

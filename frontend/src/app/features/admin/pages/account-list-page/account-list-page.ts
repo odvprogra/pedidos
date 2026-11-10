@@ -19,9 +19,10 @@ import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { AccountRow } from '../../components/account-row/account-row';
 import { AccountApi } from '../../data-access/account-api';
-import { AccountAction, copyFor } from '../../models/account-action';
+import { copyFor } from '../../models/account-action';
 import { describeAccountError } from '../../models/account-error';
 import { AccountSummary } from '../../models/account-summary';
+import { ModerationAction } from '../../models/moderation-action';
 
 const PAGE_SIZE = 20;
 
@@ -73,7 +74,7 @@ export class AccountListPage implements OnInit {
     this.load(this.requestedPage, true);
   }
 
-  protected run(action: AccountAction, account: AccountSummary): void {
+  protected run(action: ModerationAction, account: AccountSummary): void {
     if (this.busy()) {
       return;
     }

@@ -3,8 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Page } from '@core/http/page';
 import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
-import { AccountAction } from '../models/account-action';
 import { AccountSummary } from '../models/account-summary';
+import { ModerationAction } from '../models/moderation-action';
 
 @Injectable({ providedIn: 'root' })
 export class AccountApi {
@@ -15,7 +15,7 @@ export class AccountApi {
     return this.http.get<Page<AccountSummary>>(this.baseUrl, { params: { page, size } });
   }
 
-  apply(action: AccountAction, id: number): Observable<void> {
+  apply(action: ModerationAction, id: number): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${id}/${action}`, null);
   }
 }

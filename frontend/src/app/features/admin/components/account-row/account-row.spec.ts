@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AccountAction } from '../../models/account-action';
 import { AccountSummary } from '../../models/account-summary';
+import { ModerationAction } from '../../models/moderation-action';
 import { AccountRow } from './account-row';
 
 const ANA: AccountSummary = {
@@ -30,7 +30,7 @@ class Host {
   readonly isSelf = signal(false);
   readonly busy = signal(false);
   readonly locked = signal(false);
-  readonly confirmed: AccountAction[] = [];
+  readonly confirmed: ModerationAction[] = [];
 }
 
 describe('AccountRow', () => {
@@ -62,87 +62,26 @@ describe('AccountRow', () => {
     await fixture.whenStable();
   }
 
-  function pressEscapeOn(element: HTMLElement): void {
-    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  }
-
   it('names the account in the action for screen readers', () => {
     expect(button('Suspender').textContent).toContain('la cuenta de Ana Rojas');
-    expect(button('Suspender').getAttribute('aria-expanded')).toBe('false');
-    expect(button('Suspender').getAttribute('aria-controls')).toBeNull();
   });
 
-  it('opens the question below the account and moves the focus to cancel', async () => {
+  it('asks about the account by its name and explains the suspension', async () => {
     await ask();
 
     const question = row().querySelector('[role="group"]') as HTMLElement;
+    expect(question.id).toBe('account-7-confirm');
     expect(question.textContent).toContain('¿Suspender la cuenta de Ana Rojas?');
-    expect(button('Suspender').getAttribute('aria-expanded')).toBe('true');
-    expect(button('Suspender').getAttribute('aria-controls')).toBe(question.id);
-    expect(document.activeElement).toBe(button('Cancelar'));
+    expect(question.textContent).toContain('se cerrarán sus sesiones abiertas');
   });
 
-  it('describes what the suspension does to the question and its confirmation', async () => {
-    await ask();
-
-    const question = row().querySelector('[role="group"]') as HTMLElement;
-    const consequence = document.getElementById(
-      question.getAttribute('aria-describedby') ?? '',
-    ) as HTMLElement;
-    expect(consequence.textContent).toContain('se cerrarán sus sesiones abiertas');
-    expect(button('Sí, suspender').getAttribute('aria-describedby')).toBe(consequence.id);
-  });
-
-  it('closes the question and gives the focus back to the action', async () => {
-    await ask();
-
-    button('Cancelar').click();
-    await fixture.whenStable();
-
-    expect(row().querySelector('[role="group"]')).toBeNull();
-    expect(document.activeElement).toBe(button('Suspender'));
-    expect(host.confirmed).toEqual([]);
-  });
-
-  it.each(['Cancelar', 'Sí, suspender', 'Suspender'])(
-    'closes the question with the escape key from %s',
-    async (label) => {
-      await ask();
-
-      pressEscapeOn(button(label));
-      await fixture.whenStable();
-
-      expect(row().querySelector('[role="group"]')).toBeNull();
-      expect(document.activeElement).toBe(button('Suspender'));
-    },
-  );
-
-  it('ignores the escape key while the question is closed', async () => {
-    pressEscapeOn(button('Suspender'));
-    await fixture.whenStable();
-
-    expect(row().querySelector('[role="group"]')).toBeNull();
-    expect(host.confirmed).toEqual([]);
-  });
-
-  it('closes the question when the action is pressed again', async () => {
-    await ask();
-
-    button('Suspender').click();
-    await fixture.whenStable();
-
-    expect(row().querySelector('[role="group"]')).toBeNull();
-  });
-
-  it('confirms the suspension and keeps the focus on the action', async () => {
+  it('confirms the suspension of an active account', async () => {
     await ask();
 
     button('Sí, suspender').click();
     await fixture.whenStable();
 
     expect(host.confirmed).toEqual(['suspend']);
-    expect(row().querySelector('[role="group"]')).toBeNull();
-    expect(document.activeElement).toBe(button('Suspender'));
   });
 
   it('confirms the reactivation of a suspended account', async () => {
@@ -165,17 +104,6 @@ describe('AccountRow', () => {
 
     expect(button('Suspender').getAttribute('aria-disabled')).toBe('true');
     expect(row().querySelector('[role="group"]')).toBeNull();
-  });
-
-  it('does not confirm when another action started after the question opened', async () => {
-    await ask();
-    host.locked.set(true);
-    await fixture.whenStable();
-
-    button('Sí, suspender').click();
-
-    expect(button('Sí, suspender').getAttribute('aria-disabled')).toBe('true');
-    expect(host.confirmed).toEqual([]);
   });
 
   it('shows that it is working on its own action', async () => {

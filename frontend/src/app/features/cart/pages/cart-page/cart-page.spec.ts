@@ -7,9 +7,9 @@ import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { CartRestaurant } from '@core/cart/cart';
 import { CartStore } from '@core/cart/cart-store';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { CartPage } from './cart-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const ORDERS_URL = '/api/v1/orders';
 const LA_CASONA: CartRestaurant = { id: 4, name: 'La Casona', address: 'Calle Sucre 245' };

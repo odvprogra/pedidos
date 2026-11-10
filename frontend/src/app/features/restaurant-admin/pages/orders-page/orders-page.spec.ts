@@ -6,9 +6,9 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Page } from '@core/http/page';
 import { OrderStatus } from '@shared/utils/order-status';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrdersPage } from './orders-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RestaurantStub {}
@@ -108,7 +108,7 @@ describe('OrdersPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] app-alert > div');
+    return page().querySelector('app-sticky-notice');
   }
 
   function expectList(statuses: string[], pageNumber = 0) {
@@ -135,10 +135,12 @@ describe('OrdersPage', () => {
 
   describe('the list', () => {
     it('loads the orders in progress first while it shows a placeholder', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando los pedidos…']);
 
       await respond(pageOf([order(43, 'PLACED'), order(42, 'ACCEPTED')]));
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
       expect(titles()).toEqual(['Pedido #43', 'Pedido #42']);
       expect(button('En curso').getAttribute('aria-pressed')).toBe('true');
@@ -284,7 +286,7 @@ describe('OrdersPage', () => {
       await stable();
 
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('En preparación');
-      expect(notice()?.hasAttribute('role')).toBe(false);
+      expect(notice()?.querySelector('[role]')).toBeNull();
       expect(notice()?.textContent).toContain('Aceptaste el pedido #43.');
       expect(announced()).toEqual(['Aceptaste el pedido #43.']);
       expect(document.activeElement).toBe(button('Marcar listo', card(43)));
@@ -375,7 +377,7 @@ describe('OrdersPage', () => {
       fail(`${ORDERS_URL}/43/accept`, 500);
       await stable();
 
-      expect(notice()?.getAttribute('role')).toBe('alert');
+      expect(notice()?.querySelector('[role="alert"]')).toBeTruthy();
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('Pendiente');
       expect(document.activeElement).toBe(button('Aceptar', card(43)));

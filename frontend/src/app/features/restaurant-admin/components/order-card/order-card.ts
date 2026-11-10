@@ -43,7 +43,7 @@ export class OrderCard {
     actionsFor(this.order()).map((action) => ({ action, copy: copyFor(action) })),
   );
   protected readonly confirmingReject = computed(
-    () => this.confirming() && actionsFor(this.order()).includes('reject'),
+    () => this.confirming() && this.actions().some(({ action }) => action === 'reject'),
   );
   protected readonly unavailable = computed(() => this.working() !== null || this.locked());
   protected readonly placedAt = computed(() => formatDateTime(this.order().placedAt));

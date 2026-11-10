@@ -2,10 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const MINE_URL = '/api/v1/restaurants/mine';
 const REGISTER_URL = '/api/v1/restaurants';
@@ -147,10 +147,12 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

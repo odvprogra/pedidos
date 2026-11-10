@@ -3,9 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantListPage } from './restaurant-list-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const LIST_URL = '/api/v1/restaurants';
 const LA_CASONA: Restaurant = {
@@ -102,10 +102,12 @@ describe('RestaurantListPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurants load', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando restaurantes…']);
 
       await respond(pageOf([LA_CASONA]));
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

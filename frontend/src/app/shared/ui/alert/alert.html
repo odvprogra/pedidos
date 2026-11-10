@@ -26,7 +26,7 @@
       }
     }
   </svg>
-  <div class="grow font-medium"><ng-content /></div>
+  <div class="grow font-medium" [appAnnounce]="tone() === 'success'"><ng-content /></div>
   @if (dismissible()) {
     <button
       type="button"

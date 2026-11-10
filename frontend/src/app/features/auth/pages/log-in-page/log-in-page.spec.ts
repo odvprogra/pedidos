@@ -228,4 +228,14 @@ describe('LogInPage', () => {
     const link = page().querySelector('a[href^="/registro"]') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/registro?returnUrl=%2Fpedidos');
   });
+
+  it('cancels the log in when the person leaves before it answers', async () => {
+    await open();
+    await submitCredentials();
+    const request = httpTesting.expectOne(LOGIN_URL);
+
+    await harness.navigateByUrl('/restaurantes');
+
+    expect(request.cancelled).toBe(true);
+  });
 });

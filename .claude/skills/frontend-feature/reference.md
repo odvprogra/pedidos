@@ -52,7 +52,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `app-empty-state` (`@shared/ui`)                       | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
 | `appSkeleton` (`@shared/ui`)                           | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
 | `app-sticky-notice`, `NoticeSlot` (`@shared/ui`)       | El aviso fijo bajo el header con el resultado de una acción, uno a la vez y con su id      |
-| `app-alert` (`@shared/ui`)                             | Avisos: `danger` y `warning` con `role="alert"`, `success` sin rol, `dismissible`          |
+| `app-alert` (`@shared/ui`)                             | Avisos: `danger` y `warning` con `role="alert"`, `success` anunciado con `appAnnounce`     |
 | `app-live-region`, `appAnnounce`, `Announcer`          | La región `role="status"` fija de la app y la directiva que escribe en ella                |
 | `appButton`, `appSecondaryButton` (`@shared/ui`)       | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
 | `app-form-field`, `appTextInput`                       | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
@@ -607,8 +607,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
-    this.retrying.set(true);
-    this.load(true);
+    this.load(true, true);
   }
 
   protected register(): void {
@@ -681,8 +680,9 @@ export class MyRestaurantPage implements OnInit {
     });
   }
 
-  private load(moveFocus: boolean): void {
-    if (!this.retrying()) {
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
       this.state.set({ status: 'loading' });
     }
     this.restaurantApi
@@ -1200,10 +1200,12 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

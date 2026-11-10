@@ -5,9 +5,9 @@ import { provideRouter } from '@angular/router';
 import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { AccountSummary } from '../../models/account-summary';
 import { AccountListPage } from './account-list-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const ADMIN: Account = {
   id: 1,
@@ -112,10 +112,12 @@ describe('AccountListPage', () => {
 
   describe('the list', () => {
     it('shows a placeholder while the first page loads', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando cuentas…']);
 
       await show(pageOf([ANA]));
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

@@ -16,7 +16,7 @@ describe('Announcer', () => {
     announcer.announce('Cargando tu menú…');
     announcer.announce('Suspendiste La Casona.');
 
-    expect(announcer.shown()).toEqual([{ id: 2, message: 'Suspendiste La Casona.' }]);
+    expect(announcer.shown().map(({ message }) => message)).toEqual(['Suspendiste La Casona.']);
   });
 
   it('gives a repeated message a new id, so it is announced again', () => {

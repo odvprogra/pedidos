@@ -5,5 +5,5 @@
   (focusin)="remember($event)"
   (dismissed)="dismiss()"
 >
-  <span [appAnnounce]="tone() === 'success'"><ng-content /></span>
+  <ng-content />
 </app-alert>

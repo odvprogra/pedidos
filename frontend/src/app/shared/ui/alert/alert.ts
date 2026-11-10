@@ -6,6 +6,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { Announce } from '../live-region/announce';
 
 export type AlertTone = 'danger' | 'warning' | 'success';
 
@@ -23,6 +24,7 @@ const ROLES: Record<AlertTone, 'alert' | null> = {
 
 @Component({
   selector: 'app-alert',
+  imports: [Announce],
   templateUrl: './alert.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

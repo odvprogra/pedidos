@@ -141,8 +141,7 @@ export class OrdersPage implements OnInit {
   }
 
   protected retry(): void {
-    this.retrying.set(true);
-    this.load(this.requestedPage, true);
+    this.load(this.requestedPage, true, true);
   }
 
   protected workingOn(order: Order): OrderAction | null {
@@ -181,12 +180,13 @@ export class OrdersPage implements OnInit {
     });
   }
 
-  private load(page: number, moveFocus: boolean): void {
+  private load(page: number, moveFocus: boolean, retrying = false): void {
     this.request?.unsubscribe();
     this.requestedPage = page;
+    this.retrying.set(retrying);
     this.loading.set(true);
     this.confirmation.close();
-    if (!this.retrying()) {
+    if (!retrying) {
       this.problem.set(null);
     }
     const filter = this.filter();

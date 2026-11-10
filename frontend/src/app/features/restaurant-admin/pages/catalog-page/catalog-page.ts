@@ -116,8 +116,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected retry(): void {
-    this.retrying.set(true);
-    this.load(true);
+    this.load(true, true);
   }
 
   protected isAddingCategory(): boolean {
@@ -329,8 +328,9 @@ export class CatalogPage implements OnInit {
     this.load(true);
   }
 
-  private load(moveFocus: boolean): void {
-    if (!this.retrying()) {
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
       this.state.set({ status: 'loading' });
     }
     this.confirmation.close();

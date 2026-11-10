@@ -148,8 +148,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
-    this.retrying.set(true);
-    this.load(true);
+    this.load(true, true);
   }
 
   protected register(): void {
@@ -222,8 +221,9 @@ export class MyRestaurantPage implements OnInit {
     });
   }
 
-  private load(moveFocus: boolean): void {
-    if (!this.retrying()) {
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
       this.state.set({ status: 'loading' });
     }
     this.restaurantApi

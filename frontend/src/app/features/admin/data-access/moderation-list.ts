@@ -71,8 +71,7 @@ export class ModerationList<T extends Moderated> {
     if (this.busy()) {
       return;
     }
-    this.retryingLoad.set(true);
-    this.load(this.requestedPage, true);
+    this.load(this.requestedPage, true, true);
   }
 
   run(action: ModerationAction, item: T): void {
@@ -97,10 +96,11 @@ export class ModerationList<T extends Moderated> {
       });
   }
 
-  private load(page: number, moveFocus: boolean): void {
+  private load(page: number, moveFocus: boolean, retrying = false): void {
     this.requestedPage = page;
+    this.retryingLoad.set(retrying);
     this.fetching.set(true);
-    if (!this.retrying()) {
+    if (!retrying) {
       this.failure.set(null);
     }
     this.confirmation.close();

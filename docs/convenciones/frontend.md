@@ -35,8 +35,11 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 
 - Estado local con `signal` y `computed`.
 - Los clientes HTTP (`XxxApi`) devuelven `Observable` y no guardan estado.
-- Toda suscripción de una página a un pedido HTTP pasa por `takeUntilDestroyed`: si la persona sale
-  antes de la respuesta, el pedido se cancela y su respuesta no toca una página que ya no está.
+- Toda suscripción de una página a un pedido HTTP se corta cuando la página se destruye: si la
+  persona sale antes de la respuesta, el pedido se cancela y su respuesta no toca una página que ya
+  no está (ni navega desde ella, como el ingreso). Se hace con `takeUntilDestroyed`; si la página
+  además corta el pedido anterior al pedir otro (el detalle de un pedido, el menú público, los
+  pedidos del dueño), guarda la `Subscription` y la cancela también en `DestroyRef.onDestroy`.
 - El estado que comparten varias páginas de una feature va en un `XxxStore` (`@Injectable` con
   señales). Una librería de estado global (NgRx u otra) requiere una ADR.
 - Todas las URLs usan `environment.apiUrl`.
@@ -60,10 +63,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   se anuncia en todos los lectores de pantalla; por eso el esqueleto y el aviso de éxito no llevan
   `role="status"`. La directiva `appAnnounce` (`@shared/ui`) escribe en la región el texto de su
   elemento cuando aparece y lo saca cuando se va; `Announcer` le da un id nuevo a cada anuncio, así
-  un mismo mensaje se vuelve a anunciar. Los errores siguen con `role="alert"`, que sí se anuncia al
-  entrar. Los specs leen lo anunciado con `TestBed.inject(Announcer).shown()`. Las regiones
-  `aria-live` que ya existían en una página (el carrito, el menú, "Actualizar" en los pedidos)
-  también están desde el principio y siguen igual.
+  un mismo mensaje se vuelve a anunciar. Un `app-alert` en `success` se anuncia solo, con
+  `appAnnounce`, y no lleva rol; en `danger` y `warning` lleva `role="alert"`, que sí se anuncia al
+  entrar. Los specs leen lo anunciado con `TestBed.inject(Announcer).shown()`. El código nuevo
+  anuncia con `appAnnounce` o `Announcer`; las regiones `aria-live` de una página que ya existían (el
+  carrito, el menú, "Actualizar" en los pedidos) están desde el principio y funcionan, pero quedan
+  por pasar a la región fija. La decisión está en
+  [ADR-0012](../adr/0012-region-fija-para-anunciar.md).
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`). Cuando no hay
@@ -121,15 +127,16 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
   al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
 - El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`), un aviso
-  `app-alert dismissible` fijo bajo el header con `data-sticky-notice`, en `tone="success"` (su
-  texto se anuncia en la región fija con `appAnnounce`, y el aviso no lleva rol) o en el tono de
-  error (`role="alert"`). Ese atributo agranda el margen de scroll de la página
-  para que el aviso no tape el elemento con el foco. El aviso de la página vive en un `NoticeSlot`
+  `app-alert dismissible` fijo bajo el header, en `tone="success"` (su texto se anuncia en la región
+  fija y el aviso no lleva rol) o en `warning` o `danger` (`role="alert"`). Su atributo
+  `data-sticky-notice` agranda el margen de scroll de la página para que el aviso no tape el
+  elemento con el foco. El aviso de la página vive en un `NoticeSlot`
   (`notice.show(tone, message)` y `notice.clear()`), que le da un id nuevo a cada aviso. La página
   lo dibuja con `@for (shown of notice.shown(); track shown.id)`: así cada aviso es un nodo nuevo y
   un mismo mensaje repetido se vuelve a anunciar. Al cerrarlo con su "Cerrar aviso", el foco vuelve
   a donde estaba antes de llegar a ese botón, sin mover la vista; si ese elemento ya no está, va al
-  `h1` de la página. Si el foco no estaba en el aviso, no se mueve.
+  `h1` de la página, que por eso lleva siempre `tabindex="-1"`. Si el foco no estaba en el aviso, no
+  se mueve.
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
 - La cabecera de una página es `app-page-header` (`@shared/ui`): la etiqueta (`eyebrow`), el título

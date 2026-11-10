@@ -228,4 +228,14 @@ describe('RegisterPage', () => {
     const link = page().querySelector('a[href^="/ingresar"]') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/ingresar?returnUrl=%2Fpedidos');
   });
+
+  it('cancels the registration when the person leaves before it answers', async () => {
+    await open();
+    await submitValidForm();
+    const request = httpTesting.expectOne(REGISTER_URL);
+
+    await harness.navigateByUrl('/restaurantes');
+
+    expect(request.cancelled).toBe(true);
+  });
 });

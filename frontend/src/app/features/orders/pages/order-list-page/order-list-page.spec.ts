@@ -3,9 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrderListPage } from './order-list-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const LIST_URL = '/api/v1/orders';
 
@@ -106,10 +106,12 @@ describe('OrderListPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the orders load', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando tus pedidos…']);
 
       await respond(pageOf([NEWEST]));
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

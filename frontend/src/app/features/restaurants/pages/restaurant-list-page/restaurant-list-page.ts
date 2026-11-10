@@ -71,14 +71,14 @@ export class RestaurantListPage implements OnInit {
   }
 
   protected retry(): void {
-    this.retrying.set(true);
-    this.load(this.requestedPage, true);
+    this.load(this.requestedPage, true, true);
   }
 
-  private load(page: number, moveFocus: boolean): void {
+  private load(page: number, moveFocus: boolean, retrying = false): void {
     this.requestedPage = page;
+    this.retrying.set(retrying);
     this.loading.set(true);
-    if (!this.retrying()) {
+    if (!retrying) {
       this.problem.set(null);
     }
     this.restaurantApi

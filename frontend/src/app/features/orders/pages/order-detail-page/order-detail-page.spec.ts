@@ -4,9 +4,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { formatDateTime } from '@shared/utils/format-date-time';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrderDetailPage } from './order-detail-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const ORDER_URL = '/api/v1/orders/42';
 const CANCEL_URL = '/api/v1/orders/42/cancel';
@@ -84,7 +84,7 @@ describe('OrderDetailPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] app-alert > div');
+    return page().querySelector('app-sticky-notice');
   }
 
   async function confirmCancellation(): Promise<void> {
@@ -98,11 +98,13 @@ describe('OrderDetailPage', () => {
     it('shows a placeholder while the order loads', async () => {
       await open('42');
 
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando tu pedido…']);
 
       httpTesting.expectOne(ORDER_URL).flush(PENDING);
       await fixture.whenStable();
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 
@@ -322,7 +324,7 @@ describe('OrderDetailPage', () => {
 
       expect(status()).toBe('Cancelado');
       expect(button('Cancelar pedido')).toBeUndefined();
-      expect(notice()?.hasAttribute('role')).toBe(false);
+      expect(notice()?.querySelector('[role]')).toBeNull();
       expect(notice()?.textContent).toContain('Cancelaste el pedido #42.');
       expect(announced()).toEqual(['Cancelaste el pedido #42.']);
       expect(document.activeElement).toBe(page().querySelector('h1'));
@@ -410,7 +412,7 @@ describe('OrderDetailPage', () => {
         );
       await fixture.whenStable();
 
-      expect(notice()?.getAttribute('role')).toBe('alert');
+      expect(notice()?.querySelector('[role="alert"]')).toBeTruthy();
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(status()).toBe('Pendiente');
       expect(requireButton('Cancelar pedido').getAttribute('aria-disabled')).toBe('false');

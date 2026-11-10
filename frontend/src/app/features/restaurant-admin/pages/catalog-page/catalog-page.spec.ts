@@ -4,9 +4,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog, Product } from '../../models/catalog';
 import { CatalogPage } from './catalog-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const CATALOG_URL = '/api/v1/restaurants/mine/catalog';
 const CATEGORIES_URL = '/api/v1/restaurants/mine/categories';
@@ -163,10 +163,12 @@ describe('CatalogPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the menu loads', async () => {
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando tu menú…']);
 
       await showMenu();
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

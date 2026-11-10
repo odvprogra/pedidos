@@ -5,10 +5,10 @@ import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { SessionStore } from '@core/auth/session-store';
 import { CartStore } from '@core/cart/cart-store';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantMenuPage } from './restaurant-menu-page';
-import { Announcer } from '@shared/ui/live-region/announcer';
 
 const RESTAURANT_URL = '/api/v1/restaurants/4';
 const CATALOG_URL = '/api/v1/restaurants/4/catalog';
@@ -155,10 +155,12 @@ describe('RestaurantMenuPage', () => {
     it('shows a placeholder while the menu loads', async () => {
       await open('4');
 
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
       expect(announced()).toEqual(['Cargando el menú…']);
 
       await respond();
 
+      expect(page().querySelector('[appskeleton]')).toBeNull();
       expect(announced()).toEqual([]);
     });
 

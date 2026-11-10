@@ -47,6 +47,7 @@ export class RestaurantListPage implements OnInit {
   protected readonly result = signal<Page<Restaurant> | null>(null);
   protected readonly loading = signal(true);
   protected readonly problem = signal<string | null>(null);
+  protected readonly retrying = signal(false);
   protected readonly totalLabel = computed(() => countRestaurants(this.result()?.totalItems ?? 0));
 
   ngOnInit(): void {
@@ -60,13 +61,16 @@ export class RestaurantListPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(this.requestedPage, true);
   }
 
   private load(page: number, moveFocus: boolean): void {
     this.requestedPage = page;
     this.loading.set(true);
-    this.problem.set(null);
+    if (!this.retrying()) {
+      this.problem.set(null);
+    }
     this.restaurantApi
       .list(page, PAGE_SIZE)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -77,7 +81,9 @@ export class RestaurantListPage implements OnInit {
             return;
           }
           this.result.set(result);
+          this.problem.set(null);
           this.loading.set(false);
+          this.retrying.set(false);
           if (moveFocus) {
             this.focusHeading();
           }
@@ -85,6 +91,7 @@ export class RestaurantListPage implements OnInit {
         error: (error: unknown) => {
           this.problem.set(toProblemDetails(error).detail);
           this.loading.set(false);
+          this.retrying.set(false);
           if (moveFocus) {
             this.focusRetry();
           }

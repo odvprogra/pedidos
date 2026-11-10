@@ -143,7 +143,7 @@ describe('ModerationList', () => {
       expect(config.focused).toEqual(['retry']);
     });
 
-    it('asks again for the page that failed', () => {
+    it('asks again for the page that failed and keeps the problem in view meanwhile', () => {
       list.start();
       respond(pageOf([LA_CASONA], 0, 45));
       list.goTo(2);
@@ -152,8 +152,47 @@ describe('ModerationList', () => {
       list.retry();
 
       expect(config.requests.map(({ page }) => page)).toEqual([0, 2, 2]);
-      expect(list.problem()).toBeNull();
+      expect(list.problem()).toBe('status 500');
+      expect(list.retrying()).toBe(true);
       expect(list.loading()).toBe(true);
+    });
+
+    it('asks only once while it retries', () => {
+      list.start();
+      lastRequest().reply.error(failure(500));
+
+      list.retry();
+      list.retry();
+
+      expect(config.requests).toHaveLength(2);
+    });
+
+    it('drops the problem once the retry brings the page', async () => {
+      list.start();
+      lastRequest().reply.error(failure(500));
+      list.retry();
+
+      respond(pageOf([LA_CASONA]));
+      await rendered();
+
+      expect(list.problem()).toBeNull();
+      expect(list.retrying()).toBe(false);
+      expect(list.result()?.items).toEqual([LA_CASONA]);
+      expect(config.focused).toEqual(['heading']);
+    });
+
+    it('describes the new problem when the retry fails again', async () => {
+      list.start();
+      lastRequest().reply.error(failure(500));
+      list.retry();
+
+      lastRequest().reply.error(failure(503));
+      await rendered();
+
+      expect(list.problem()).toBe('status 503');
+      expect(list.retrying()).toBe(false);
+      expect(list.loading()).toBe(false);
+      expect(config.focused).toEqual(['retry']);
     });
   });
 

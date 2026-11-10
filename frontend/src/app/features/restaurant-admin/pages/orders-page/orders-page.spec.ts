@@ -216,6 +216,28 @@ describe('OrdersPage', () => {
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      fail(`${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`, 500);
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await stable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar los pedidos',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43']);
+    });
+
     it('sends an owner without a restaurant to register it', async () => {
       fail(
         `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`,

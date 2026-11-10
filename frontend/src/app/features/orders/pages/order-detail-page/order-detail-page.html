@@ -163,6 +163,7 @@
       class="mt-4 block"
       heading="No pudimos cargar tu pedido"
       [message]="page.message"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else {

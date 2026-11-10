@@ -32,6 +32,7 @@
       class="mt-6 block"
       heading="No pudimos cargar los restaurantes"
       [message]="problem"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else if (result(); as result) {

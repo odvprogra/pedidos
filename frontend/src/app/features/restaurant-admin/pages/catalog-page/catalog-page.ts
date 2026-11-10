@@ -97,6 +97,7 @@ export class CatalogPage implements OnInit {
   protected readonly formErrors = signal<FieldViolation[]>([]);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly working = signal<Working | null>(null);
+  protected readonly retrying = signal(false);
   protected readonly notice = new NoticeSlot();
   protected readonly confirmation = new ConfirmationSlot<string>();
   protected readonly catalog = computed(() => {
@@ -113,6 +114,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(true);
   }
 
@@ -326,7 +328,9 @@ export class CatalogPage implements OnInit {
   }
 
   private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
+    if (!this.retrying()) {
+      this.state.set({ status: 'loading' });
+    }
     this.confirmation.close();
     this.catalogApi
       .mine()
@@ -334,12 +338,14 @@ export class CatalogPage implements OnInit {
       .subscribe({
         next: (catalog) => {
           this.state.set({ status: 'ready', catalog });
+          this.retrying.set(false);
           if (moveFocus) {
             this.focusAfterRender(null);
           }
         },
         error: (error: unknown) => {
           const problem = toProblemDetails(error);
+          this.retrying.set(false);
           if (isNotRegistered(problem)) {
             this.leave();
             return;

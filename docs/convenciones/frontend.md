@@ -42,9 +42,13 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Todas las URLs usan `environment.apiUrl`.
 - Toda vista con datos cubre cuatro estados: cargando, vacío, error y éxito. El error de carga es
   `app-load-error` (`@shared/ui`): recibe el título y el mensaje, emite `retry` al tocar
-  "Reintentar", y la página le lleva el foco con su método `focus()`. El vacío es `app-empty-state`
-  (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo `emptyStateIcon` y la
-  acción, si la hay, como contenido.
+  "Reintentar", y la página le lleva el foco con su método `focus()`. Al reintentar, la página no
+  vuelve al esqueleto: le pasa `[retrying]="true"` y el error queda a la vista, con el botón en
+  "Reintentando…", `aria-disabled` y el foco, que ignora más toques. Si llega la respuesta, el foco
+  va al título; si vuelve a fallar, el motivo entra de nuevo como `role="alert"` y se anuncia. Solo
+  "Reintentar" deja el error a la vista: cambiar de filtro o de página lo quita como antes. El vacío
+  es `app-empty-state` (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo
+  `emptyStateIcon` y la acción, si la hay, como contenido.
 - La carga es un esqueleto con la forma de lo que viene, dentro de un contenedor con
   `role="status"` y un texto `sr-only` ("Cargando tus pedidos…"). Cada barra es un `div appSkeleton`
   (`@shared/ui`), que pone el pulso, el color y la pausa con `motion-reduce`; la página le da el

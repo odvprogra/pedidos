@@ -200,6 +200,7 @@
         class="mt-6 block"
         heading="No pudimos cargar tu menú"
         [message]="page.message"
+        [retrying]="retrying()"
         (retry)="retry()"
       />
     } @else {

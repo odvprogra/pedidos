@@ -94,6 +94,7 @@ export class OrdersPage implements OnInit {
   protected readonly busy = computed(() => this.loading() || this.pending() !== null);
   protected readonly empty = computed(() => emptyCopyFor(this.shownFilter()));
   protected readonly refreshing = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly announcement = signal('');
   protected readonly countLabel = computed(() => {
     const result = this.result();
@@ -138,6 +139,7 @@ export class OrdersPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(this.requestedPage, true);
   }
 
@@ -182,7 +184,9 @@ export class OrdersPage implements OnInit {
     this.requestedPage = page;
     this.loading.set(true);
     this.confirmation.close();
-    this.problem.set(null);
+    if (!this.retrying()) {
+      this.problem.set(null);
+    }
     const filter = this.filter();
     this.request = this.orderApi.list(ORDER_FILTERS[filter].statuses, page, PAGE_SIZE).subscribe({
       next: (result) => {
@@ -192,7 +196,9 @@ export class OrdersPage implements OnInit {
         }
         this.shownFilter.set(filter);
         this.result.set(result);
+        this.problem.set(null);
         this.loading.set(false);
+        this.retrying.set(false);
         this.finishRefresh(`Lista actualizada: ${countOrdersIn(filter, result.totalItems)}.`);
         if (moveFocus) {
           this.focusAfterRender(() => this.header()?.focus());
@@ -206,6 +212,7 @@ export class OrdersPage implements OnInit {
         }
         this.problem.set(describeOrderError(problem));
         this.loading.set(false);
+        this.retrying.set(false);
         this.finishRefresh('');
         if (moveFocus) {
           this.focusAfterRender(() => this.loadError()?.focus());

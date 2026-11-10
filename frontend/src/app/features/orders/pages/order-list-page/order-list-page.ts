@@ -59,6 +59,7 @@ export class OrderListPage implements OnInit {
   protected readonly result = signal<Page<Order> | null>(null);
   protected readonly loading = signal(true);
   protected readonly problem = signal<string | null>(null);
+  protected readonly retrying = signal(false);
   protected readonly totalLabel = computed(() => countOrders(this.result()?.totalItems ?? 0));
 
   ngOnInit(): void {
@@ -72,13 +73,16 @@ export class OrderListPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(this.requestedPage, true);
   }
 
   private load(page: number, moveFocus: boolean): void {
     this.requestedPage = page;
     this.loading.set(true);
-    this.problem.set(null);
+    if (!this.retrying()) {
+      this.problem.set(null);
+    }
     this.orderApi
       .list(page, PAGE_SIZE)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -89,7 +93,9 @@ export class OrderListPage implements OnInit {
             return;
           }
           this.result.set(result);
+          this.problem.set(null);
           this.loading.set(false);
+          this.retrying.set(false);
           if (moveFocus) {
             this.focusHeading();
           }
@@ -97,6 +103,7 @@ export class OrderListPage implements OnInit {
         error: (error: unknown) => {
           this.problem.set(describeOrderError(toProblemDetails(error)));
           this.loading.set(false);
+          this.retrying.set(false);
           if (moveFocus) {
             this.focusRetry();
           }

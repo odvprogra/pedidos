@@ -187,6 +187,40 @@ describe('MyRestaurantPage', () => {
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu restaurante',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showRestaurant();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
+    });
+
+    it('offers the registration when the retry finds no restaurant', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+
+      button('Reintentar').click();
+      await showMissing();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(page().querySelector('form')).toBeTruthy();
+      expect(document.activeElement).toBe(heading());
+    });
+
     it('does not take a not found without its code for a missing restaurant', async () => {
       failWith(MINE_URL, 404);
       await fixture.whenStable();

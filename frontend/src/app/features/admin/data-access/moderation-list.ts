@@ -40,11 +40,13 @@ export class ModerationList<T extends Moderated> {
   private readonly fetching = signal(true);
   private readonly failure = signal<string | null>(null);
   private readonly working = signal<number | null>(null);
+  private readonly retryingLoad = signal(false);
 
   readonly result = this.shownPage.asReadonly();
   readonly loading = this.fetching.asReadonly();
   readonly problem = this.failure.asReadonly();
   readonly pendingId = this.working.asReadonly();
+  readonly retrying = this.retryingLoad.asReadonly();
   readonly notice = new NoticeSlot();
   readonly confirmation = new ConfirmationSlot();
   readonly busy = computed(() => this.loading() || this.pendingId() !== null);
@@ -66,6 +68,10 @@ export class ModerationList<T extends Moderated> {
   }
 
   retry(): void {
+    if (this.busy()) {
+      return;
+    }
+    this.retryingLoad.set(true);
     this.load(this.requestedPage, true);
   }
 
@@ -94,7 +100,9 @@ export class ModerationList<T extends Moderated> {
   private load(page: number, moveFocus: boolean): void {
     this.requestedPage = page;
     this.fetching.set(true);
-    this.failure.set(null);
+    if (!this.retrying()) {
+      this.failure.set(null);
+    }
     this.confirmation.close();
     this.config
       .list(page, MODERATION_PAGE_SIZE)
@@ -102,7 +110,9 @@ export class ModerationList<T extends Moderated> {
       .subscribe({
         next: (result) => {
           this.shownPage.set(result);
+          this.failure.set(null);
           this.fetching.set(false);
+          this.retryingLoad.set(false);
           if (moveFocus) {
             this.focus(() => this.config.heading());
           }
@@ -110,6 +120,7 @@ export class ModerationList<T extends Moderated> {
         error: (error: unknown) => {
           this.failure.set(this.config.describeError(toProblemDetails(error)));
           this.fetching.set(false);
+          this.retryingLoad.set(false);
           if (moveFocus) {
             this.focus(() => this.config.loadError());
           }

@@ -36,6 +36,7 @@
     class="mt-6 block"
     heading="No pudimos cargar las cuentas"
     [message]="problem"
+    [retrying]="list.retrying()"
     (retry)="list.retry()"
   />
 } @else if (list.result(); as result) {

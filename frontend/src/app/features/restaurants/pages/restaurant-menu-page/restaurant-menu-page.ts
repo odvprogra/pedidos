@@ -84,6 +84,7 @@ export class RestaurantMenuPage {
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly announcement = signal('');
+  protected readonly retrying = signal(false);
   protected readonly confirmation = new ConfirmationSlot();
   protected readonly canOrder = computed(() => canShop(this.session.account()));
   protected readonly otherRestaurant = computed(() => {
@@ -113,7 +114,7 @@ export class RestaurantMenuPage {
   }
 
   protected retry(): void {
-    this.load(this.id(), true);
+    this.load(this.id(), true, true);
   }
 
   protected quantityOf(product: Product): number {
@@ -140,8 +141,9 @@ export class RestaurantMenuPage {
     );
   }
 
-  private load(idText: string, moveFocus: boolean): void {
+  private load(idText: string, moveFocus: boolean, retrying = false): void {
     this.loads += 1;
+    this.retrying.set(retrying);
     this.request?.unsubscribe();
     this.confirmation.close();
     const id = parseId(idText);
@@ -149,7 +151,9 @@ export class RestaurantMenuPage {
       this.show({ status: 'missing' }, moveFocus);
       return;
     }
-    this.state.set({ status: 'loading' });
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
     this.request = forkJoin({
       restaurant: this.restaurantApi.get(id),
       catalog: this.restaurantApi.catalog(id),
@@ -170,6 +174,7 @@ export class RestaurantMenuPage {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     this.title.setTitle(this.titleOf(state));
     if (moveFocus) {
       afterNextRender(() => this.focus(state), { injector: this.injector });

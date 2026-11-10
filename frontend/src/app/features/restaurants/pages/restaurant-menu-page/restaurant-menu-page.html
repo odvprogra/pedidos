@@ -87,6 +87,7 @@
       class="mt-2 block max-w-2xl"
       heading="No pudimos cargar el menú"
       [message]="page.message"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else {

@@ -48,7 +48,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `appCountPill` (`@shared/ui`)                          | La píldora del contador ("12 pedidos") junto al título, en una sola línea                  |
 | `app-back-link` (`@shared/ui`)                         | "‹ Mi restaurante": vuelve a `link`, relativo a la ruta de la página                       |
 | `app-not-found` (`@shared/ui`)                         | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |
-| `app-load-error` (`@shared/ui`)                        | El error de carga con "Reintentar" y su método `focus()`                                   |
+| `app-load-error` (`@shared/ui`)                        | El error de carga con "Reintentar", `retrying` ("Reintentando…") y su método `focus()`     |
 | `app-empty-state` (`@shared/ui`)                       | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
 | `appSkeleton` (`@shared/ui`)                           | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
 | `app-sticky-notice`, `NoticeSlot` (`@shared/ui`)       | El aviso fijo bajo el header con el resultado de una acción, uno a la vez y con su id      |
@@ -451,7 +451,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
 
 ## Página
 
-La página carga los datos y maneja el estado. El estado de la vista es una unión discriminada (`loading`, `missing`, `failed`, `ready`), así el template no puede mostrar dos estados a la vez. El foco va al título cuando la página llega desde otra o cuando termina una acción, y a "Reintentar" cuando la carga falla; el título lo enfoca `app-page-header` con su método `focus()`. El aviso vive en un `NoticeSlot`, que le da a cada aviso un id nuevo, así un mismo mensaje repetido se vuelve a anunciar. Cada pedido HTTP pasa por `takeUntilDestroyed`, así se cancela si el dueño sale de la página antes de la respuesta.
+La página carga los datos y maneja el estado. El estado de la vista es una unión discriminada (`loading`, `missing`, `failed`, `ready`), así el template no puede mostrar dos estados a la vez. El foco va al título cuando la página llega desde otra o cuando termina una acción, y a "Reintentar" cuando la carga falla; el título lo enfoca `app-page-header` con su método `focus()`. Al reintentar, la página no vuelve a `loading`: queda en `failed` con `retrying`, así el error sigue a la vista con "Reintentando…" y el foco no se pierde. El aviso vive en un `NoticeSlot`, que le da a cada aviso un id nuevo, así un mismo mensaje repetido se vuelve a anunciar. Cada pedido HTTP pasa por `takeUntilDestroyed`, así se cancela si el dueño sale de la página antes de la respuesta.
 
 `frontend/src/app/features/restaurant-admin/pages/my-restaurant-page/my-restaurant-page.ts`
 
@@ -566,6 +566,7 @@ export class MyRestaurantPage implements OnInit {
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly menuSummary = computed(() => {
     const menu = this.menu();
     return menu ? summarize(menu) : null;
@@ -603,6 +604,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(true);
   }
 
@@ -677,7 +679,9 @@ export class MyRestaurantPage implements OnInit {
   }
 
   private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
+    if (!this.retrying()) {
+      this.state.set({ status: 'loading' });
+    }
     this.restaurantApi
       .mine()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -711,6 +715,7 @@ export class MyRestaurantPage implements OnInit {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     if (state.status !== 'ready') {
       this.notice.clear();
     }
@@ -847,6 +852,7 @@ export class MyRestaurantPage implements OnInit {
       class="mt-6 block max-w-2xl"
       heading="No pudimos cargar tu restaurante"
       [message]="current.message"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else {
@@ -1222,6 +1228,28 @@ describe('MyRestaurantPage', () => {
 
       expect(page().querySelector('[role="alert"]')).toBeNull();
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu restaurante',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showRestaurant();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
     });
 
     it('takes the focus to retry when loading again fails', async () => {

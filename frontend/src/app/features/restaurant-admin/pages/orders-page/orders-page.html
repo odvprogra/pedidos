@@ -73,6 +73,7 @@
         class="mt-6 block"
         heading="No pudimos cargar los pedidos"
         [message]="problem"
+        [retrying]="retrying()"
         (retry)="retry()"
       />
     } @else if (result(); as result) {

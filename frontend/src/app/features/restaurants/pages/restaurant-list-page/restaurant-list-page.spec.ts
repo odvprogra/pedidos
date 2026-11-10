@@ -145,6 +145,27 @@ describe('RestaurantListPage', () => {
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await fail(0);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar los restaurantes',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([LA_CASONA]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(names()).toEqual(['La Casona']);
+    });
+
     it('explains that the server cannot be reached', async () => {
       expectPage(0).error(new ProgressEvent('error'));
       await fixture.whenStable();

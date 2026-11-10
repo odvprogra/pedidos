@@ -108,6 +108,7 @@ export class MyRestaurantPage implements OnInit {
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly menuSummary = computed(() => {
     const menu = this.menu();
     return menu ? summarize(menu) : null;
@@ -145,6 +146,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
+    this.retrying.set(true);
     this.load(true);
   }
 
@@ -219,7 +221,9 @@ export class MyRestaurantPage implements OnInit {
   }
 
   private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
+    if (!this.retrying()) {
+      this.state.set({ status: 'loading' });
+    }
     this.restaurantApi
       .mine()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -253,6 +257,7 @@ export class MyRestaurantPage implements OnInit {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     if (state.status !== 'ready') {
       this.notice.clear();
     }

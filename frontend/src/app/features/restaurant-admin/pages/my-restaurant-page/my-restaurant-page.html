@@ -104,6 +104,7 @@
       class="mt-6 block max-w-2xl"
       heading="No pudimos cargar tu restaurante"
       [message]="current.message"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else {

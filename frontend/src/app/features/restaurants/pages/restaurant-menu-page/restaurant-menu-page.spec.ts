@@ -242,6 +242,48 @@ describe('RestaurantMenuPage', () => {
       expect(heading()?.textContent).toContain('No encontramos este restaurante');
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await open('4');
+      await failWith(CATALOG_URL, RESTAURANT_URL, 500);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar el menú',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(categories()).toEqual(['Platos fuertes', 'Bebidas']);
+    });
+
+    it('loads the new restaurant when the address changes during a retry', async () => {
+      await open('4');
+      await failWith(CATALOG_URL, RESTAURANT_URL, 500);
+      button('Reintentar').click();
+      await fixture.whenStable();
+
+      await open('5');
+
+      expect(httpTesting.expectOne(RESTAURANT_URL).cancelled).toBe(true);
+      expect(httpTesting.expectOne(CATALOG_URL).cancelled).toBe(true);
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      await respond({ ...LA_CASONA, id: 5, name: 'El Fogón' }, MENU, {
+        restaurant: '/api/v1/restaurants/5',
+        catalog: '/api/v1/restaurants/5/catalog',
+      });
+
+      expect(heading()?.textContent).toContain('El Fogón');
+    });
+
     it('explains that the menu could not load and loads both again', async () => {
       await open('4');
       await failWith(CATALOG_URL, RESTAURANT_URL, 500);

@@ -205,6 +205,27 @@ describe('CatalogPage', () => {
       expect(document.activeElement).toBe(heading());
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(CATALOG_URL, 500);
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      await click(retry);
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu menú',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showMenu();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
+    });
+
     it('takes the focus to retry when loading again fails', async () => {
       failWith(CATALOG_URL, 500);
       await stable();

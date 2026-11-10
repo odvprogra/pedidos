@@ -190,6 +190,35 @@ describe('OrderDetailPage', () => {
       expect(TestBed.inject(Title).getTitle()).toBe('Pedido no encontrado | Pedidos');
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await open('42');
+      httpTesting
+        .expectOne(ORDER_URL)
+        .flush(
+          { status: 500, detail: 'Detalle del servidor' },
+          { status: 500, statusText: 'Error' },
+        );
+      await fixture.whenStable();
+      const retry = requireButton('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu pedido',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      httpTesting.expectOne(ORDER_URL).flush(PENDING);
+      await fixture.whenStable();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(status()).toBe('Pendiente');
+    });
+
     it('explains that the order could not load and loads it again', async () => {
       await open('42');
       httpTesting

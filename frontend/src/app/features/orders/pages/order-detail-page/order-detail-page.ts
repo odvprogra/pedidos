@@ -87,6 +87,7 @@ export class OrderDetailPage {
   protected readonly notice = new NoticeSlot();
   protected readonly confirming = signal(false);
   protected readonly cancelling = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly details = computed(() => {
     const state = this.state();
     if (state.status !== 'ready') {
@@ -118,7 +119,7 @@ export class OrderDetailPage {
   }
 
   protected retry(): void {
-    this.load(this.id(), true);
+    this.load(this.id(), true, true);
   }
 
   protected toggleConfirm(): void {
@@ -170,8 +171,9 @@ export class OrderDetailPage {
     });
   }
 
-  private load(idText: string, moveFocus: boolean): void {
+  private load(idText: string, moveFocus: boolean, retrying = false): void {
     this.loads += 1;
+    this.retrying.set(retrying);
     this.request?.unsubscribe();
     this.confirming.set(false);
     this.cancelling.set(false);
@@ -181,7 +183,9 @@ export class OrderDetailPage {
       this.show({ status: 'missing' }, moveFocus);
       return;
     }
-    this.state.set({ status: 'loading' });
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
     this.request = this.orderApi.get(id).subscribe({
       next: (order) => this.show({ status: 'ready', order }, moveFocus),
       error: (error: unknown) => {
@@ -209,6 +213,7 @@ export class OrderDetailPage {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     if (state.status !== 'ready') {
       this.notice.clear();
     }

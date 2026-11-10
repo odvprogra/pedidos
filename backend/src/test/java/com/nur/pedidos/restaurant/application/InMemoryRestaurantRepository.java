@@ -30,6 +30,16 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByIdForUpdate(Long id) {
+        return findById(id);
+    }
+
+    @Override
+    public Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId) {
+        return findByOwnerId(ownerId);
+    }
+
+    @Override
     public Optional<Restaurant> findByOwnerId(Long ownerId) {
         return restaurants.values().stream()
                 .filter(restaurant -> restaurant.getOwnerId().equals(ownerId))

@@ -16,7 +16,7 @@ public class CloseRestaurantUseCase {
     @Transactional
     public void execute(Long ownerId) {
         Restaurant restaurant =
-                restaurantRepository.findByOwnerId(ownerId).orElseThrow(RestaurantNotFoundException::new);
+                restaurantRepository.findByOwnerIdForUpdate(ownerId).orElseThrow(RestaurantNotFoundException::new);
         restaurant.close();
         restaurantRepository.save(restaurant);
     }

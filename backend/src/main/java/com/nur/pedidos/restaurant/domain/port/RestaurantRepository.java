@@ -10,7 +10,11 @@ public interface RestaurantRepository {
 
     Optional<Restaurant> findById(Long id);
 
+    Optional<Restaurant> findByIdForUpdate(Long id);
+
     Optional<Restaurant> findByOwnerId(Long ownerId);
+
+    Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
 

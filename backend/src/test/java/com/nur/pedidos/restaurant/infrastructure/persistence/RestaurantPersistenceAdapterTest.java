@@ -103,6 +103,28 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void findsARestaurantToChangeByItsIdAndByItsOwner() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByIdForUpdate(saved.getId()))
+                .get()
+                .extracting(Restaurant::getName)
+                .isEqualTo("La Casona");
+        assertThat(adapter.findByOwnerIdForUpdate(7L))
+                .get()
+                .extracting(Restaurant::getId)
+                .isEqualTo(saved.getId());
+    }
+
+    @Test
+    void findsNothingToChangeWhenTheRestaurantDoesNotExist() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByIdForUpdate(saved.getId() + 100)).isEmpty();
+        assertThat(adapter.findByOwnerIdForUpdate(8L)).isEmpty();
+    }
+
+    @Test
     void findsNothingWhenTheIdDoesNotExist() {
         Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
 

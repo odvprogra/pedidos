@@ -16,7 +16,7 @@ public class ReactivateRestaurantUseCase {
     @Transactional
     public Restaurant execute(Long restaurantId) {
         Restaurant restaurant =
-                restaurantRepository.findById(restaurantId).orElseThrow(RestaurantNotFoundException::new);
+                restaurantRepository.findByIdForUpdate(restaurantId).orElseThrow(RestaurantNotFoundException::new);
         restaurant.reactivate();
         return restaurantRepository.save(restaurant);
     }

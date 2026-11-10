@@ -30,8 +30,18 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByIdForUpdate(Long id) {
+        return jpaRepository.findForUpdateById(id).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
     public Optional<Restaurant> findByOwnerId(Long ownerId) {
         return jpaRepository.findByOwnerId(ownerId).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId) {
+        return jpaRepository.findForUpdateByOwnerId(ownerId).map(RestaurantEntity::toDomain);
     }
 
     @Override

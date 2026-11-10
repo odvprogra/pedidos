@@ -65,13 +65,14 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
   mismo panel lo explica en tono de aviso y solo ofrece "Entendido". El botón "Cancelar" del panel
   puede decir lo que se mantiene ("Mantener pedido") cuando la acción misma se llama cancelar.
-- En el panel del admin y en el menú público ("Vaciar y agregar") hay una sola pregunta abierta a
-  la vez: abrir otra cierra la anterior. El componente de la fila expone `confirming` como `model()`
-  y la pregunta abierta vive en un `ConfirmationSlot` (`@shared/ui`) de la página o de su
-  `ModerationList`: `[confirming]="confirmation.isOpen(id)"` y
-  `(confirmingChange)="confirmation.set(id, $event)"`. Al cargar otra página de la lista, se cierra
-  con `confirmation.close()`. El menú del dueño y sus pedidos todavía guardan la pregunta en cada
-  fila.
+- En una página hay una sola pregunta abierta a la vez: abrir otra cierra la anterior. El
+  componente de la fila expone `confirming` como `model()` y la pregunta abierta vive en un
+  `ConfirmationSlot` (`@shared/ui`) de la página o de su `ModerationList`:
+  `[confirming]="confirmation.isOpen(id)"` y `(confirmingChange)="confirmation.set(id, $event)"`. Si
+  la página tiene preguntas de filas distintas, como productos y categorías en el menú del dueño, la
+  clave las separa (`'product-' + id`, `'category-' + id`). Se cierra con `confirmation.close()`
+  cuando la lista se vuelve a cargar y cuando se abre un formulario en el lugar, para que la pregunta
+  no reaparezca al volver la fila.
 - Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
   se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
   confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.

@@ -1311,14 +1311,14 @@ describe('MyRestaurantPage', () => {
 
 ## Otros patrones de la feature
 
-| Patrón                                              | Dónde verlo                                                                                          |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                                                     |
-| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`                                              |
-| Una sola pregunta abierta a la vez                  | `ModerationControl` con `ModerationList` (admin) y `MenuItem` (menú público), con `ConfirmationSlot` |
-| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                                                              |
-| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec                                          |
-| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)                                               |
-| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`                                  |
-| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination` y `ModerationList`                       |
-| Lista pública en grilla y página de detalle         | `RestaurantListPage` y `RestaurantMenuPage` en `features/restaurants`                                |
+| Patrón                                              | Dónde verlo                                                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                                                                           |
+| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`                                                                    |
+| Una sola pregunta abierta a la vez                  | `ConfirmationSlot` en `CatalogPage` (productos y categorías) y `OrdersPage`, en `ModerationList` y en `RestaurantMenuPage` |
+| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                                                                                    |
+| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec                                                                |
+| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)                                                                     |
+| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`                                                        |
+| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination` y `ModerationList`                                             |
+| Lista pública en grilla y página de detalle         | `RestaurantListPage` y `RestaurantMenuPage` en `features/restaurants`                                                      |

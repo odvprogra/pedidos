@@ -580,6 +580,25 @@ describe('CatalogPage', () => {
       expect(document.activeElement).toBe(byId('add-product-3'));
     });
 
+    it('keeps a single question open across the products and the categories', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Borrar', section('Bebidas')));
+
+      expect(page().querySelectorAll('app-confirm-panel')).toHaveLength(1);
+      expect(text(section('Bebidas'))).toContain('¿Borrar la categoría Bebidas?');
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(button('Cancelar', section('Bebidas')));
+    });
+
+    it('closes the question when a form opens, so it does not come back with the row', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Editar', productRow('Silpancho')));
+      await click(button('Cancelar', page().querySelector('form') as HTMLElement));
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('loads the menu again when the product no longer exists', async () => {
       await click(button('Borrar', productRow('Silpancho')));
       await click(button('Sí, borrar'));

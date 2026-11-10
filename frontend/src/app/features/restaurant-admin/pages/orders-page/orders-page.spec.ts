@@ -295,6 +295,33 @@ describe('OrdersPage', () => {
       },
     );
 
+    it('keeps a single question open across the orders', async () => {
+      await respond(pageOf([order(43, 'PLACED'), order(44, 'PLACED')]));
+
+      button('Rechazar', card(43)).click();
+      await stable();
+      button('Rechazar', card(44)).click();
+      await stable();
+
+      expect(page().querySelectorAll('app-confirm-panel')).toHaveLength(1);
+      expect(card(44).querySelector('app-confirm-panel')).toBeTruthy();
+      expect(button('Rechazar', card(43)).getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(button('Mantener pedido', card(44)));
+    });
+
+    it('closes the question when the list loads again', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      button('Rechazar', card(43)).click();
+      await stable();
+
+      button('Actualizar').click();
+      await stable();
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Rechazar', card(43)).getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('warns that the order changed and loads the list again', async () => {
       await respond(pageOf([order(43, 'PLACED')]));
 

@@ -99,6 +99,8 @@
               [productCount]="category.products.length"
               [deleting]="isDeleting(category)"
               [locked]="busy() && !isDeleting(category)"
+              [confirming]="confirmation.isOpen('category-' + category.id)"
+              (confirmingChange)="confirmation.set('category-' + category.id, $event)"
               (rename)="startRename(category)"
               (deleteConfirmed)="deleteCategory(category)"
             />
@@ -125,6 +127,8 @@
                     [product]="product"
                     [working]="taskOf(product)"
                     [locked]="busy() && taskOf(product) === null"
+                    [confirming]="confirmation.isOpen('product-' + product.id)"
+                    (confirmingChange)="confirmation.set('product-' + product.id, $event)"
                     (availabilityChange)="changeAvailability(product, $event)"
                     (edit)="startEdit(product)"
                     (deleteConfirmed)="deleteProduct(product)"

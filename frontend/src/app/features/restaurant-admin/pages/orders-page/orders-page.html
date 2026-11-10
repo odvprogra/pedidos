@@ -107,6 +107,8 @@
                 [order]="order"
                 [working]="workingOn(order)"
                 [locked]="busy()"
+                [confirming]="confirmation.isOpen(order.id)"
+                (confirmingChange)="confirmation.set(order.id, $event)"
                 (acted)="run(order, $event)"
               />
             </li>

@@ -15,6 +15,7 @@ import { FieldViolation, ProblemDetails, toProblemDetails } from '@core/http/pro
 import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
@@ -94,6 +95,7 @@ export class CatalogPage implements OnInit {
   protected readonly formAlert = signal<string | null>(null);
   protected readonly working = signal<Working | null>(null);
   protected readonly notice = new NoticeSlot();
+  protected readonly confirmation = new ConfirmationSlot<string>();
   protected readonly catalog = computed(() => {
     const current = this.state();
     return current.status === 'ready' ? current.catalog : null;
@@ -252,6 +254,7 @@ export class CatalogPage implements OnInit {
       return;
     }
     this.editing.set(editing);
+    this.confirmation.close();
     this.returnFocusTo = trigger;
     this.formErrors.set([]);
     this.formAlert.set(null);
@@ -321,6 +324,7 @@ export class CatalogPage implements OnInit {
 
   private load(moveFocus: boolean): void {
     this.state.set({ status: 'loading' });
+    this.confirmation.close();
     this.catalogApi.mine().subscribe({
       next: (catalog) => {
         this.state.set({ status: 'ready', catalog });

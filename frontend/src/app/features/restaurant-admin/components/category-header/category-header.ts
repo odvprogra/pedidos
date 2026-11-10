@@ -7,8 +7,8 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
@@ -30,10 +30,10 @@ export class CategoryHeader {
   readonly productCount = input.required<number>();
   readonly deleting = input(false);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly rename = output();
   readonly deleteConfirmed = output();
 
-  protected readonly confirming = signal(false);
   protected readonly unavailable = computed(() => this.deleting() || this.locked());
   protected readonly countLabel = computed(() => countProducts(this.productCount()));
   protected readonly idPrefix = computed(() => `category-${this.category().id}`);

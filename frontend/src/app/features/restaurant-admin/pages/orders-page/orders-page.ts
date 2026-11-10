@@ -16,6 +16,7 @@ import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { PageHeader } from '@shared/ui/page-header/page-header';
@@ -89,6 +90,7 @@ export class OrdersPage implements OnInit {
   protected readonly problem = signal<string | null>(null);
   protected readonly pending = signal<PendingAction | null>(null);
   protected readonly notice = new NoticeSlot();
+  protected readonly confirmation = new ConfirmationSlot();
   protected readonly busy = computed(() => this.loading() || this.pending() !== null);
   protected readonly empty = computed(() => emptyCopyFor(this.shownFilter()));
   protected readonly refreshing = signal(false);
@@ -179,6 +181,7 @@ export class OrdersPage implements OnInit {
     this.request?.unsubscribe();
     this.requestedPage = page;
     this.loading.set(true);
+    this.confirmation.close();
     this.problem.set(null);
     const filter = this.filter();
     this.request = this.orderApi.list(ORDER_FILTERS[filter].statuses, page, PAGE_SIZE).subscribe({

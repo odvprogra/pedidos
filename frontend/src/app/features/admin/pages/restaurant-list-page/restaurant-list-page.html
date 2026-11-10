@@ -4,7 +4,7 @@
   heading="Restaurantes"
   subtitle="Suspende un restaurante para ocultarlo a los clientes, o reactívalo."
 >
-  @if (result()) {
+  @if (list.result()) {
     <p appCountPill>
       <svg
         aria-hidden="true"
@@ -26,20 +26,20 @@
   }
 </app-page-header>
 
-@for (shown of notice.shown(); track shown.id) {
-  <app-sticky-notice class="mt-6" [tone]="shown.tone" (dismissed)="notice.clear()">
+@for (shown of list.notice.shown(); track shown.id) {
+  <app-sticky-notice class="mt-6" [tone]="shown.tone" (dismissed)="list.notice.clear()">
     {{ shown.message }}
   </app-sticky-notice>
 }
 
-@if (problem(); as problem) {
+@if (list.problem(); as problem) {
   <app-load-error
     class="mt-6 block"
     heading="No pudimos cargar los restaurantes"
     [message]="problem"
-    (retry)="retry()"
+    (retry)="list.retry()"
   />
-} @else if (result(); as result) {
+} @else if (list.result(); as result) {
   @if (result.items.length === 0) {
     <app-empty-state
       class="mt-6 block"
@@ -66,8 +66,8 @@
   } @else {
     <div
       class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"
-      [class.opacity-60]="loading()"
-      [attr.aria-busy]="loading()"
+      [class.opacity-60]="list.loading()"
+      [attr.aria-busy]="list.loading()"
     >
       <div
         aria-hidden="true"
@@ -82,9 +82,9 @@
           <li>
             <app-restaurant-row
               [restaurant]="restaurant"
-              [busy]="pendingId() === restaurant.id"
-              [locked]="busy() && pendingId() !== restaurant.id"
-              (confirmed)="run($event, restaurant)"
+              [busy]="list.pendingId() === restaurant.id"
+              [locked]="list.busy() && list.pendingId() !== restaurant.id"
+              (confirmed)="list.run($event, restaurant)"
             />
           </li>
         }
@@ -96,8 +96,8 @@
         class="mt-6 block"
         [page]="result.page"
         [totalPages]="result.totalPages"
-        [disabled]="busy()"
-        (pageChange)="goTo($event)"
+        [disabled]="list.busy()"
+        (pageChange)="list.goTo($event)"
       />
     }
   }

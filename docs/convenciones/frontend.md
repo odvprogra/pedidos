@@ -53,6 +53,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
   queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
   llega, el foco va al título de la página; si falla, a "Reintentar".
+- Las listas del panel del admin (cuentas y restaurantes) comparten esa lógica, y la de suspender y
+  reactivar, en `ModerationList` (`features/admin/data-access`): una clase con señales que la página
+  crea en un campo y a la que le pasa cómo listar, cómo aplicar la acción, sus textos, sus errores y
+  adónde va el foco. Se prueba sola con una fuente falsa; la página solo dibuja.
 - Una acción que afecta a otra persona, como suspender una cuenta, o que no se puede deshacer, como
   borrar un producto del menú, se confirma dentro de la misma fila o tarjeta con `app-confirm-panel`
   (`@shared/ui`), sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el

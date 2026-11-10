@@ -18,6 +18,7 @@ import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { TextInput } from '@shared/ui/text-input/text-input';
@@ -79,6 +80,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     Button,
     FormField,
     LoadError,
+    PageHeader,
     RegistrationSteps,
     RestaurantCard,
     Skeleton,
@@ -94,7 +96,7 @@ export class MyRestaurantPage implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly menu = signal<Catalog | null>(null);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -264,7 +266,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   private focusHeading(): void {
-    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
 
   private focusRetry(): void {

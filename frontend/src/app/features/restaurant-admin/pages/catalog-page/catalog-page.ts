@@ -17,6 +17,7 @@ import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Observable } from 'rxjs';
 import { CategoryForm } from '../../components/category-form/category-form';
@@ -69,6 +70,7 @@ interface Notice {
     CategoryHeader,
     EmptyState,
     LoadError,
+    PageHeader,
     ProductForm,
     ProductRow,
     Skeleton,
@@ -82,7 +84,7 @@ export class CatalogPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     this.router.currentNavigation()?.previousNavigation,
@@ -374,7 +376,11 @@ export class CatalogPage implements OnInit {
         const target = targetId
           ? this.host.nativeElement.querySelector<HTMLElement>(`#${targetId}`)
           : null;
-        (target ?? this.heading()?.nativeElement)?.focus();
+        if (target) {
+          target.focus();
+        } else {
+          this.header()?.focus();
+        }
       },
       { injector: this.injector },
     );

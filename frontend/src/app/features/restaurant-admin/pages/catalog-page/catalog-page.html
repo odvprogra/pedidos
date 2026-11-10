@@ -2,22 +2,12 @@
   <div class="max-w-3xl">
     <app-back-link link="..">Mi restaurante</app-back-link>
 
-    <header class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="text-sm font-extrabold tracking-wide text-brand uppercase">
-          Panel del restaurante
-        </p>
-        <h1
-          #heading
-          tabindex="-1"
-          class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
-        >
-          Tu menú
-        </h1>
-        <p class="mt-2 text-muted">
-          Ordena tus productos en categorías, como los verán tus clientes.
-        </p>
-      </div>
+    <app-page-header
+      class="mt-2"
+      eyebrow="Panel del restaurante"
+      heading="Tu menú"
+      subtitle="Ordena tus productos en categorías, como los verán tus clientes."
+    >
       @let current = catalog();
       @if (current && current.categories.length > 0 && !isAddingCategory()) {
         <button
@@ -42,7 +32,7 @@
           Nueva categoría
         </button>
       }
-    </header>
+    </app-page-header>
 
     @for (shown of notices(); track shown.id) {
       <div class="sticky top-20 z-5 mt-6" data-sticky-notice>

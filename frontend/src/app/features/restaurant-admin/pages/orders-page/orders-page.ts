@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -20,6 +19,7 @@ import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
@@ -59,6 +59,7 @@ interface PendingAction {
     EmptyState,
     LoadError,
     OrderCard,
+    PageHeader,
     Pagination,
     SecondaryButton,
     Skeleton,
@@ -72,7 +73,7 @@ export class OrdersPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly cards = viewChildren(OrderCard);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -198,7 +199,7 @@ export class OrdersPage implements OnInit {
         this.loading.set(false);
         this.finishRefresh(`Lista actualizada: ${countOrdersIn(filter, result.totalItems)}.`);
         if (moveFocus) {
-          this.focusAfterRender(() => this.heading()?.nativeElement.focus());
+          this.focusAfterRender(() => this.header()?.focus());
         }
       },
       error: (error: unknown) => {

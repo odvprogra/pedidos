@@ -91,6 +91,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   aviso es un nodo nuevo, con su id, así un mismo mensaje repetido se vuelve a anunciar.
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
+- La cabecera de una página es `app-page-header` (`@shared/ui`): la etiqueta (`eyebrow`), el título
+  (el `h1`, con `tabindex="-1"`) y el subtítulo. Lo que va al lado, como un botón o el contador, va
+  como contenido; el contador es un `<p appCountPill>` con su ícono y no se parte en dos líneas. La
+  página lleva el foco al título con el método `focus()` de la cabecera.
 - Una página que se abre desde otra de la app lleva el foco a su título cuando termina de cargar.
   El router abre cada página arriba (`withInMemoryScrolling` con `scrollPositionRestoration: 'top'`).
   Eso no se prueba en `TestBed`, porque el router solo lo activa cuando arranca la app; se revisa

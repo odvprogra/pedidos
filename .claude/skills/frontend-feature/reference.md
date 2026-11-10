@@ -44,6 +44,8 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `toProblemDetails` (`@core/http`)            | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
 | `Page<T>` (`@core/http/page`)                | La forma de una página de la API                                                           |
+| `app-page-header` (`@shared/ui`)             | Etiqueta, `h1` con `focus()` y subtítulo; lo de al lado va como contenido                  |
+| `appCountPill` (`@shared/ui`)                | La píldora del contador ("12 pedidos") junto al título, en una sola línea                  |
 | `app-load-error` (`@shared/ui`)              | El error de carga con "Reintentar" y su método `focus()`                                   |
 | `app-empty-state` (`@shared/ui`)             | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
 | `app-not-found` (`@shared/ui`)               | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |

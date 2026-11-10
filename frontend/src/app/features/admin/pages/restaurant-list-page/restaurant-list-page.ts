@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -18,6 +17,8 @@ import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { CountPill } from '@shared/ui/page-header/count-pill';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { RestaurantRow } from '../../components/restaurant-row/restaurant-row';
@@ -37,7 +38,16 @@ interface Notice {
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [Alert, EmptyState, LoadError, Pagination, RestaurantRow, Skeleton],
+  imports: [
+    Alert,
+    CountPill,
+    EmptyState,
+    LoadError,
+    PageHeader,
+    Pagination,
+    RestaurantRow,
+    Skeleton,
+  ],
   templateUrl: './restaurant-list-page.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,7 +56,7 @@ export class RestaurantListPage implements OnInit {
   private readonly restaurantApi = inject(RestaurantApi);
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
@@ -149,7 +159,7 @@ export class RestaurantListPage implements OnInit {
   }
 
   private focusHeading(): void {
-    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
 
   private focusRetry(): void {

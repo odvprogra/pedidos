@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -17,6 +16,8 @@ import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { CountPill } from '@shared/ui/page-header/count-pill';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { RestaurantTile } from '../../components/restaurant-tile/restaurant-tile';
@@ -27,7 +28,7 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-restaurant-list-page',
-  imports: [EmptyState, LoadError, Pagination, RestaurantTile, Skeleton],
+  imports: [CountPill, EmptyState, LoadError, PageHeader, Pagination, RestaurantTile, Skeleton],
   templateUrl: './restaurant-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -35,7 +36,7 @@ export class RestaurantListPage implements OnInit {
   private readonly restaurantApi = inject(RestaurantApi);
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
@@ -92,7 +93,7 @@ export class RestaurantListPage implements OnInit {
   }
 
   private focusHeading(): void {
-    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
 
   private focusRetry(): void {

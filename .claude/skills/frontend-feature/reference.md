@@ -40,29 +40,31 @@ frontend/src/app/features/restaurant-admin/
 
 Lo que ya existe y no se vuelve a escribir en una feature:
 
-| Pieza                                       | Para qué                                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `toProblemDetails` (`@core/http`)           | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
-| `Page<T>` (`@core/http/page`)               | La forma de una página de la API                                                           |
-| `app-load-error` (`@shared/ui`)             | El error de carga con "Reintentar" y su método `focus()`                                   |
-| `app-empty-state` (`@shared/ui`)            | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
-| `app-alert` (`@shared/ui`)                  | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
-| `appButton`, `appSecondaryButton`           | Botón principal y secundarios (`tone="danger"`, `working`)                                 |
-| `app-form-field`, `appTextInput`            | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
-| `app-confirm-panel` (`@shared/ui`)          | La confirmación dentro de la fila, sin modal                                               |
-| `app-pagination` (`@shared/ui`)             | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
-| `app-badge` (`@shared/ui`)                  | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
-| `app-order-status-badge` (`@shared/ui`)     | La insignia de un pedido según su `status`, con su nombre y su tono                        |
-| `app-spinner` (`@shared/ui`)                | El indicador dentro de un botón que trabaja                                                |
-| `validationMessage` (`@shared/utils`)       | El mensaje de un campo, con prioridad para el error del backend                            |
-| `applyFieldErrors` (`@shared/utils`)        | Asigna los `errors[]` del backend a los campos del formulario                              |
-| `focusFirstInvalid` (`@shared/utils`)       | Lleva el foco al primer campo inválido después de renderizar                               |
-| `formatPrice` (`@shared/utils`)             | `Bs 45,00`                                                                                 |
-| `formatDateTime` (`@shared/utils`)          | `8 nov 2026, 11:00` en la hora local                                                       |
-| `parseId` (`@shared/utils`)                 | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
-| `orderPath`, `ORDERS_PATH` (`@core/orders`) | Las rutas de los pedidos del cliente                                                       |
-| `CartStore` (`@core/cart`)                  | El carrito de un restaurante, guardado en `localStorage`                                   |
-| `describeUnits` (`@core/cart/cart`)         | `1 producto`, `3 productos`                                                                |
+| Pieza                                        | Para qué                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `toProblemDetails` (`@core/http`)            | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
+| `Page<T>` (`@core/http/page`)                | La forma de una página de la API                                                           |
+| `app-load-error` (`@shared/ui`)              | El error de carga con "Reintentar" y su método `focus()`                                   |
+| `app-empty-state` (`@shared/ui`)             | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
+| `app-alert` (`@shared/ui`)                   | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
+| `appButton`, `appSecondaryButton`            | Botón principal y secundarios (`tone="danger"`, `working`)                                 |
+| `app-form-field`, `appTextInput`             | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
+| `app-confirm-panel` (`@shared/ui`)           | La confirmación dentro de la fila, sin modal                                               |
+| `app-pagination` (`@shared/ui`)              | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
+| `app-badge` (`@shared/ui`)                   | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
+| `app-order-status-badge` (`@shared/ui`)      | La insignia de un pedido según su `status`, con su nombre y su tono                        |
+| `app-restaurant-status-badge` (`@shared/ui`) | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
+| `restaurantStatusOf` (`@shared/utils`)       | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
+| `app-spinner` (`@shared/ui`)                 | El indicador dentro de un botón que trabaja                                                |
+| `validationMessage` (`@shared/utils`)        | El mensaje de un campo, con prioridad para el error del backend                            |
+| `applyFieldErrors` (`@shared/utils`)         | Asigna los `errors[]` del backend a los campos del formulario                              |
+| `focusFirstInvalid` (`@shared/utils`)        | Lleva el foco al primer campo inválido después de renderizar                               |
+| `formatPrice` (`@shared/utils`)              | `Bs 45,00`                                                                                 |
+| `formatDateTime` (`@shared/utils`)           | `8 nov 2026, 11:00` en la hora local                                                       |
+| `parseId` (`@shared/utils`)                  | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
+| `orderPath`, `ORDERS_PATH` (`@core/orders`)  | Las rutas de los pedidos del cliente                                                       |
+| `CartStore` (`@core/cart`)                   | El carrito de un restaurante, guardado en `localStorage`                                   |
+| `describeUnits` (`@core/cart/cart`)          | `1 producto`, `3 productos`                                                                |
 
 ## Modelo
 
@@ -89,28 +91,11 @@ export interface RestaurantRegistration {
 
 ## Modelo: estado y textos
 
-Lo que la interfaz decide a partir de los datos (qué insignia mostrar, qué texto acompaña a cada estado) son funciones puras en `models/`. Así se prueban sin `TestBed` y el componente solo las llama.
+Lo que la interfaz decide a partir de los datos (qué texto acompaña a cada estado) son funciones puras en `models/`. Así se prueban sin `TestBed` y el componente solo las llama. El estado del restaurante y su insignia los comparte con el panel del admin, así que viven en `@shared/utils/restaurant-status` y `app-restaurant-status-badge`.
 
 `frontend/src/app/features/restaurant-admin/models/restaurant-status.ts`
 
 ```ts
-import { Restaurant } from './restaurant';
-
-export type RestaurantStatus = 'open' | 'closed' | 'suspended';
-
-export const STATUS_LABELS: Record<RestaurantStatus, string> = {
-  open: 'Abierto',
-  closed: 'Cerrado',
-  suspended: 'Suspendido',
-};
-
-export function statusOf(restaurant: Restaurant): RestaurantStatus {
-  if (restaurant.suspended) {
-    return 'suspended';
-  }
-  return restaurant.open ? 'open' : 'closed';
-}
-
 export function openingHint(open: boolean): string {
   return open
     ? 'Abierto: los clientes ya pueden hacer pedidos.'
@@ -212,26 +197,14 @@ Solo recibe `input()` y emite `output()`; no inyecta servicios de datos. No camb
 ```ts
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Badge, BadgeTone } from '@shared/ui/badge/badge';
+import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { Restaurant } from '../../models/restaurant';
-import {
-  RestaurantStatus,
-  STATUS_LABELS,
-  openingHint,
-  openingProgress,
-  statusOf,
-} from '../../models/restaurant-status';
-
-const BADGE_TONES: Record<RestaurantStatus, BadgeTone> = {
-  open: 'success',
-  closed: 'neutral',
-  suspended: 'danger',
-};
+import { openingHint, openingProgress } from '../../models/restaurant-status';
 
 @Component({
   selector: 'app-restaurant-card',
-  imports: [RouterLink, Badge, Spinner],
+  imports: [RouterLink, RestaurantStatusBadge, Spinner],
   templateUrl: './restaurant-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -241,9 +214,6 @@ export class RestaurantCard {
   readonly menuSummary = input<string | null>(null);
   readonly openChange = output<boolean>();
 
-  protected readonly status = computed(() => statusOf(this.restaurant()));
-  protected readonly statusLabel = computed(() => STATUS_LABELS[this.status()]);
-  protected readonly badgeTone = computed(() => BADGE_TONES[this.status()]);
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
@@ -299,7 +269,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
       >
         {{ initial() }}
       </span>
-      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
+      <app-restaurant-status-badge class="mb-1" data-status [restaurant]="restaurant()" />
     </div>
 
     <h2
@@ -384,6 +354,48 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
       </div>
     }
   </div>
+
+  <a
+    routerLink="pedidos"
+    data-orders-link
+    class="group flex items-center justify-between gap-4 border-t border-line px-5 py-4 transition hover:bg-brand-soft/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:px-6"
+  >
+    <span class="flex min-w-0 items-center gap-3">
+      <span
+        aria-hidden="true"
+        class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"
+      >
+        <svg
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span class="block font-bold">Pedidos</span>
+        <span class="block text-sm text-muted">Acepta y prepara los pedidos de tus clientes</span>
+      </span>
+    </span>
+    <svg
+      aria-hidden="true"
+      class="size-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand motion-reduce:transition-none"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  </a>
 
   <a
     routerLink="menu"
@@ -915,48 +927,12 @@ La feature se carga con `loadChildren` bajo una ruta en español. Los segmentos 
 
 ## Test de funciones puras
 
-Sin `TestBed`. `it.each` recorre los casos de una misma regla.
+Sin `TestBed`: se llama a la función y se revisa el texto. Cuando varios casos siguen la misma regla, `it.each` los recorre (`shared/utils/restaurant-status.spec.ts`).
 
 `frontend/src/app/features/restaurant-admin/models/restaurant-status.spec.ts`
 
 ```ts
-import { Restaurant } from './restaurant';
-import {
-  STATUS_LABELS,
-  openingDone,
-  openingHint,
-  openingProgress,
-  statusOf,
-} from './restaurant-status';
-
-function restaurant(overrides: Partial<Restaurant>): Restaurant {
-  return {
-    id: 4,
-    name: 'La Casona',
-    description: null,
-    address: 'Calle Sucre 245',
-    open: false,
-    suspended: false,
-    ...overrides,
-  };
-}
-
-describe('statusOf', () => {
-  it.each([
-    ['a closed restaurant', restaurant({}), 'closed', 'Cerrado'],
-    ['an open restaurant', restaurant({ open: true }), 'open', 'Abierto'],
-    ['a suspended restaurant', restaurant({ suspended: true }), 'suspended', 'Suspendido'],
-    [
-      'a suspended restaurant still marked open',
-      restaurant({ open: true, suspended: true }),
-      'suspended',
-      'Suspendido',
-    ],
-  ])('names the status of %s', (_case, current, status, label) => {
-    expect(statusOf(current)).toBe(status);
-    expect(STATUS_LABELS[statusOf(current)]).toBe(label);
-  });
-});
+import { openingDone, openingHint, openingProgress } from './restaurant-status';
 
 describe('the opening copy', () => {
   it('explains what each state means for the customers', () => {

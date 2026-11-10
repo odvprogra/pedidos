@@ -28,7 +28,7 @@
       >
         {{ initial() }}
       </span>
-      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
+      <app-restaurant-status-badge class="mb-1" data-status [restaurant]="restaurant()" />
     </div>
 
     <h2

@@ -115,6 +115,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
   bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el
   estado; el color solo lo acompaña.
+- El estado de un restaurante es un `app-restaurant-status-badge` (`@shared/ui`), que toma `open` y
+  `suspended` y muestra Abierto, Cerrado o Suspendido con `restaurantStatusOf`
+  (`@shared/utils/restaurant-status`). Lo usan la ficha del dueño y el panel del admin.
 - El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
   las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
   tono. Los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,

@@ -1,25 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Badge, BadgeTone } from '@shared/ui/badge/badge';
+import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { Restaurant } from '../../models/restaurant';
-import {
-  RestaurantStatus,
-  STATUS_LABELS,
-  openingHint,
-  openingProgress,
-  statusOf,
-} from '../../models/restaurant-status';
-
-const BADGE_TONES: Record<RestaurantStatus, BadgeTone> = {
-  open: 'success',
-  closed: 'neutral',
-  suspended: 'danger',
-};
+import { openingHint, openingProgress } from '../../models/restaurant-status';
 
 @Component({
   selector: 'app-restaurant-card',
-  imports: [RouterLink, Badge, Spinner],
+  imports: [RouterLink, RestaurantStatusBadge, Spinner],
   templateUrl: './restaurant-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -29,9 +17,6 @@ export class RestaurantCard {
   readonly menuSummary = input<string | null>(null);
   readonly openChange = output<boolean>();
 
-  protected readonly status = computed(() => statusOf(this.restaurant()));
-  protected readonly statusLabel = computed(() => STATUS_LABELS[this.status()]);
-  protected readonly badgeTone = computed(() => BADGE_TONES[this.status()]);
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );

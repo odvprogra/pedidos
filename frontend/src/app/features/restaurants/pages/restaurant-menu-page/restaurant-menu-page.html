@@ -56,8 +56,8 @@
                       [restaurantOpen]="page.restaurant.open"
                       [quantityInCart]="quantityOf(product)"
                       [otherRestaurant]="otherRestaurant()"
-                      [confirming]="confirmingId() === product.id"
-                      (confirmingChange)="toggleConfirmation(product.id, $event)"
+                      [confirming]="confirmation.isOpen(product.id)"
+                      (confirmingChange)="confirmation.set(product.id, $event)"
                       (added)="add(page.restaurant, product)"
                       (replaced)="replace(page.restaurant, product)"
                     />

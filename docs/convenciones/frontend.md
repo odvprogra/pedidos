@@ -7,15 +7,16 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 
 Se sigue la guía de estilo de Angular 2025: archivos sin sufijo de tipo para componentes.
 
-| Pieza                   | Archivo                                              | Clase / export       |
-| ----------------------- | ---------------------------------------------------- | -------------------- |
-| Página (enrutada)       | `pages/restaurant-list-page/restaurant-list-page.ts` | `RestaurantListPage` |
-| Componente              | `components/restaurant-card/restaurant-card.ts`      | `RestaurantCard`     |
-| Cliente HTTP            | `data-access/restaurant-api.ts`                      | `RestaurantApi`      |
-| Estado compartido       | `data-access/menu-store.ts`                          | `MenuStore`          |
-| Modelo                  | `models/restaurant.ts`                               | `Restaurant`         |
-| Rutas de la feature     | `restaurants.routes.ts`                              | `RESTAURANTS_ROUTES` |
-| Componente reutilizable | `shared/ui/badge/badge.ts`                           | `Badge`              |
+| Pieza                    | Archivo                                              | Clase / export       |
+| ------------------------ | ---------------------------------------------------- | -------------------- |
+| Página (enrutada)        | `pages/restaurant-list-page/restaurant-list-page.ts` | `RestaurantListPage` |
+| Componente               | `components/restaurant-card/restaurant-card.ts`      | `RestaurantCard`     |
+| Cliente HTTP             | `data-access/restaurant-api.ts`                      | `RestaurantApi`      |
+| Estado compartido        | `data-access/menu-store.ts`                          | `MenuStore`          |
+| Lógica de varias páginas | `data-access/moderation-list.ts`                     | `ModerationList`     |
+| Modelo                   | `models/restaurant.ts`                               | `Restaurant`         |
+| Rutas de la feature      | `restaurants.routes.ts`                              | `RESTAURANTS_ROUTES` |
+| Componente reutilizable  | `shared/ui/badge/badge.ts`                           | `Badge`              |
 
 Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I`.
 
@@ -54,19 +55,23 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
   llega, el foco va al título de la página; si falla, a "Reintentar".
 - Las listas del panel del admin (cuentas y restaurantes) comparten esa lógica, y la de suspender y
-  reactivar, en `ModerationList` (`features/admin/data-access`): una clase con señales que la página
-  crea en un campo y a la que le pasa cómo listar, cómo aplicar la acción, sus textos, sus errores y
-  adónde va el foco. Se prueba sola con una fuente falsa; la página solo dibuja.
+  reactivar, en `ModerationList` (`features/admin/data-access`). Es una clase con señales de solo
+  lectura que la página crea en un campo, porque usa `inject()`, y a la que le pasa un
+  `ModerationConfig`: cómo listar, cómo aplicar la acción, sus textos, sus errores y adónde va el
+  foco. Se prueba sola con una configuración falsa; la página solo dibuja.
 - Una acción que afecta a otra persona, como suspender una cuenta, o que no se puede deshacer, como
   borrar un producto del menú, se confirma dentro de la misma fila o tarjeta con `app-confirm-panel`
   (`@shared/ui`), sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
   mismo panel lo explica en tono de aviso y solo ofrece "Entendido". El botón "Cancelar" del panel
   puede decir lo que se mantiene ("Mantener pedido") cuando la acción misma se llama cancelar.
-- En una lista hay una sola pregunta abierta a la vez: abrir otra cierra la anterior, como en el
-  panel del admin o con "Vaciar y agregar" en el menú. El componente de la fila expone `confirming`
-  como `model()` y la página guarda el id de la que está abierta (`confirmingId`), que vuelve a
-  `null` al cargar otra página de la lista.
+- En el panel del admin y en el menú público ("Vaciar y agregar") hay una sola pregunta abierta a
+  la vez: abrir otra cierra la anterior. El componente de la fila expone `confirming` como `model()`
+  y la pregunta abierta vive en un `ConfirmationSlot` (`@shared/ui`) de la página o de su
+  `ModerationList`: `[confirming]="confirmation.isOpen(id)"` y
+  `(confirmingChange)="confirmation.set(id, $event)"`. Al cargar otra página de la lista, se cierra
+  con `confirmation.close()`. El menú del dueño y sus pedidos todavía guardan la pregunta en cada
+  fila.
 - Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
   se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
   confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.
@@ -93,10 +98,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   toque no hace dos pasos. Si el paso falla, el foco se queda en el botón que se tocó.
   Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
   al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
-- El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`): un `app-alert
-dismissible` fijo bajo el header, con `data-sticky-notice`, en `tone="success"` (que usa
-  `role="status"`) o en el tono de error. Ese atributo agranda el margen de scroll de la página para
-  que el aviso no tape el elemento con el foco. El aviso de la página vive en un `NoticeSlot`
+- El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`), un aviso
+  `app-alert dismissible` fijo bajo el header con `data-sticky-notice`, en `tone="success"` (que
+  usa `role="status"`) o en el tono de error. Ese atributo agranda el margen de scroll de la página
+  para que el aviso no tape el elemento con el foco. El aviso de la página vive en un `NoticeSlot`
   (`notice.show(tone, message)` y `notice.clear()`), que le da un id nuevo a cada aviso. La página
   lo dibuja con `@for (shown of notice.shown(); track shown.id)`: así cada aviso es un nodo nuevo y
   un mismo mensaje repetido se vuelve a anunciar.
@@ -111,8 +116,8 @@ dismissible` fijo bajo el header, con `data-sticky-notice`, en `tone="success"` 
   Eso no se prueba en `TestBed`, porque el router solo lo activa cuando arranca la app; se revisa
   en el navegador.
 - Una página que cuelga de otra (el menú del dueño, el detalle de un pedido) empieza con
-  `app-back-link` (`@shared/ui`), que dice adónde vuelve: `<app-back-link link="..">Mi
-restaurante</app-back-link>`. Un `link` relativo se resuelve desde la ruta de la página.
+  `app-back-link` (`@shared/ui`), que dice adónde vuelve ("‹ Mi restaurante") y recibe el destino
+  en `link`. Un `link` relativo, como `..`, se resuelve desde la ruta de la página.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de

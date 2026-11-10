@@ -7,7 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
-import { RESTAURANT_STATUS_LABELS, restaurantStatusOf } from '@shared/utils/restaurant-status';
+import { restaurantStatusLabel } from '@shared/utils/restaurant-status';
 import { Restaurant, publicStatus } from '../../models/restaurant';
 
 @Component({
@@ -25,9 +25,7 @@ export class RestaurantProfile {
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
   protected readonly status = computed(() => publicStatus(this.restaurant()));
-  protected readonly statusLabel = computed(
-    () => RESTAURANT_STATUS_LABELS[restaurantStatusOf(this.status())],
-  );
+  protected readonly statusLabel = computed(() => restaurantStatusLabel(this.status()));
 
   focus(): void {
     this.name().nativeElement.focus();

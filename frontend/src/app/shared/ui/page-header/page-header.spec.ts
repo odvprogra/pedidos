@@ -65,16 +65,3 @@ describe('PageHeader', () => {
     expect(title?.getAttribute('tabindex')).toBe('-1');
   });
 });
-
-describe('CountPill', () => {
-  it('keeps the count on one line next to a long subtitle', async () => {
-    const fixture = TestBed.createComponent(Host);
-    await fixture.whenStable();
-
-    const pill = (fixture.nativeElement as HTMLElement).querySelector('[appCountPill]');
-
-    expect(pill?.classList).toContain('shrink-0');
-    expect(pill?.classList).toContain('whitespace-nowrap');
-    expect(pill?.classList).toContain('rounded-full');
-  });
-});

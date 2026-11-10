@@ -1,4 +1,4 @@
-import { RESTAURANT_STATUS_LABELS, restaurantStatusOf } from './restaurant-status';
+import { restaurantStatusLabel, restaurantStatusOf } from './restaurant-status';
 
 describe('restaurantStatusOf', () => {
   it.each([
@@ -13,6 +13,6 @@ describe('restaurantStatusOf', () => {
     ],
   ])('names the status of %s', (_case, state, status, label) => {
     expect(restaurantStatusOf(state)).toBe(status);
-    expect(RESTAURANT_STATUS_LABELS[restaurantStatusOf(state)]).toBe(label);
+    expect(restaurantStatusLabel(state)).toBe(label);
   });
 });

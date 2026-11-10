@@ -5,18 +5,18 @@ import { Page } from '@core/http/page';
 import { ProblemDetails } from '@core/http/problem-details';
 import { Subject } from 'rxjs';
 import { ModerationAction, ModerationCopy } from '../models/moderation-action';
-import { MODERATION_PAGE_SIZE, ModerationList, ModerationSource } from './moderation-list';
+import { MODERATION_PAGE_SIZE, ModerationList, ModerationConfig } from './moderation-list';
 
-interface Shop {
+interface Item {
   id: number;
   name: string;
   suspended: boolean;
 }
 
-const LA_CASONA: Shop = { id: 4, name: 'La Casona', suspended: false };
-const EL_FOGON: Shop = { id: 5, name: 'El Fogón', suspended: false };
+const LA_CASONA: Item = { id: 4, name: 'La Casona', suspended: false };
+const EL_FOGON: Item = { id: 5, name: 'El Fogón', suspended: false };
 
-function pageOf(items: Shop[], page = 0, totalItems = items.length): Page<Shop> {
+function pageOf(items: Item[], page = 0, totalItems = items.length): Page<Item> {
   return {
     items,
     page,
@@ -33,25 +33,33 @@ function failure(status: number, code?: string): HttpErrorResponse {
   });
 }
 
-class FakeSource implements ModerationSource<Shop> {
-  readonly requests: { page: number; size: number; reply: Subject<Page<Shop>> }[] = [];
-  readonly actions: { action: ModerationAction; item: Shop; reply: Subject<Shop> }[] = [];
+class FakeConfig implements ModerationConfig<Item> {
+  readonly requests: { page: number; size: number; reply: Subject<Page<Item>> }[] = [];
+  readonly actions: { action: ModerationAction; item: Item; reply: Subject<Item> }[] = [];
   readonly focused: string[] = [];
 
-  list(page: number, size: number): Subject<Page<Shop>> {
-    const reply = new Subject<Page<Shop>>();
+  list(page: number, size: number): Subject<Page<Item>> {
+    const reply = new Subject<Page<Item>>();
     this.requests.push({ page, size, reply });
     return reply;
   }
 
-  apply(action: ModerationAction, item: Shop): Subject<Shop> {
-    const reply = new Subject<Shop>();
+  apply(action: ModerationAction, item: Item): Subject<Item> {
+    const reply = new Subject<Item>();
     this.actions.push({ action, item, reply });
     return reply;
   }
 
   copyFor(action: ModerationAction, name: string): ModerationCopy {
-    return { done: `${action} ${name}` } as ModerationCopy;
+    return {
+      label: 'Acción',
+      target: name,
+      working: 'Trabajando…',
+      question: `¿${action} ${name}?`,
+      consequence: 'Cambia el estado.',
+      confirm: 'Sí',
+      done: `${action} ${name}`,
+    };
   }
 
   describeError(problem: ProblemDetails): string {
@@ -68,24 +76,24 @@ class FakeSource implements ModerationSource<Shop> {
 }
 
 describe('ModerationList', () => {
-  let source: FakeSource;
-  let list: ModerationList<Shop>;
+  let config: FakeConfig;
+  let list: ModerationList<Item>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    source = new FakeSource();
-    list = TestBed.runInInjectionContext(() => new ModerationList(source));
+    config = new FakeConfig();
+    list = TestBed.runInInjectionContext(() => new ModerationList(config));
   });
 
   function lastRequest() {
-    return source.requests[source.requests.length - 1];
+    return config.requests[config.requests.length - 1];
   }
 
   function lastAction() {
-    return source.actions[source.actions.length - 1];
+    return config.actions[config.actions.length - 1];
   }
 
-  function respond(page: Page<Shop>): void {
+  function respond(page: Page<Item>): void {
     const { reply } = lastRequest();
     reply.next(page);
     reply.complete();
@@ -100,7 +108,7 @@ describe('ModerationList', () => {
     it('asks for the first page of twenty and waits for it', () => {
       list.start();
 
-      expect(source.requests.map(({ page, size }) => [page, size])).toEqual([[0, 20]]);
+      expect(config.requests.map(({ page, size }) => [page, size])).toEqual([[0, 20]]);
       expect(list.loading()).toBe(true);
       expect(list.busy()).toBe(true);
       expect(list.result()).toBeNull();
@@ -120,7 +128,7 @@ describe('ModerationList', () => {
       respond(pageOf([LA_CASONA]));
       await rendered();
 
-      expect(source.focused).toEqual([]);
+      expect(config.focused).toEqual([]);
     });
 
     it('describes why the list did not load and takes the focus to "Reintentar"', async () => {
@@ -132,7 +140,7 @@ describe('ModerationList', () => {
 
       expect(list.problem()).toBe('status 503');
       expect(list.loading()).toBe(false);
-      expect(source.focused).toEqual(['retry']);
+      expect(config.focused).toEqual(['retry']);
     });
 
     it('asks again for the page that failed', () => {
@@ -143,7 +151,7 @@ describe('ModerationList', () => {
 
       list.retry();
 
-      expect(source.requests.map(({ page }) => page)).toEqual([0, 2, 2]);
+      expect(config.requests.map(({ page }) => page)).toEqual([0, 2, 2]);
       expect(list.problem()).toBeNull();
       expect(list.loading()).toBe(true);
     });
@@ -165,14 +173,14 @@ describe('ModerationList', () => {
       await rendered();
 
       expect(list.result()?.page).toBe(1);
-      expect(source.focused).toEqual(['heading']);
+      expect(config.focused).toEqual(['heading']);
     });
 
     it('ignores another page while one is loading', () => {
       list.goTo(1);
       list.goTo(2);
 
-      expect(source.requests.map(({ page }) => page)).toEqual([0, 1]);
+      expect(config.requests.map(({ page }) => page)).toEqual([0, 1]);
     });
 
     it('clears the notice of the last action', () => {
@@ -225,14 +233,14 @@ describe('ModerationList', () => {
       list.run('suspend', LA_CASONA);
       list.run('suspend', EL_FOGON);
 
-      expect(source.actions).toHaveLength(1);
+      expect(config.actions).toHaveLength(1);
     });
 
     it('ignores an action while a page is loading', () => {
       list.goTo(1);
       list.run('suspend', LA_CASONA);
 
-      expect(source.actions).toHaveLength(0);
+      expect(config.actions).toHaveLength(0);
     });
 
     it('clears the last notice when another action starts', () => {
@@ -246,35 +254,14 @@ describe('ModerationList', () => {
   });
 
   describe('the question before an action', () => {
-    beforeEach(() => {
+    it('closes the open question when another page loads', () => {
       list.start();
       respond(pageOf([LA_CASONA, EL_FOGON], 0, 45));
-    });
-
-    it('keeps a single question open', () => {
-      list.toggleConfirmation(4, true);
-      list.toggleConfirmation(5, true);
-
-      expect(list.confirmingId()).toBe(5);
-    });
-
-    it('ignores the closing of a question that is no longer open', () => {
-      list.toggleConfirmation(4, true);
-      list.toggleConfirmation(5, true);
-
-      list.toggleConfirmation(4, false);
-      expect(list.confirmingId()).toBe(5);
-
-      list.toggleConfirmation(5, false);
-      expect(list.confirmingId()).toBeNull();
-    });
-
-    it('closes the question when another page loads', () => {
-      list.toggleConfirmation(4, true);
+      list.confirmation.set(4, true);
 
       list.goTo(1);
 
-      expect(list.confirmingId()).toBeNull();
+      expect(list.confirmation.openKey()).toBeNull();
     });
   });
 });

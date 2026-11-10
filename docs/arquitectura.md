@@ -180,7 +180,8 @@ src/app/
         ├── <feature>.routes.ts
         ├── pages/        Componentes enrutados: cargan datos y manejan estado
         ├── components/   Componentes de presentación: reciben inputs y emiten outputs
-        ├── data-access/  Clientes HTTP (XxxApi) y estado compartido (XxxStore)
+        ├── data-access/  Clientes HTTP (XxxApi), estado compartido (XxxStore) y la lógica que
+        │                 repiten varias páginas de la feature (ModerationList en admin)
         └── models/       Interfaces y tipos
 ```
 

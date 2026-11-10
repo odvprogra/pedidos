@@ -84,8 +84,8 @@
               [restaurant]="restaurant"
               [busy]="list.pendingId() === restaurant.id"
               [locked]="list.busy() && list.pendingId() !== restaurant.id"
-              [confirming]="list.confirmingId() === restaurant.id"
-              (confirmingChange)="list.toggleConfirmation(restaurant.id, $event)"
+              [confirming]="list.confirmation.isOpen(restaurant.id)"
+              (confirmingChange)="list.confirmation.set(restaurant.id, $event)"
               (confirmed)="list.run($event, restaurant)"
             />
           </li>

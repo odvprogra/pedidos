@@ -20,6 +20,7 @@ const LA_CASONA: RestaurantSummary = {
       [restaurant]="restaurant()"
       [busy]="busy()"
       [locked]="locked()"
+      [(confirming)]="confirming"
       (confirmed)="confirmed.push($event)"
     />
   `,
@@ -29,6 +30,7 @@ class Host {
   readonly restaurant = signal(LA_CASONA);
   readonly busy = signal(false);
   readonly locked = signal(false);
+  readonly confirming = signal(false);
   readonly confirmed: ModerationAction[] = [];
 }
 
@@ -130,5 +132,27 @@ describe('RestaurantRow', () => {
     await fixture.whenStable();
 
     expect(button('Suspendiendo…').getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('tells the page whether its question is open', async () => {
+    button('Suspender').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(true);
+
+    button('Cancelar').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(false);
+  });
+
+  it('closes its question when the page opens another one', async () => {
+    button('Suspender').click();
+    await fixture.whenStable();
+
+    host.confirming.set(false);
+    await fixture.whenStable();
+
+    expect(row().querySelector('[role="group"]')).toBeNull();
   });
 });

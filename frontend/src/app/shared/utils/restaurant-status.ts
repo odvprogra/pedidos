@@ -17,3 +17,7 @@ export function restaurantStatusOf(restaurant: RestaurantState): RestaurantStatu
   }
   return restaurant.open ? 'open' : 'closed';
 }
+
+export function restaurantStatusLabel(restaurant: RestaurantState): string {
+  return RESTAURANT_STATUS_LABELS[restaurantStatusOf(restaurant)];
+}

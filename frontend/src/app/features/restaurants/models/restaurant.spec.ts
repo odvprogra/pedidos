@@ -9,7 +9,7 @@ const LA_CASONA: Restaurant = {
   open: true,
 };
 
-describe('the restaurant copy', () => {
+describe('the public restaurant', () => {
   it('shows a listed restaurant as open or closed, never as suspended', () => {
     expect(publicStatus(LA_CASONA)).toEqual({ open: true, suspended: false });
     expect(restaurantStatusOf(publicStatus(LA_CASONA))).toBe('open');

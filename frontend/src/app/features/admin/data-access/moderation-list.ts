@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { ProblemDetails, toProblemDetails } from '@core/http/problem-details';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
 import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
 import { Observable } from 'rxjs';
 import { ModerationAction, ModerationCopy } from '../models/moderation-action';
@@ -13,12 +14,12 @@ interface Focusable {
   focus(): void;
 }
 
-export interface Moderated {
+interface Moderated {
   id: number;
   name: string;
 }
 
-export interface ModerationSource<T extends Moderated> {
+export interface ModerationConfig<T extends Moderated> {
   list(page: number, size: number): Observable<Page<T>>;
   apply(action: ModerationAction, item: T): Observable<T>;
   copyFor(action: ModerationAction, name: string): ModerationCopy;
@@ -33,24 +34,23 @@ export class ModerationList<T extends Moderated> {
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
-  private readonly source: ModerationSource<T>;
+  private readonly config: ModerationConfig<T>;
   private requestedPage = 0;
   private readonly shownPage = signal<Page<T> | null>(null);
   private readonly fetching = signal(true);
   private readonly failure = signal<string | null>(null);
   private readonly working = signal<number | null>(null);
-  private readonly asking = signal<number | null>(null);
 
   readonly result = this.shownPage.asReadonly();
   readonly loading = this.fetching.asReadonly();
   readonly problem = this.failure.asReadonly();
   readonly pendingId = this.working.asReadonly();
-  readonly confirmingId = this.asking.asReadonly();
   readonly notice = new NoticeSlot();
+  readonly confirmation = new ConfirmationSlot();
   readonly busy = computed(() => this.loading() || this.pendingId() !== null);
 
-  constructor(source: ModerationSource<T>) {
-    this.source = source;
+  constructor(config: ModerationConfig<T>) {
+    this.config = config;
   }
 
   start(): void {
@@ -69,31 +69,23 @@ export class ModerationList<T extends Moderated> {
     this.load(this.requestedPage, true);
   }
 
-  toggleConfirmation(id: number, open: boolean): void {
-    if (open) {
-      this.asking.set(id);
-    } else if (this.confirmingId() === id) {
-      this.asking.set(null);
-    }
-  }
-
   run(action: ModerationAction, item: T): void {
     if (this.busy()) {
       return;
     }
     this.working.set(item.id);
     this.notice.clear();
-    this.source
+    this.config
       .apply(action, item)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.replace(updated);
-          this.notice.show('success', this.source.copyFor(action, updated.name).done);
+          this.notice.show('success', this.config.copyFor(action, updated.name).done);
           this.working.set(null);
         },
         error: (error: unknown) => {
-          this.notice.show('danger', this.source.describeError(toProblemDetails(error)));
+          this.notice.show('danger', this.config.describeError(toProblemDetails(error)));
           this.working.set(null);
         },
       });
@@ -103,8 +95,8 @@ export class ModerationList<T extends Moderated> {
     this.requestedPage = page;
     this.fetching.set(true);
     this.failure.set(null);
-    this.asking.set(null);
-    this.source
+    this.confirmation.close();
+    this.config
       .list(page, MODERATION_PAGE_SIZE)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -112,14 +104,14 @@ export class ModerationList<T extends Moderated> {
           this.shownPage.set(result);
           this.fetching.set(false);
           if (moveFocus) {
-            this.focus(() => this.source.heading());
+            this.focus(() => this.config.heading());
           }
         },
         error: (error: unknown) => {
-          this.failure.set(this.source.describeError(toProblemDetails(error)));
+          this.failure.set(this.config.describeError(toProblemDetails(error)));
           this.fetching.set(false);
           if (moveFocus) {
-            this.focus(() => this.source.loadError());
+            this.focus(() => this.config.loadError());
           }
         },
       });

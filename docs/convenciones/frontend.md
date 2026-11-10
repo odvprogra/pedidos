@@ -108,6 +108,9 @@ restaurante</app-back-link>`. Un `link` relativo se resuelve desde la ruta de la
   (`America/La_Paz`) para no depender de la máquina.
 - El id de una ruta (`/pedidos/:id`, `/restaurantes/:id`) se lee con `parseId` (`@shared/utils`).
   Si no es un número válido, la página muestra "No encontramos…" sin llamar al backend.
+- "No encontramos…" es `app-not-found` (`@shared/ui`), para un id inválido o un `404`: recibe el
+  título (que es el `h1` de la página) y el mensaje, la salida va como contenido (`<a appButton>`) y
+  la página le lleva el foco con su método `focus()`.
 - El carrito sale solo de `CartStore` (`@core/cart`). Las sumas del carrito se hacen en centavos
   (`estimatedSubtotal`) y se rotulan como "estimado": el total que vale es el que devuelve la API al
   confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y

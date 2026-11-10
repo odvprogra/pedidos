@@ -23,6 +23,7 @@ import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { NotFound } from '@shared/ui/not-found/not-found';
 import { OrderStatusBadge } from '@shared/ui/order-status-badge/order-status-badge';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
@@ -60,6 +61,7 @@ const CHANGED_MESSAGE =
     Button,
     ConfirmPanel,
     LoadError,
+    NotFound,
     OrderStatusBadge,
     SecondaryButton,
     Skeleton,
@@ -73,7 +75,7 @@ export class OrderDetailPage {
   private readonly title = inject(Title);
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
-  private readonly missingHeading = viewChild<ElementRef<HTMLElement>>('missingHeading');
+  private readonly notFound = viewChild(NotFound);
   private readonly cancelButton = viewChild<ElementRef<HTMLElement>>('cancelButton');
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -237,7 +239,7 @@ export class OrderDetailPage {
     if (state.status === 'ready') {
       this.heading()?.nativeElement.focus();
     } else if (state.status === 'missing') {
-      this.missingHeading()?.nativeElement.focus();
+      this.notFound()?.focus();
     } else {
       this.loadError()?.focus();
     }

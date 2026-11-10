@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   afterNextRender,
   computed,
@@ -24,6 +23,7 @@ import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { NotFound } from '@shared/ui/not-found/not-found';
 import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { describeUnits } from '@shared/utils/describe-units';
 import { parseId } from '@shared/utils/parse-id';
@@ -55,6 +55,7 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
     EmptyState,
     LoadError,
     MenuItem,
+    NotFound,
     RestaurantProfile,
     SecondaryButton,
     Skeleton,
@@ -69,7 +70,7 @@ export class RestaurantMenuPage {
   private readonly title = inject(Title);
   private readonly injector = inject(Injector);
   private readonly profile = viewChild(RestaurantProfile);
-  private readonly missingHeading = viewChild<ElementRef<HTMLElement>>('missingHeading');
+  private readonly notFound = viewChild(NotFound);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
@@ -183,7 +184,7 @@ export class RestaurantMenuPage {
     if (state.status === 'ready') {
       this.profile()?.focus();
     } else if (state.status === 'missing') {
-      this.missingHeading()?.nativeElement.focus();
+      this.notFound()?.focus();
     } else {
       this.loadError()?.focus();
     }

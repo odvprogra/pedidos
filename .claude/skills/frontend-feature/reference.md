@@ -46,6 +46,7 @@ Lo que ya existe y no se vuelve a escribir en una feature:
 | `Page<T>` (`@core/http/page`)                | La forma de una página de la API                                                           |
 | `app-load-error` (`@shared/ui`)              | El error de carga con "Reintentar" y su método `focus()`                                   |
 | `app-empty-state` (`@shared/ui`)             | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
+| `app-not-found` (`@shared/ui`)               | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |
 | `app-alert` (`@shared/ui`)                   | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
 | `appButton`, `appSecondaryButton`            | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
 | `app-form-field`, `appTextInput`             | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |

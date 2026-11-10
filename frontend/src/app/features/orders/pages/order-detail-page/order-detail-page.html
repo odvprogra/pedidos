@@ -157,32 +157,13 @@
       </div>
     }
   } @else if (page.status === 'missing') {
-    <div
-      class="mt-4 grid justify-items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"
+    <app-not-found
+      class="mt-4"
+      heading="No encontramos este pedido"
+      message="Puede que el enlace esté incompleto o que el pedido sea de otra cuenta."
     >
-      <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
-        <svg
-          aria-hidden="true"
-          class="size-6"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.25"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" />
-        </svg>
-      </span>
-      <h1 #missingHeading tabindex="-1" class="text-2xl font-extrabold outline-none">
-        No encontramos este pedido
-      </h1>
-      <p class="max-w-md text-muted">
-        Puede que el enlace esté incompleto o que el pedido sea de otra cuenta.
-      </p>
       <a appButton class="mt-2" [routerLink]="ordersPath">Ver mis pedidos</a>
-    </div>
+    </app-not-found>
   } @else if (page.status === 'failed') {
     <h1 class="sr-only">Pedido</h1>
     <app-load-error

@@ -17,6 +17,7 @@ Las nuevas parten de [la plantilla](template.md).
 | 0010 | [Los cambios de estado de un pedido bloquean su fila](0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)           | Propuesta |
 | 0011 | [Los cambios de estado de un restaurante bloquean su fila](0011-cambios-de-estado-del-restaurante-con-bloqueo-de-fila.md) | Propuesta |
 | 0012 | [Lo que se anuncia sin mover el foco va a una región fija](0012-region-fija-para-anunciar.md)                             | Propuesta |
+| 0013 | [Las pruebas E2E usan Playwright desde una carpeta propia](0013-pruebas-e2e-con-playwright.md)                            | Propuesta |
 
 ## Pendientes
 

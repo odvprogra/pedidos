@@ -139,13 +139,16 @@ describe('CartPage', () => {
   describe('a cart with products', () => {
     beforeEach(() => fillCart());
 
-    it('lists the products of the restaurant with the estimated subtotal', async () => {
+    it('lists the products of the restaurant with the total of the cart', async () => {
       await openAs(ANA);
 
       expect(lines()).toEqual(['Silpancho', 'Limonada']);
       expect(link('La Casona').getAttribute('href')).toBe('/restaurantes/4');
       expect(textOf('[data-cart-units]')).toBe('3');
       expect(textOf('[data-cart-subtotal]')).toBe('Bs 100,50');
+      expect(
+        page().querySelector('[data-cart-subtotal]')?.previousElementSibling?.textContent,
+      ).toBe('Total');
       expect(text()).toContain('Retiras en Calle Sucre 245');
     });
 
@@ -157,7 +160,7 @@ describe('CartPage', () => {
       expect(cart.quantityOf(10)).toBe(3);
       expect(textOf('[data-cart-subtotal]')).toBe('Bs 145,50');
       expect(textOf('[data-cart-announcement]')).toBe(
-        'Silpancho: 3 unidades. Subtotal estimado Bs 145,50.',
+        'Silpancho: 3 unidades. Total del carrito Bs 145,50.',
       );
     });
 

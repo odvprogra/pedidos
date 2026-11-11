@@ -463,5 +463,5 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 
 - Fechas en ISO-8601 y UTC: `"2026-10-14T21:30:00Z"`.
 - Dinero como número con dos decimales en bolivianos: `"price": 45.00`.
-- El total de un pedido lo calcula el backend. El frontend puede mostrar un subtotal estimado del
-  carrito, pero el valor que vale es el que devuelve la API al crear el pedido.
+- El total de un pedido lo calcula el backend. El frontend puede mostrar el total del carrito, que
+  es una estimación, pero el valor que vale es el que devuelve la API al crear el pedido.

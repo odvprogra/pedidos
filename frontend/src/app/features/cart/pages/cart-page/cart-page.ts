@@ -105,7 +105,7 @@ export class CartPage {
     this.failure.set(null);
     this.cart.setQuantity(item.productId, quantity);
     this.announcement.set(
-      `${item.name}: ${describeQuantity(this.cart.quantityOf(item.productId))}. Subtotal estimado ${this.subtotal()}.`,
+      `${item.name}: ${describeQuantity(this.cart.quantityOf(item.productId))}. Total del carrito ${this.subtotal()}.`,
     );
   }
 

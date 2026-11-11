@@ -31,7 +31,7 @@ describe('CartSummary', () => {
   });
 
   it('tells screen readers what the numbers mean', () => {
-    expect(textOf('.sr-only')).toBe('Ver carrito: 3 productos, Bs 100,50 estimado');
+    expect(textOf('.sr-only')).toBe('Ver carrito: 3 productos, total Bs 100,50');
     expect(link().querySelector('[data-units]')?.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(link().querySelector('[data-subtotal]')?.closest('[aria-hidden="true"]')).not.toBeNull();
   });

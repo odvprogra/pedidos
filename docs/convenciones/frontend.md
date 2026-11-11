@@ -169,8 +169,8 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   título (que es el `h1` de la página) y el mensaje, la salida va como contenido (`<a appButton>`) y
   la página le lleva el foco con su método `focus()`.
 - El carrito sale solo de `CartStore` (`@core/cart`). Las sumas del carrito se hacen en centavos
-  (`estimatedSubtotal`) y se rotulan como "estimado": el total que vale es el que devuelve la API al
-  confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y
+  (`estimatedSubtotal`) y la suma de todo se rotula "Total", como pide el enunciado, con la nota de
+  que se confirma al hacer el pedido: el total que vale es el que devuelve la API al confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y
   su error deja el carrito intacto.
 - Agregar algo que no se puede, como un producto agotado o de un restaurante cerrado, es un botón
   con `disabled`: el motivo ya está a la vista. Un paso de cantidad que llegó a su límite (1 o 99)

@@ -18,6 +18,6 @@ export class CartSummary {
   protected readonly cartPath = CART_PATH;
   protected readonly subtotalLabel = computed(() => formatPrice(this.subtotal()));
   protected readonly readableLabel = computed(
-    () => `Ver carrito: ${describeUnits(this.units())}, ${this.subtotalLabel()} estimado`,
+    () => `Ver carrito: ${describeUnits(this.units())}, total ${this.subtotalLabel()}`,
   );
 }

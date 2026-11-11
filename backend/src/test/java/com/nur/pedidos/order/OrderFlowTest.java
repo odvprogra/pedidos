@@ -197,6 +197,47 @@ class OrderFlowTest {
     }
 
     @Test
+    void anOrderKeepsThePriceOfTheMomentItWasPlacedWhenTheOwnerChangesIt() {
+        Menu menu = openRestaurantWithMenu("vera@pedido.com");
+        Long majadito = createProduct(menu.owner(), menu.categoryId(), "Majadito", "35");
+        Account customer = register("irene@pedido.com", "CUSTOMER");
+        Long orderId = customer.post(
+                        "/api/v1/orders", new OrderBody(menu.restaurantId(), List.of(new LineBody(majadito, 2))))
+                .expectStatus()
+                .isCreated()
+                .expectBody(IdView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+
+        menu.owner()
+                .put(
+                        "/api/v1/restaurants/mine/products/" + majadito,
+                        new ProductBody(menu.categoryId(), "Majadito", null, new BigDecimal("40")))
+                .expectStatus()
+                .isOk();
+
+        OrderView order = customer.get("/api/v1/orders/" + orderId)
+                .expectStatus()
+                .isOk()
+                .expectBody(OrderView.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(order.total()).isEqualTo(new BigDecimal("70.00"));
+        assertThat(order.items())
+                .containsExactly(
+                        new ItemView(majadito, "Majadito", new BigDecimal("35.00"), 2, new BigDecimal("70.00")));
+        client.get()
+                .uri("/api/v1/restaurants/" + menu.restaurantId() + "/catalog")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.categories[0].products[?(@.name == 'Majadito')].price")
+                .isEqualTo(List.of(40.0));
+    }
+
+    @Test
     void theOwnerCannotAcceptAnOrderTheCustomerAlreadyCancelled() {
         Menu menu = openRestaurantWithMenu("olga@pedido.com");
         Account customer = register("mateo@pedido.com", "CUSTOMER");
@@ -279,7 +320,7 @@ class OrderFlowTest {
         Long silpancho = createProduct(owner, mainDishes, "Silpancho", "45");
         Long lemonade = createProduct(owner, mainDishes, "Limonada", "10.5");
         owner.act("/api/v1/restaurants/mine/open").expectStatus().isNoContent();
-        return new Menu(owner, restaurantId, silpancho, lemonade);
+        return new Menu(owner, restaurantId, mainDishes, silpancho, lemonade);
     }
 
     private Long createProduct(Account owner, Long categoryId, String name, String price) {
@@ -322,7 +363,7 @@ class OrderFlowTest {
                 .getValue();
     }
 
-    private record Menu(Account owner, Long restaurantId, Long silpancho, Long lemonade) {}
+    private record Menu(Account owner, Long restaurantId, Long categoryId, Long silpancho, Long lemonade) {}
 
     private record Account(RestTestClient client, String session, String csrfToken) {
 
@@ -332,6 +373,17 @@ class OrderFlowTest {
 
         RestTestClient.ResponseSpec post(String uri, Object body) {
             return client.post()
+                    .uri(uri)
+                    .cookie("SESSION", session)
+                    .cookie("XSRF-TOKEN", csrfToken)
+                    .header("X-XSRF-TOKEN", csrfToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .exchange();
+        }
+
+        RestTestClient.ResponseSpec put(String uri, Object body) {
+            return client.put()
                     .uri(uri)
                     .cookie("SESSION", session)
                     .cookie("XSRF-TOKEN", csrfToken)

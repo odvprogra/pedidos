@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -282,6 +284,55 @@ class OrderFlowTest {
                 .expectBody()
                 .jsonPath("$.items[0].status")
                 .isEqualTo("PLACED");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"accept", "reject", "start-preparing", "mark-ready", "mark-picked-up"})
+    void aCustomerCannotChangeTheStatusOfTheirOwnOrder(String action) {
+        Menu menu = openRestaurantWithMenu("owner-" + action + "@pedido.com");
+        Account customer = register("customer-" + action + "@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+
+        customer.act(MINE + "/" + orderId + "/" + action)
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("access_denied");
+
+        expectStatus(customer.get("/api/v1/orders/" + orderId), "PLACED");
+    }
+
+    @Test
+    void aVisitorWithoutSessionCannotOrderNorReadOrders() {
+        Menu menu = openRestaurantWithMenu("elsa@pedido.com");
+        Long orderId = place(register("bruno@pedido.com", "CUSTOMER"), menu);
+        String csrfToken = csrfToken();
+
+        client.post()
+                .uri("/api/v1/orders")
+                .cookie("XSRF-TOKEN", csrfToken)
+                .header("X-XSRF-TOKEN", csrfToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(silpanchoFrom(menu))
+                .exchange()
+                .expectStatus()
+                .isUnauthorized()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("unauthenticated");
+        client.get().uri("/api/v1/orders").exchange().expectStatus().isUnauthorized();
+        client.get().uri("/api/v1/orders/" + orderId).exchange().expectStatus().isUnauthorized();
+        client.get().uri(MINE).exchange().expectStatus().isUnauthorized();
+        client.get().uri("/api/v1/admin/orders").exchange().expectStatus().isUnauthorized();
+
+        menu.owner()
+                .get(MINE)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(1);
     }
 
     private static void expectStatus(RestTestClient.ResponseSpec response, String status) {

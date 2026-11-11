@@ -14,7 +14,7 @@ completas están en `docs/`; aquí está lo que hay que saber antes de tocar có
 | Backend       | Spring Boot 4.1, Java 21, Spring Data JPA, Bean Validation, Lombok |
 | Frontend      | Angular 21 (standalone, señales, zoneless), Tailwind CSS 4         |
 | Base de datos | PostgreSQL 17 en Docker                                            |
-| Tests         | JUnit 6, AssertJ, Testcontainers, ArchUnit, Vitest                 |
+| Tests         | JUnit 6, AssertJ, Testcontainers, ArchUnit, Vitest, Playwright     |
 
 ## Comandos
 
@@ -29,6 +29,7 @@ completas están en `docs/`; aquí está lo que hay que saber antes de tocar có
 | Lint                      | `frontend/` | `npm run lint`                             |
 | Tests                     | `frontend/` | `npm test -- --watch=false`                |
 | Build                     | `frontend/` | `npm run build`                            |
+| Tests E2E                 | `e2e/`      | `npm test` (levanta todo en 8090 y 4210)   |
 
 En Windows con PowerShell se usa `.\mvnw.cmd`. Los tests del backend necesitan Docker encendido.
 

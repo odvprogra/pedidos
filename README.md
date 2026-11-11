@@ -27,6 +27,7 @@ docker-compose.yml   Base de datos para desarrollo
 - JDK 21 o superior
 - Node.js 20.19 o superior
 - Docker Desktop
+- Google Chrome (para los E2E)
 
 ## Primera vez
 
@@ -34,6 +35,8 @@ docker-compose.yml   Base de datos para desarrollo
 npm install              # en la raíz: activa el hook que valida los commits
 cd frontend
 npm install
+cd ../e2e
+npm install              # Playwright, para los E2E
 ```
 
 ## Levantar el proyecto
@@ -72,6 +75,21 @@ cd frontend && npm run lint && npm test -- --watch=false && npm run build
 
 `./mvnw verify` revisa formato, reglas de arquitectura y tests (necesita Docker encendido). La CI
 corre lo mismo en cada pull request.
+
+## Correr todas las pruebas
+
+Con Docker encendido, cada bloque arranca desde cero y no depende de datos cargados a mano:
+
+```bash
+cd backend && ./mvnw verify               # unitarios e integración (Testcontainers)
+cd frontend && npm test -- --watch=false  # componentes, páginas y carrito (Vitest)
+cd e2e && npm test                        # E2E con Playwright en Chrome
+```
+
+Los E2E recrean la base `pedidos_e2e` y levantan su propio backend (puerto 8090) y frontend (4210),
+así que no tocan la base `pedidos` ni la app de desarrollo. Tardan unos minutos: la mayor parte es el
+arranque. Para verlos en una ventana de Chrome: `npm run test:headed`. Detalle en
+[docs/convenciones/testing.md](docs/convenciones/testing.md).
 
 ## Configuración
 

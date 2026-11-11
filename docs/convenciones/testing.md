@@ -90,6 +90,29 @@ tienen tests propios; las prueban los tests que ya usan Testcontainers:
 - Se prueba lo que ve el usuario (texto, atributos, estados), no detalles internos del componente.
 - Descripciones en inglés: `it('shows an empty message when the restaurant has no products')`.
 
+## End-to-End
+
+Los E2E recorren la app completa con un navegador, como un usuario: backend, frontend y base de
+datos reales. Viven en `e2e/`, con Playwright
+([ADR-0013](../adr/0013-pruebas-e2e-con-playwright.md)).
+
+| Archivo                     | Flujo del enunciado                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| `01-place-order.spec.ts`    | E2E 01: ingresar, elegir el restaurante, agregar, cambiar cantidades, ver el total y confirmar |
+| `02-manage-order.spec.ts`   | E2E 02: el dueño acepta, prepara, marca listo y entrega; no puede saltear un paso              |
+| `03-order-history.spec.ts`  | E2E 03: Mis pedidos, el detalle con productos, total y estado; un pedido ajeno no se ve        |
+| `04-cart-rules.spec.ts`     | E2E 04: carrito de un solo restaurante, producto agotado, local cerrado y carrito vacío        |
+| `05-access-control.spec.ts` | E2E 05: sin sesión, rol incorrecto en la interfaz y en la API, y el admin que sí entra         |
+
+- `cd e2e && npm test` recrea la base `pedidos_e2e`, levanta el backend en el 8090 y el frontend en
+  el 4210 y corre todo. Necesita Docker, Java 21 y Chrome. La primera vez: `npm install` en `e2e/`.
+- Cada test crea sus datos por la API (`support/seed.ts`), con nombres propios, y después usa la
+  interfaz para lo que prueba. Ningún test depende de lo que dejó otro.
+- Los selectores son los de un usuario: `getByRole` con el nombre accesible y `getByLabel`. Un
+  `data-*` solo cuando el texto no alcanza, como el total o la insignia de estado.
+- Descripciones en inglés, con el número del flujo del enunciado: `test('E2E 02 · ...')`.
+- Si un test falla, `npm run report` abre el reporte con la traza y la captura.
+
 ## Qué no se hace
 
 - Tests que llaman a servicios externos reales.

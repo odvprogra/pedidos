@@ -1079,16 +1079,8 @@ export class MyRestaurantPage implements OnInit {
       <app-alert class="block">{{ alert }}</app-alert>
     }
 
-    <div class="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
-      <button appButton type="submit" [attr.aria-disabled]="submitting()">
-        @if (submitting()) {
-          <app-spinner />
-          {{ editing() ? 'Guardando…' : 'Registrando…' }}
-        } @else {
-          {{ editing() ? 'Guardar cambios' : 'Registrar restaurante' }}
-        }
-      </button>
-      @if (editing()) {
+    @if (editing()) {
+      <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <button
           appSecondaryButton
           type="button"
@@ -1097,8 +1089,25 @@ export class MyRestaurantPage implements OnInit {
         >
           Cancelar
         </button>
-      }
-    </div>
+        <button appButton type="submit" [attr.aria-disabled]="submitting()">
+          @if (submitting()) {
+            <app-spinner />
+            Guardando…
+          } @else {
+            Guardar cambios
+          }
+        </button>
+      </div>
+    } @else {
+      <button appButton type="submit" [attr.aria-disabled]="submitting()">
+        @if (submitting()) {
+          <app-spinner />
+          Registrando…
+        } @else {
+          Registrar restaurante
+        }
+      </button>
+    }
   </form>
 </ng-template>
 ```

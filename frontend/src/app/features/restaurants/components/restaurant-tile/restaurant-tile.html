@@ -29,10 +29,15 @@
     <div class="flex shrink-0 items-start sm:-mt-7 sm:items-end sm:justify-between sm:gap-3">
       <span
         aria-hidden="true"
-        class="relative grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-xl font-extrabold text-ink sm:size-14 sm:border-4 sm:border-surface sm:text-2xl sm:shadow-md"
+        class="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent text-xl font-extrabold text-ink sm:size-14 sm:border-4 sm:border-surface sm:text-2xl sm:shadow-md"
         data-initial
       >
         {{ initial() }}
+        <app-cover-image
+          class="absolute inset-0 overflow-hidden rounded-lg"
+          data-logo
+          [src]="restaurant().imageUrl"
+        />
       </span>
       <span class="hidden sm:block">
         <app-restaurant-status-badge data-status [restaurant]="status()" />
@@ -50,6 +55,13 @@
           <app-restaurant-status-badge size="sm" data-status [restaurant]="status()" />
         </span>
       </div>
+      <p
+        class="mt-0.5 text-sm font-semibold text-brand-strong"
+        data-category
+        [id]="idPrefix() + '-category'"
+      >
+        {{ categoryLabel() }}
+      </p>
       @if (restaurant().description; as description) {
         <p
           class="mt-1 line-clamp-2 text-sm wrap-anywhere text-muted"

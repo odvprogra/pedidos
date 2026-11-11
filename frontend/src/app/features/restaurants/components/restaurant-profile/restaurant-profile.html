@@ -24,9 +24,10 @@
     <div class="-mt-9 flex items-end justify-between gap-3">
       <span
         aria-hidden="true"
-        class="relative grid size-18 shrink-0 place-items-center rounded-2xl border-4 border-surface bg-accent text-3xl font-extrabold text-ink shadow-md"
+        class="relative grid size-18 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-accent text-3xl font-extrabold text-ink shadow-md"
       >
         {{ initial() }}
+        <app-cover-image class="absolute inset-0" data-logo [src]="restaurant().imageUrl" />
       </span>
       <app-restaurant-status-badge
         class="mb-1"
@@ -44,6 +45,7 @@
       {{ restaurant().name }}
     </h1>
     <p class="sr-only" data-status-for-readers>{{ statusLabel() }}</p>
+    <p class="mt-1 text-sm font-semibold text-brand-strong" data-category>{{ categoryLabel() }}</p>
     @if (restaurant().description; as description) {
       <p class="mt-1 wrap-anywhere text-muted">{{ description }}</p>
     }

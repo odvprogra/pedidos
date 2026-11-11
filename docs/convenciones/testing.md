@@ -96,13 +96,13 @@ Los E2E recorren la app completa con un navegador, como un usuario: backend, fro
 datos reales. Viven en `e2e/`, con Playwright
 ([ADR-0013](../adr/0013-pruebas-e2e-con-playwright.md)).
 
-| Archivo                     | Flujo del enunciado                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| `01-place-order.spec.ts`    | E2E 01: ingresar, elegir el restaurante, agregar, cambiar cantidades, ver el total y confirmar |
-| `02-manage-order.spec.ts`   | E2E 02: el dueño acepta, prepara, marca listo y entrega; no puede saltear un paso              |
-| `03-order-history.spec.ts`  | E2E 03: Mis pedidos, el detalle con productos, total y estado; un pedido ajeno no se ve        |
-| `04-cart-rules.spec.ts`     | E2E 04: carrito de un solo restaurante, producto agotado, local cerrado y carrito vacío        |
-| `05-access-control.spec.ts` | E2E 05: sin sesión, rol incorrecto en la interfaz y en la API, y el admin que sí entra         |
+| Archivo                     | Flujo del enunciado                                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01-place-order.spec.ts`    | E2E 01: ingresar, elegir el restaurante, agregar, cambiar cantidades, ver el total y confirmar; el listado y el menú con categoría, logo y fotos |
+| `02-manage-order.spec.ts`   | E2E 02: el dueño acepta, prepara, marca listo y entrega; no puede saltear un paso; edita los datos de su local                                   |
+| `03-order-history.spec.ts`  | E2E 03: Mis pedidos, el detalle con productos, total y estado; un pedido ajeno no se ve                                                          |
+| `04-cart-rules.spec.ts`     | E2E 04: carrito de un solo restaurante, producto agotado, local cerrado y carrito vacío                                                          |
+| `05-access-control.spec.ts` | E2E 05: sin sesión, rol incorrecto en la interfaz y en la API, y el admin que entra y ve los pedidos                                             |
 
 - `cd e2e && npm test` recrea la base `pedidos_e2e`, levanta el backend en el 8090 y el frontend en
   el 4210 y corre todo. Necesita Docker, Java 21 y Chrome. La primera vez: `npm install` en `e2e/`.

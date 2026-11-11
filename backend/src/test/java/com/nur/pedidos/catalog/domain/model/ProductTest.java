@@ -20,7 +20,8 @@ class ProductTest {
 
     @Test
     void createsAnAvailableProductInTheRestaurantOfItsCategory() {
-        Product product = Product.create(MAIN_DISHES, "  Silpancho ", "  Con arroz y huevo  ", new BigDecimal("45.5"));
+        Product product =
+                Product.create(MAIN_DISHES, "  Silpancho ", "  Con arroz y huevo  ", new BigDecimal("45.5"), null);
 
         assertThat(product.getId()).isNull();
         assertThat(product.getRestaurantId()).isEqualTo(4L);
@@ -35,7 +36,7 @@ class ProductTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void createsAProductWithoutDescriptionWhenItIsBlank(String description) {
-        Product product = Product.create(MAIN_DISHES, "Silpancho", description, BigDecimal.TEN);
+        Product product = Product.create(MAIN_DISHES, "Silpancho", description, BigDecimal.TEN, null);
 
         assertThat(product.getDescription()).isNull();
     }
@@ -44,7 +45,7 @@ class ProductTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void rejectsABlankName(String name) {
-        assertThatThrownBy(() -> Product.create(MAIN_DISHES, name, null, BigDecimal.TEN))
+        assertThatThrownBy(() -> Product.create(MAIN_DISHES, name, null, BigDecimal.TEN, null))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("catalog.product_name_required");
@@ -54,7 +55,7 @@ class ProductTest {
     @NullSource
     @ValueSource(strings = {"0", "0.00", "-1", "0.004"})
     void rejectsAPriceThatIsNotPositive(BigDecimal price) {
-        assertThatThrownBy(() -> Product.create(MAIN_DISHES, "Silpancho", null, price))
+        assertThatThrownBy(() -> Product.create(MAIN_DISHES, "Silpancho", null, price, null))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("catalog.price_not_positive");
@@ -63,16 +64,65 @@ class ProductTest {
     @ParameterizedTest
     @CsvSource({"45, 45.00", "0.01, 0.01", "0.005, 0.01", "12.345, 12.35"})
     void keepsThePriceWithTwoDecimals(String price, String kept) {
-        Product product = Product.create(MAIN_DISHES, "Silpancho", null, new BigDecimal(price));
+        Product product = Product.create(MAIN_DISHES, "Silpancho", null, new BigDecimal(price), null);
 
         assertThat(product.getPrice()).isEqualTo(new BigDecimal(kept));
+    }
+
+    @Test
+    void createsAProductWithItsImage() {
+        Product product =
+                Product.create(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, " https://fotos.pedidos.test/s.jpg ");
+
+        assertThat(product.getImageUrl()).isEqualTo("https://fotos.pedidos.test/s.jpg");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "   ")
+    void createsAProductWithoutImageWhenItIsBlank(String imageUrl) {
+        Product product = Product.create(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, imageUrl);
+
+        assertThat(product.getImageUrl()).isNull();
+    }
+
+    @Test
+    void rejectsAnImageThatIsNotAWebAddress() {
+        assertThatThrownBy(() -> Product.create(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, "silpancho.jpg"))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("catalog.invalid_image_url");
+    }
+
+    @Test
+    void changesAndRemovesTheImageWhenTheProductIsEdited() {
+        Product product = Product.create(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, null);
+
+        product.edit(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, "https://fotos.pedidos.test/s.jpg");
+        assertThat(product.getImageUrl()).isEqualTo("https://fotos.pedidos.test/s.jpg");
+
+        product.edit(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, "  ");
+        assertThat(product.getImageUrl()).isNull();
+    }
+
+    @Test
+    void keepsTheProductAsItWasWhenTheNewImageIsNotAWebAddress() {
+        Product product = Product.create(MAIN_DISHES, "Silpancho", null, BigDecimal.TEN, null);
+
+        assertThatThrownBy(() -> product.edit(DRINKS, "Limonada", null, BigDecimal.ONE, "limonada.jpg"))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("catalog.invalid_image_url");
+        assertThat(product)
+                .extracting(Product::getName, Product::getCategoryId, Product::getImageUrl)
+                .containsExactly("Silpancho", 3L, null);
     }
 
     @Test
     void editsTheProductAndMovesItToAnotherCategory() {
         Product product = silpancho(true);
 
-        product.edit(DRINKS, " Limonada ", " Jarra de un litro ", new BigDecimal("20"));
+        product.edit(DRINKS, " Limonada ", " Jarra de un litro ", new BigDecimal("20"), null);
 
         assertThat(product.getCategoryId()).isEqualTo(5L);
         assertThat(product.getName()).isEqualTo("Limonada");
@@ -84,7 +134,7 @@ class ProductTest {
     void keepsTheAvailabilityWhenEditing() {
         Product product = silpancho(false);
 
-        product.edit(MAIN_DISHES, "Silpancho", null, new BigDecimal("48"));
+        product.edit(MAIN_DISHES, "Silpancho", null, new BigDecimal("48"), null);
 
         assertThat(product.isAvailable()).isFalse();
     }
@@ -93,7 +143,7 @@ class ProductTest {
     void removesTheDescriptionWhenEditingWithABlankOne() {
         Product product = silpancho(true);
 
-        product.edit(MAIN_DISHES, "Silpancho", "  ", new BigDecimal("45"));
+        product.edit(MAIN_DISHES, "Silpancho", "  ", new BigDecimal("45"), null);
 
         assertThat(product.getDescription()).isNull();
     }
@@ -102,7 +152,7 @@ class ProductTest {
     void keepsTheProductUnchangedWhenTheEditBreaksARule() {
         Product product = silpancho(true);
 
-        assertThatThrownBy(() -> product.edit(DRINKS, "Limonada", null, BigDecimal.ZERO))
+        assertThatThrownBy(() -> product.edit(DRINKS, "Limonada", null, BigDecimal.ZERO, null))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("catalog.price_not_positive");
@@ -116,7 +166,7 @@ class ProductTest {
         Product product = silpancho(true);
         Category foreign = new Category(9L, 8L, "Pizzas");
 
-        assertThatThrownBy(() -> product.edit(foreign, "Silpancho", null, BigDecimal.TEN))
+        assertThatThrownBy(() -> product.edit(foreign, "Silpancho", null, BigDecimal.TEN, null))
                 .isInstanceOf(CatalogNotOwnerException.class)
                 .extracting("code")
                 .isEqualTo("catalog.not_owner");
@@ -170,6 +220,6 @@ class ProductTest {
     }
 
     private static Product silpancho(boolean available) {
-        return new Product(10L, 4L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.00"), available);
+        return new Product(10L, 4L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.00"), available, null);
     }
 }

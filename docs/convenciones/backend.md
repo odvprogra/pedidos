@@ -5,22 +5,22 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 
 ## Nombres
 
-| Pieza                   | Paquete                      | Ejemplo                                           |
-| ----------------------- | ---------------------------- | ------------------------------------------------- |
-| Modelo de dominio       | `domain.model`               | `Restaurant`                                      |
-| Puerto                  | `domain.port`                | `RestaurantRepository`                            |
-| Excepción de negocio    | `domain.exception`           | `RestaurantNotFoundException`                     |
-| Caso de uso             | `application`                | `RegisterRestaurantUseCase`                       |
-| Datos de entrada        | `application`                | `RegisterRestaurantCommand`                       |
-| Entidad JPA             | `infrastructure.persistence` | `RestaurantEntity`                                |
-| Repositorio Spring Data | `infrastructure.persistence` | `RestaurantJpaRepository`                         |
-| Adaptador del puerto    | `infrastructure.persistence` | `RestaurantPersistenceAdapter`                    |
-| Adaptador con seguridad | `infrastructure.security`    | `BcryptPasswordHasher`                            |
-| Tarea al arrancar       | `infrastructure.startup`     | `FirstAdminRunner`                                |
-| Adaptador a otro módulo | `infrastructure.<modulo>`    | `RestaurantDirectoryAdapter`                      |
-| Controller              | `infrastructure.web`         | `RestaurantController`                            |
-| Controller del admin    | `infrastructure.web`         | `AdminRestaurantController`                       |
-| Request / Response      | `infrastructure.web`         | `RegisterRestaurantRequest`, `RestaurantResponse` |
+| Pieza                   | Paquete                      | Ejemplo                                   |
+| ----------------------- | ---------------------------- | ----------------------------------------- |
+| Modelo de dominio       | `domain.model`               | `Restaurant`                              |
+| Puerto                  | `domain.port`                | `RestaurantRepository`                    |
+| Excepción de negocio    | `domain.exception`           | `RestaurantNotFoundException`             |
+| Caso de uso             | `application`                | `RegisterRestaurantUseCase`               |
+| Datos de entrada        | `application`                | `RegisterRestaurantCommand`               |
+| Entidad JPA             | `infrastructure.persistence` | `RestaurantEntity`                        |
+| Repositorio Spring Data | `infrastructure.persistence` | `RestaurantJpaRepository`                 |
+| Adaptador del puerto    | `infrastructure.persistence` | `RestaurantPersistenceAdapter`            |
+| Adaptador con seguridad | `infrastructure.security`    | `BcryptPasswordHasher`                    |
+| Tarea al arrancar       | `infrastructure.startup`     | `FirstAdminRunner`                        |
+| Adaptador a otro módulo | `infrastructure.<modulo>`    | `RestaurantDirectoryAdapter`              |
+| Controller              | `infrastructure.web`         | `RestaurantController`                    |
+| Controller del admin    | `infrastructure.web`         | `AdminRestaurantController`               |
+| Request / Response      | `infrastructure.web`         | `RestaurantRequest`, `RestaurantResponse` |
 
 Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `PublishProduct`,
 `CancelOrder`. Nada de `RestaurantService` con veinte métodos.

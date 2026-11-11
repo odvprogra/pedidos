@@ -7,6 +7,8 @@ const LA_CASONA: Restaurant = {
   description: null,
   address: 'Calle Sucre 245',
   open: true,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 
 describe('the public restaurant', () => {

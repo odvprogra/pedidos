@@ -1,3 +1,4 @@
+import { RestaurantCategory } from '@shared/utils/restaurant-category';
 import { RestaurantState } from '@shared/utils/restaurant-status';
 
 export interface Restaurant {
@@ -5,6 +6,8 @@ export interface Restaurant {
   name: string;
   description: string | null;
   address: string;
+  category: RestaurantCategory;
+  imageUrl: string | null;
   open: boolean;
 }
 

@@ -10,6 +10,8 @@ const LA_CASONA: Restaurant = {
   description: 'Comida criolla casera',
   address: 'Calle Sucre 245',
   open: true,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 
 @Component({
@@ -71,7 +73,7 @@ describe('RestaurantTile', () => {
   it('names the link after the restaurant and its status and describes it with the rest', () => {
     expect(link().getAttribute('aria-label')).toBe('La Casona, Abierto');
     expect(textOf(link().getAttribute('aria-describedby') ?? '')).toBe(
-      'Comida criolla casera | Dirección: Calle Sucre 245',
+      'Comida típica | Comida criolla casera | Dirección: Calle Sucre 245',
     );
   });
 
@@ -93,7 +95,7 @@ describe('RestaurantTile', () => {
 
     expect(text()).not.toContain('Comida criolla casera');
     expect(textOf(link().getAttribute('aria-describedby') ?? '')).toBe(
-      'Dirección: Calle Sucre 245',
+      'Comida típica | Dirección: Calle Sucre 245',
     );
   });
 

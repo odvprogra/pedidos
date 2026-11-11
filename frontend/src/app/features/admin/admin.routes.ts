@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AccountListPage } from './pages/account-list-page/account-list-page';
 import { AdminPanelPage } from './pages/admin-panel-page/admin-panel-page';
+import { PlatformOrderListPage } from './pages/platform-order-list-page/platform-order-list-page';
 import { RestaurantListPage } from './pages/restaurant-list-page/restaurant-list-page';
 
 export const ADMIN_ROUTES: Routes = [
@@ -13,6 +14,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'restaurantes',
         component: RestaurantListPage,
         title: 'Restaurantes del panel | Pedidos',
+      },
+      {
+        path: 'pedidos',
+        component: PlatformOrderListPage,
+        title: 'Pedidos de la plataforma | Pedidos',
       },
     ],
   },

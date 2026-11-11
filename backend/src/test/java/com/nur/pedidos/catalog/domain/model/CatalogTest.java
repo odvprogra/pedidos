@@ -40,7 +40,7 @@ class CatalogTest {
 
     @Test
     void keepsACategoryWhoseProductsAreAllSoldOut() {
-        Product lemonade = new Product(11L, 4L, DRINKS.getId(), "Limonada", null, new BigDecimal("10.00"), false);
+        Product lemonade = new Product(11L, 4L, DRINKS.getId(), "Limonada", null, new BigDecimal("10.00"), false, null);
         Catalog catalog = new Catalog(List.of(DRINKS), List.of(lemonade));
 
         Catalog withoutEmpty = catalog.withoutEmptyCategories();
@@ -69,6 +69,6 @@ class CatalogTest {
     }
 
     private static Product product(Long id, Category category, String name) {
-        return new Product(id, 4L, category.getId(), name, null, new BigDecimal("20.00"), true);
+        return new Product(id, 4L, category.getId(), name, null, new BigDecimal("20.00"), true, null);
     }
 }

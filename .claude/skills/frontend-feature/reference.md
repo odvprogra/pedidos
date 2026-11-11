@@ -14,7 +14,7 @@ frontend/src/app/features/restaurant-admin/
 │   ├── catalog-page/           El menú: categorías y productos editados en el lugar
 │   └── orders-page/            Los pedidos del restaurante: "En curso" y "Terminados"
 ├── components/
-│   ├── restaurant-card/        La ficha con su insignia, el interruptor y los enlaces al menú y a los pedidos
+│   ├── restaurant-card/        La ficha con logo, categoría, insignia, interruptor, "Editar datos" y los enlaces
 │   ├── registration-steps/     La guía de tres pasos al lado del registro
 │   ├── category-header/        Nombre de la categoría, renombrar y borrar con confirmación
 │   ├── category-form/          Formulario de una categoría
@@ -80,19 +80,25 @@ Las interfaces tienen la forma exacta del JSON de la API. Un campo opcional del 
 `frontend/src/app/features/restaurant-admin/models/restaurant.ts`
 
 ```ts
+import { RestaurantCategory } from '@shared/utils/restaurant-category';
+
 export interface Restaurant {
   id: number;
   name: string;
   description: string | null;
   address: string;
+  category: RestaurantCategory;
+  imageUrl: string | null;
   open: boolean;
   suspended: boolean;
 }
 
-export interface RestaurantRegistration {
+export interface RestaurantDetails {
   name: string;
   description: string;
   address: string;
+  category: RestaurantCategory;
+  imageUrl: string;
 }
 ```
 
@@ -170,7 +176,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '@env/environment';
 import { Observable } from 'rxjs';
-import { Restaurant, RestaurantRegistration } from '../models/restaurant';
+import { Restaurant, RestaurantDetails } from '../models/restaurant';
 
 @Injectable({ providedIn: 'root' })
 export class RestaurantApi {
@@ -181,8 +187,12 @@ export class RestaurantApi {
     return this.http.get<Restaurant>(`${this.baseUrl}/mine`);
   }
 
-  register(registration: RestaurantRegistration): Observable<Restaurant> {
-    return this.http.post<Restaurant>(this.baseUrl, registration);
+  register(details: RestaurantDetails): Observable<Restaurant> {
+    return this.http.post<Restaurant>(this.baseUrl, details);
+  }
+
+  update(details: RestaurantDetails): Observable<Restaurant> {
+    return this.http.put<Restaurant>(`${this.baseUrl}/mine`, details);
   }
 
   open(): Observable<void> {
@@ -202,16 +212,27 @@ Solo recibe `input()` y emite `output()`; no inyecta servicios de datos. No camb
 `frontend/src/app/features/restaurant-admin/components/restaurant-card/restaurant-card.ts`
 
 ```ts
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { SecondaryButton } from '@shared/ui/button/secondary-button';
+import { CoverImage } from '@shared/ui/cover-image/cover-image';
 import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { RESTAURANT_CATEGORY_LABELS } from '@shared/utils/restaurant-category';
 import { Restaurant } from '../../models/restaurant';
 import { openingHint, openingProgress } from '../../models/restaurant-status';
 
 @Component({
   selector: 'app-restaurant-card',
-  imports: [RouterLink, RestaurantStatusBadge, Spinner],
+  imports: [RouterLink, CoverImage, RestaurantStatusBadge, SecondaryButton, Spinner],
   templateUrl: './restaurant-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -220,15 +241,25 @@ export class RestaurantCard {
   readonly busy = input(false);
   readonly menuSummary = input<string | null>(null);
   readonly openChange = output<boolean>();
+  readonly editRequested = output<void>();
+
+  private readonly editButton = viewChild.required<ElementRef<HTMLButtonElement>>('editButton');
 
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
+  );
+  protected readonly categoryLabel = computed(
+    () => RESTAURANT_CATEGORY_LABELS[this.restaurant().category],
   );
   protected readonly hint = computed(() => {
     const open = this.restaurant().open;
     return this.busy() ? openingProgress(!open) : openingHint(open);
   });
   protected readonly idPrefix = computed(() => `restaurant-${this.restaurant().id}`);
+
+  focusEdit(): void {
+    this.editButton().nativeElement.focus();
+  }
 
   protected toggle(): void {
     if (this.busy()) {
@@ -272,9 +303,10 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
     <div class="-mt-9 flex items-end justify-between gap-3">
       <span
         aria-hidden="true"
-        class="relative grid size-18 shrink-0 place-items-center rounded-2xl border-4 border-surface bg-accent text-3xl font-extrabold text-ink shadow-md"
+        class="relative grid size-18 shrink-0 place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-accent text-3xl font-extrabold text-ink shadow-md"
       >
         {{ initial() }}
+        <app-cover-image class="absolute inset-0" data-logo [src]="restaurant().imageUrl" />
       </span>
       <app-restaurant-status-badge class="mb-1" data-status [restaurant]="restaurant()" />
     </div>
@@ -285,6 +317,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
     >
       {{ restaurant().name }}
     </h2>
+    <p class="mt-1 text-sm font-semibold text-brand-strong" data-category>{{ categoryLabel() }}</p>
     @if (restaurant().description; as description) {
       <p class="mt-1 wrap-anywhere text-muted">{{ description }}</p>
     }
@@ -306,6 +339,29 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
         <span class="sr-only">Dirección: </span>{{ restaurant().address }}
       </span>
     </p>
+    <button
+      #editButton
+      appSecondaryButton
+      type="button"
+      class="mt-5"
+      [attr.aria-describedby]="idPrefix() + '-name'"
+      (click)="editRequested.emit()"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+      </svg>
+      Editar datos
+    </button>
   </div>
 
   <div class="border-t border-line bg-canvas px-5 py-5 sm:px-6">
@@ -470,12 +526,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
+import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
@@ -487,6 +545,11 @@ import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
 import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
+import {
+  RESTAURANT_CATEGORIES,
+  RESTAURANT_CATEGORY_LABELS,
+  RestaurantCategory,
+} from '@shared/utils/restaurant-category';
 import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
 import { map } from 'rxjs';
 import { RegistrationSteps } from '../../components/registration-steps/registration-steps';
@@ -494,7 +557,7 @@ import { RestaurantCard } from '../../components/restaurant-card/restaurant-card
 import { CatalogApi } from '../../data-access/catalog-api';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { Catalog, summarize } from '../../models/catalog';
-import { Restaurant } from '../../models/restaurant';
+import { Restaurant, RestaurantDetails } from '../../models/restaurant';
 import {
   describeRestaurantError,
   isAlreadyRegistered,
@@ -509,15 +572,20 @@ type PageState =
   | { status: 'failed'; message: string }
   | { status: 'ready'; restaurant: Restaurant };
 
-type RegistrationField = 'name' | 'description' | 'address';
+type DetailsField = 'name' | 'category' | 'description' | 'address' | 'imageUrl';
 
 const DESCRIPTION_LIMIT = 300;
+const IMAGE_URL_LIMIT = 500;
+const WEB_ADDRESS = /^\s*(https?:\/\/\S+)?\s*$/i;
 
-const MESSAGES: Record<RegistrationField, ValidationMessages> = {
+const MESSAGES: Record<DetailsField, ValidationMessages> = {
   name: {
     required: 'Escribe el nombre de tu restaurante.',
     pattern: 'Escribe el nombre de tu restaurante.',
     maxlength: 'Usa hasta 120 caracteres.',
+  },
+  category: {
+    required: 'Elige qué tipo de comida ofreces.',
   },
   description: {
     maxlength: `Usa hasta ${DESCRIPTION_LIMIT} caracteres.`,
@@ -527,11 +595,16 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     pattern: 'Escribe dónde queda tu restaurante.',
     maxlength: 'Usa hasta 200 caracteres.',
   },
+  imageUrl: {
+    pattern: 'Pega una dirección que empiece con http:// o https://.',
+    maxlength: `Usa hasta ${IMAGE_URL_LIMIT} caracteres.`,
+  },
 };
 
 @Component({
   selector: 'app-my-restaurant-page',
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     Alert,
     Announce,
@@ -541,6 +614,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     PageHeader,
     RegistrationSteps,
     RestaurantCard,
+    SecondaryButton,
     Skeleton,
     Spinner,
     StickyNotice,
@@ -558,12 +632,18 @@ export class MyRestaurantPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
+  private readonly card = viewChild(RestaurantCard);
   private readonly menu = signal<Catalog | null>(null);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
+  protected readonly categories = RESTAURANT_CATEGORIES.map((category) => ({
+    value: category,
+    label: RESTAURANT_CATEGORY_LABELS[category],
+  }));
+  protected readonly editing = signal(false);
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly notice = new NoticeSlot();
   protected readonly submitting = signal(false);
@@ -576,8 +656,10 @@ export class MyRestaurantPage implements OnInit {
   });
   protected readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]],
+    category: ['' as RestaurantCategory | '', Validators.required],
     description: ['', Validators.maxLength(DESCRIPTION_LIMIT)],
     address: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    imageUrl: ['', [Validators.pattern(WEB_ADDRESS), Validators.maxLength(IMAGE_URL_LIMIT)]],
   });
   protected readonly descriptionLength = toSignal(
     this.form.controls.description.valueChanges.pipe(map((description) => description.length)),
@@ -602,7 +684,7 @@ export class MyRestaurantPage implements OnInit {
     this.load(this.arrivedFromAnotherPage);
   }
 
-  protected errorOf(field: RegistrationField): string | null {
+  protected errorOf(field: DetailsField): string | null {
     return validationMessage(this.form.controls[field], MESSAGES[field]);
   }
 
@@ -610,7 +692,7 @@ export class MyRestaurantPage implements OnInit {
     this.load(true, true);
   }
 
-  protected register(): void {
+  protected submit(): void {
     if (this.submitting()) {
       return;
     }
@@ -619,11 +701,53 @@ export class MyRestaurantPage implements OnInit {
       focusFirstInvalid(this.host.nativeElement, this.injector);
       return;
     }
+    const details = { ...this.form.getRawValue() } as RestaurantDetails;
+    if (this.editing()) {
+      this.save(details);
+    } else {
+      this.register(details);
+    }
+  }
 
+  protected startEditing(): void {
+    const current = this.state();
+    if (current.status !== 'ready') {
+      return;
+    }
+    const restaurant = current.restaurant;
+    this.form.reset({
+      name: restaurant.name,
+      category: restaurant.category,
+      description: restaurant.description ?? '',
+      address: restaurant.address,
+      imageUrl: restaurant.imageUrl ?? '',
+    });
+    this.formAlert.set(null);
+    this.notice.clear();
+    this.editing.set(true);
+    afterNextRender(
+      () => this.host.nativeElement.querySelector<HTMLInputElement>('#name')?.focus(),
+      {
+        injector: this.injector,
+      },
+    );
+  }
+
+  protected cancelEditing(): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.editing.set(false);
+    this.formAlert.set(null);
+    this.form.reset();
+    this.focusEditButton();
+  }
+
+  private register(details: RestaurantDetails): void {
     this.submitting.set(true);
     this.formAlert.set(null);
     this.restaurantApi
-      .register(this.form.getRawValue())
+      .register(details)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (restaurant) => {
@@ -644,6 +768,37 @@ export class MyRestaurantPage implements OnInit {
               'warning',
               'Ya tenías un restaurante registrado. Te mostramos sus datos.',
             );
+            this.load(true);
+            return;
+          }
+          applyFieldErrors(this.form, problem.errors ?? []);
+          this.formAlert.set(describeRestaurantError(problem));
+          focusFirstInvalid(this.host.nativeElement, this.injector);
+        },
+      });
+  }
+
+  private save(details: RestaurantDetails): void {
+    this.submitting.set(true);
+    this.formAlert.set(null);
+    this.restaurantApi
+      .update(details)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.submitting.set(false);
+          this.editing.set(false);
+          this.state.set({ status: 'ready', restaurant });
+          this.notice.show('success', `Guardaste los cambios de ${restaurant.name}.`);
+          this.focusEditButton();
+        },
+        error: (error: unknown) => {
+          this.submitting.set(false);
+          const problem = toProblemDetails(error);
+          if (isNotRegistered(problem)) {
+            this.editing.set(false);
+            this.form.reset();
+            this.notice.show('warning', describeRestaurantError(problem));
             this.load(true);
             return;
           }
@@ -732,6 +887,10 @@ export class MyRestaurantPage implements OnInit {
     }
   }
 
+  private focusEditButton(): void {
+    afterNextRender(() => this.card()?.focusEdit(), { injector: this.injector });
+  }
+
   private focusHeading(): void {
     afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
@@ -760,95 +919,25 @@ export class MyRestaurantPage implements OnInit {
 
   @let current = state();
   @if (current.status === 'ready') {
-    <app-restaurant-card
-      class="mt-6 block max-w-2xl"
-      [restaurant]="current.restaurant"
-      [busy]="toggling()"
-      [menuSummary]="menuSummary()"
-      (openChange)="changeOpening($event)"
-    />
+    @if (editing()) {
+      <div class="mt-6 max-w-2xl">
+        <ng-container *ngTemplateOutlet="detailsForm" />
+      </div>
+    } @else {
+      <app-restaurant-card
+        class="mt-6 block max-w-2xl"
+        [restaurant]="current.restaurant"
+        [busy]="toggling()"
+        [menuSummary]="menuSummary()"
+        (openChange)="changeOpening($event)"
+        (editRequested)="startEditing()"
+      />
+    }
   } @else if (current.status === 'missing') {
     <div class="mt-6 grid gap-6 lg:grid-cols-5 lg:items-start">
       <app-registration-steps class="block lg:order-last lg:col-span-2" />
 
-      <form
-        class="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6 lg:col-span-3"
-        aria-labelledby="registration-title"
-        [formGroup]="form"
-        (ngSubmit)="register()"
-      >
-        <h2 id="registration-title" class="text-lg font-extrabold">Datos del restaurante</h2>
-
-        @let nameError = errorOf('name');
-        <app-form-field label="Nombre del restaurante" fieldId="name" [error]="nameError">
-          <input
-            appTextInput
-            id="name"
-            formControlName="name"
-            autocomplete="organization"
-            placeholder="La Casona"
-            [attr.aria-invalid]="nameError !== null"
-          />
-        </app-form-field>
-
-        @let descriptionError = errorOf('description');
-        <app-form-field
-          label="Descripción (opcional)"
-          fieldId="description"
-          hint="Cuéntales qué cocinas, en hasta 300 caracteres."
-          [error]="descriptionError"
-        >
-          <div class="grid gap-1">
-            <textarea
-              appTextInput
-              id="description"
-              rows="3"
-              class="field-sizing-content min-h-28 resize-none"
-              formControlName="description"
-              placeholder="Comida criolla casera, con almuerzos del día."
-              [attr.aria-invalid]="descriptionError !== null"
-            ></textarea>
-            <p
-              aria-hidden="true"
-              class="text-right text-xs font-semibold"
-              [class.text-danger]="descriptionLength() > descriptionLimit"
-              [class.text-muted]="descriptionLength() <= descriptionLimit"
-            >
-              {{ descriptionLength() }}/{{ descriptionLimit }}
-            </p>
-          </div>
-        </app-form-field>
-
-        @let addressError = errorOf('address');
-        <app-form-field
-          label="Dirección"
-          fieldId="address"
-          hint="Donde tus clientes retiran sus pedidos."
-          [error]="addressError"
-        >
-          <input
-            appTextInput
-            id="address"
-            formControlName="address"
-            autocomplete="off"
-            placeholder="Calle Sucre 245, zona Centro"
-            [attr.aria-invalid]="addressError !== null"
-          />
-        </app-form-field>
-
-        @if (formAlert(); as alert) {
-          <app-alert class="block">{{ alert }}</app-alert>
-        }
-
-        <button appButton type="submit" [attr.aria-disabled]="submitting()">
-          @if (submitting()) {
-            <app-spinner />
-            Registrando…
-          } @else {
-            Registrar restaurante
-          }
-        </button>
-      </form>
+      <ng-container *ngTemplateOutlet="detailsForm" />
     </div>
   } @else if (current.status === 'failed') {
     <app-load-error
@@ -878,6 +967,149 @@ export class MyRestaurantPage implements OnInit {
     </div>
   }
 </section>
+
+<ng-template #detailsForm>
+  <form
+    class="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6 lg:col-span-3"
+    aria-labelledby="registration-title"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+  >
+    <h2 id="registration-title" class="text-lg font-extrabold">
+      {{ editing() ? 'Editar datos' : 'Datos del restaurante' }}
+    </h2>
+
+    @let nameError = errorOf('name');
+    <app-form-field label="Nombre del restaurante" fieldId="name" [error]="nameError">
+      <input
+        appTextInput
+        id="name"
+        formControlName="name"
+        autocomplete="organization"
+        placeholder="La Casona"
+        [attr.aria-invalid]="nameError !== null"
+      />
+    </app-form-field>
+
+    @let categoryError = errorOf('category');
+    <app-form-field
+      label="Tipo de comida"
+      fieldId="category"
+      hint="Así te encuentran los clientes en la lista de restaurantes."
+      [error]="categoryError"
+    >
+      <select
+        appTextInput
+        id="category"
+        formControlName="category"
+        [attr.aria-invalid]="categoryError !== null"
+      >
+        <option value="" disabled>Elige una opción</option>
+        @for (category of categories; track category.value) {
+          <option [value]="category.value">{{ category.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    @let descriptionError = errorOf('description');
+    <app-form-field
+      label="Descripción (opcional)"
+      fieldId="description"
+      hint="Cuéntales qué cocinas, en hasta 300 caracteres."
+      [error]="descriptionError"
+    >
+      <div class="grid gap-1">
+        <textarea
+          appTextInput
+          id="description"
+          rows="3"
+          class="field-sizing-content min-h-28 resize-none"
+          formControlName="description"
+          placeholder="Comida criolla casera, con almuerzos del día."
+          [attr.aria-invalid]="descriptionError !== null"
+        ></textarea>
+        <p
+          aria-hidden="true"
+          class="text-right text-xs font-semibold"
+          [class.text-danger]="descriptionLength() > descriptionLimit"
+          [class.text-muted]="descriptionLength() <= descriptionLimit"
+        >
+          {{ descriptionLength() }}/{{ descriptionLimit }}
+        </p>
+      </div>
+    </app-form-field>
+
+    @let addressError = errorOf('address');
+    <app-form-field
+      label="Dirección"
+      fieldId="address"
+      hint="Donde tus clientes retiran sus pedidos."
+      [error]="addressError"
+    >
+      <input
+        appTextInput
+        id="address"
+        formControlName="address"
+        autocomplete="off"
+        placeholder="Calle Sucre 245, zona Centro"
+        [attr.aria-invalid]="addressError !== null"
+      />
+    </app-form-field>
+
+    @let imageUrlError = errorOf('imageUrl');
+    <app-form-field
+      label="Logo o foto del local (opcional)"
+      fieldId="imageUrl"
+      hint="Pega la dirección web de la imagen. Si no tienes, mostramos tu inicial."
+      [error]="imageUrlError"
+    >
+      <input
+        appTextInput
+        id="imageUrl"
+        type="url"
+        inputmode="url"
+        formControlName="imageUrl"
+        autocomplete="off"
+        placeholder="https://"
+        [attr.aria-invalid]="imageUrlError !== null"
+      />
+    </app-form-field>
+
+    @if (formAlert(); as alert) {
+      <app-alert class="block">{{ alert }}</app-alert>
+    }
+
+    @if (editing()) {
+      <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <button
+          appSecondaryButton
+          type="button"
+          [attr.aria-disabled]="submitting()"
+          (click)="cancelEditing()"
+        >
+          Cancelar
+        </button>
+        <button appButton type="submit" [attr.aria-disabled]="submitting()">
+          @if (submitting()) {
+            <app-spinner />
+            Guardando…
+          } @else {
+            Guardar cambios
+          }
+        </button>
+      </div>
+    } @else {
+      <button appButton type="submit" [attr.aria-disabled]="submitting()">
+        @if (submitting()) {
+          <app-spinner />
+          Registrando…
+        } @else {
+          Registrar restaurante
+        }
+      </button>
+    }
+  </form>
+</ng-template>
 ```
 
 ## Rutas de la feature
@@ -963,6 +1195,8 @@ const LA_CASONA: Restaurant = {
   name: 'La Casona',
   description: 'Comida criolla casera',
   address: 'Calle Sucre 245',
+  category: 'TRADITIONAL',
+  imageUrl: null,
   open: false,
   suspended: false,
 };
@@ -1096,6 +1330,8 @@ const LA_CASONA: Restaurant = {
   name: 'La Casona',
   description: 'Comida criolla casera',
   address: 'Calle Sucre 245',
+  category: 'TRADITIONAL',
+  imageUrl: null,
   open: false,
   suspended: false,
 };
@@ -1133,8 +1369,11 @@ describe('MyRestaurantPage', () => {
     return page().querySelector('h1') as HTMLElement;
   }
 
-  function field(id: string): HTMLInputElement | HTMLTextAreaElement {
-    return page().querySelector(`#${id}`) as HTMLInputElement | HTMLTextAreaElement;
+  function field(id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
+    return page().querySelector(`#${id}`) as
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | HTMLSelectElement;
   }
 
   function messageOf(id: string): string {
@@ -1164,9 +1403,10 @@ describe('MyRestaurantPage', () => {
   }
 
   function fill(id: string, value: string): void {
-    field(id).value = value;
-    field(id).dispatchEvent(new Event('input'));
-    field(id).dispatchEvent(new Event('blur'));
+    const control = field(id);
+    control.value = value;
+    control.dispatchEvent(new Event(control instanceof HTMLSelectElement ? 'change' : 'input'));
+    control.dispatchEvent(new Event('blur'));
   }
 
   function failWith(url: string, status: number, code?: string, extra: object = {}): void {
@@ -1192,6 +1432,7 @@ describe('MyRestaurantPage', () => {
 
   async function submitValidForm(): Promise<void> {
     fill('name', 'La Casona');
+    fill('category', 'TRADITIONAL');
     fill('description', 'Comida criolla casera');
     fill('address', 'Calle Sucre 245');
     submitButton().click();
@@ -1295,6 +1536,8 @@ describe('MyRestaurantPage', () => {
         name: 'La Casona',
         description: 'Comida criolla casera',
         address: 'Calle Sucre 245',
+        category: 'TRADITIONAL',
+        imageUrl: '',
       });
       expect(submitButton().getAttribute('aria-disabled')).toBe('true');
       expect(submitButton().textContent).toContain('Registrando…');

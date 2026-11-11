@@ -36,6 +36,11 @@ class OrderPersistenceAdapter implements OrderRepository {
     }
 
     @Override
+    public PageResult<Order> findPage(int page, int size) {
+        return pageOf(jpaRepository.findAll(newestFirst(page, size)), page, size);
+    }
+
+    @Override
     public PageResult<Order> findPageOfCustomer(Long customerId, int page, int size) {
         return pageOf(jpaRepository.findAllByCustomerId(customerId, newestFirst(page, size)), page, size);
     }

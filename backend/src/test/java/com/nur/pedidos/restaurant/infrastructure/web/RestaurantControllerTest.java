@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import com.nur.pedidos.restaurant.application.CloseRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.EditRestaurantCommand;
+import com.nur.pedidos.restaurant.application.EditRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.GetOwnRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.OpenRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.RegisterRestaurantCommand;
@@ -18,6 +20,8 @@ import com.nur.pedidos.restaurant.domain.exception.RestaurantAlreadyRegisteredEx
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
+import com.nur.pedidos.shared.domain.exception.DomainException;
 import com.nur.pedidos.shared.infrastructure.security.SecurityConfig;
 import java.time.Instant;
 import java.util.stream.Stream;
@@ -41,7 +45,7 @@ class RestaurantControllerTest {
 
     private static final Instant NOW = Instant.parse("2026-11-07T15:00:00Z");
     private static final String REGISTRATION = """
-            {"name": "La Casona", "description": "Comida criolla", "address": "Calle Sucre 245"}
+            {"name": "La Casona", "description": "Comida criolla", "address": "Calle Sucre 245", "category": "TRADITIONAL"}
             """;
 
     @Autowired
@@ -58,6 +62,9 @@ class RestaurantControllerTest {
 
     @MockitoBean
     private CloseRestaurantUseCase closeRestaurant;
+
+    @MockitoBean
+    private EditRestaurantUseCase editRestaurant;
 
     @Test
     void registersARestaurantForTheOwnerInSession() {
@@ -80,18 +87,31 @@ class RestaurantControllerTest {
                           "name": "La Casona",
                           "description": "Comida criolla",
                           "address": "Calle Sucre 245",
+                          "category": "TRADITIONAL",
+                          "imageUrl": null,
                           "open": false,
                           "suspended": false
                         }
                         """);
         verify(registerRestaurant)
-                .execute(new RegisterRestaurantCommand(7L, "La Casona", "Comida criolla", "Calle Sucre 245"));
+                .execute(new RegisterRestaurantCommand(
+                        7L, "La Casona", "Comida criolla", "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
     }
 
     @Test
     void registersARestaurantWithoutDescription() {
         when(registerRestaurant.execute(any()))
-                .thenReturn(new Restaurant(1L, 7L, "La Casona", null, "Calle Sucre 245", false, false, NOW));
+                .thenReturn(new Restaurant(
+                        1L,
+                        7L,
+                        "La Casona",
+                        null,
+                        "Calle Sucre 245",
+                        RestaurantCategory.TRADITIONAL,
+                        null,
+                        false,
+                        false,
+                        NOW));
 
         var response = mvc.post()
                 .uri("/api/v1/restaurants")
@@ -99,7 +119,7 @@ class RestaurantControllerTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                        {"name": "La Casona", "address": "Calle Sucre 245"}
+                        {"name": "La Casona", "address": "Calle Sucre 245", "category": "TRADITIONAL"}
                         """);
 
         assertThat(response)
@@ -107,18 +127,20 @@ class RestaurantControllerTest {
                 .bodyJson()
                 .extractingPath("$.description")
                 .isNull();
-        verify(registerRestaurant).execute(new RegisterRestaurantCommand(7L, "La Casona", null, "Calle Sucre 245"));
+        verify(registerRestaurant)
+                .execute(new RegisterRestaurantCommand(
+                        7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
     }
 
     @ParameterizedTest
     @CsvSource(
             delimiter = '|',
             value = {
-                "{\"name\": \"\", \"address\": \"Calle Sucre 245\"}                         | name",
-                "{\"name\": \"   \", \"address\": \"Calle Sucre 245\"}                      | name",
-                "{\"address\": \"Calle Sucre 245\"}                                         | name",
-                "{\"name\": \"La Casona\", \"address\": \"\"}                               | address",
-                "{\"name\": \"La Casona\"}                                                  | address"
+                "{\"name\": \"\", \"address\": \"Calle Sucre 245\", \"category\": \"TRADITIONAL\"}                         | name",
+                "{\"name\": \"   \", \"address\": \"Calle Sucre 245\", \"category\": \"TRADITIONAL\"}                      | name",
+                "{\"address\": \"Calle Sucre 245\", \"category\": \"TRADITIONAL\"}                                         | name",
+                "{\"name\": \"La Casona\", \"address\": \"\", \"category\": \"TRADITIONAL\"}                               | address",
+                "{\"name\": \"La Casona\", \"category\": \"TRADITIONAL\"}                                                  | address"
             })
     void rejectsARegistrationWithoutARequiredField(String body, String field) {
         var response = mvc.post()
@@ -246,6 +268,8 @@ class RestaurantControllerTest {
                   "name": "La Casona",
                   "description": "Comida criolla",
                   "address": "Calle Sucre 245",
+                  "category": "TRADITIONAL",
+                  "imageUrl": null,
                   "open": true,
                   "suspended": false
                 }
@@ -396,16 +420,218 @@ class RestaurantControllerTest {
         verifyNoInteractions(openRestaurant, closeRestaurant);
     }
 
+    @Test
+    void registersARestaurantWithItsCategoryAndImage() {
+        when(registerRestaurant.execute(any())).thenReturn(laCasona(false, false));
+
+        var response = mvc.post()
+                .uri("/api/v1/restaurants")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "La Casona", "address": "Calle Sucre 245", "category": "GRILL", "imageUrl": "https://fotos.pedidos.test/casona.jpg"}
+                        """);
+
+        assertThat(response).hasStatus(HttpStatus.CREATED);
+        verify(registerRestaurant)
+                .execute(new RegisterRestaurantCommand(
+                        7L,
+                        "La Casona",
+                        null,
+                        "Calle Sucre 245",
+                        RestaurantCategory.GRILL,
+                        "https://fotos.pedidos.test/casona.jpg"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "{\"name\": \"La Casona\", \"address\": \"Calle Sucre 245\"}",
+                "{\"name\": \"La Casona\", \"address\": \"Calle Sucre 245\", \"category\": null}"
+            })
+    void rejectsARestaurantWithoutCategory(String body) {
+        var response = mvc.post()
+                .uri("/api/v1/restaurants")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body);
+
+        assertThat(response).hasStatus(HttpStatus.BAD_REQUEST).bodyJson().satisfies(json -> {
+            assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
+            assertThat(json).extractingPath("$.errors[0].field").isEqualTo("category");
+        });
+        verifyNoInteractions(registerRestaurant);
+    }
+
+    @Test
+    void rejectsACategoryThatIsNotOnTheList() {
+        var response = mvc.post()
+                .uri("/api/v1/restaurants")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "La Casona", "address": "Calle Sucre 245", "category": "PIZZERIA"}
+                        """);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("validation_failed");
+        verifyNoInteractions(registerRestaurant);
+    }
+
+    @Test
+    void editsTheRestaurantOfTheOwnerInSession() {
+        when(editRestaurant.execute(any())).thenReturn(laCasona(true, false));
+
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "La Casona", "description": "Comida criolla", "address": "Calle Sucre 245", "category": "TRADITIONAL", "imageUrl": "https://fotos.pedidos.test/casona.jpg"}
+                        """);
+
+        assertThat(response).hasStatus(HttpStatus.OK).bodyJson().satisfies(json -> {
+            assertThat(json).extractingPath("$.name").isEqualTo("La Casona");
+            assertThat(json).extractingPath("$.category").isEqualTo("TRADITIONAL");
+            assertThat(json).extractingPath("$.open").isEqualTo(true);
+        });
+        verify(editRestaurant)
+                .execute(new EditRestaurantCommand(
+                        7L,
+                        "La Casona",
+                        "Comida criolla",
+                        "Calle Sucre 245",
+                        RestaurantCategory.TRADITIONAL,
+                        "https://fotos.pedidos.test/casona.jpg"));
+    }
+
+    @Test
+    void rejectsAnEditWithoutAName() {
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": " ", "address": "Calle Sucre 245", "category": "TRADITIONAL"}
+                        """);
+
+        assertThat(response).hasStatus(HttpStatus.BAD_REQUEST).bodyJson().satisfies(json -> {
+            assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
+            assertThat(json).extractingPath("$.errors[0].field").isEqualTo("name");
+        });
+        verifyNoInteractions(editRestaurant);
+    }
+
+    @Test
+    void answersAnImageThatIsNotAWebAddressWithItsCode() {
+        when(editRestaurant.execute(any()))
+                .thenThrow(new DomainException("restaurant.invalid_image_url", "La imagen no es válida"));
+
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "La Casona", "address": "Calle Sucre 245", "category": "TRADITIONAL", "imageUrl": "foto.jpg"}
+                        """);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("restaurant.invalid_image_url");
+    }
+
+    @Test
+    void returnsNotFoundWhenTheOwnerEditsWithoutARestaurant() {
+        when(editRestaurant.execute(any())).thenThrow(new RestaurantNotFoundException());
+
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf("OWNER", 7L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(REGISTRATION);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("restaurant.not_found");
+    }
+
+    @Test
+    void rejectsAnEditWithoutSession() {
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(REGISTRATION);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.UNAUTHORIZED)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("unauthenticated");
+        verifyNoInteractions(editRestaurant);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"CUSTOMER", "ADMIN"})
+    void rejectsAnEditFromAnotherRole(String role) {
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf(role, 3L))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(REGISTRATION);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.FORBIDDEN)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("access_denied");
+        verifyNoInteractions(editRestaurant);
+    }
+
+    @Test
+    void rejectsAnEditWithoutCsrfToken() {
+        var response = mvc.put()
+                .uri("/api/v1/restaurants/mine")
+                .with(sessionOf("OWNER", 7L))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(REGISTRATION);
+
+        assertThat(response)
+                .hasStatus(HttpStatus.FORBIDDEN)
+                .bodyJson()
+                .extractingPath("$.code")
+                .isEqualTo("csrf_invalid");
+        verifyNoInteractions(editRestaurant);
+    }
+
     static Stream<Arguments> fieldsLongerThanTheirColumn() {
         return Stream.of(
                 Arguments.of(registration("a".repeat(121), null, "Calle Sucre 245"), "name"),
                 Arguments.of(registration("La Casona", "a".repeat(301), "Calle Sucre 245"), "description"),
-                Arguments.of(registration("La Casona", null, "a".repeat(201)), "address"));
+                Arguments.of(registration("La Casona", null, "a".repeat(201)), "address"),
+                Arguments.of("""
+                        {"name": "La Casona", "address": "Calle Sucre 245", "category": "TRADITIONAL", "imageUrl": "https://fotos.pedidos.test/%s"}
+                        """.formatted("a".repeat(480)), "imageUrl"));
     }
 
     private static String registration(String name, String description, String address) {
         return """
-                {"name": %s, "description": %s, "address": %s}
+                {"name": %s, "description": %s, "address": %s, "category": "TRADITIONAL"}
                 """.formatted(quoted(name), quoted(description), quoted(address));
     }
 
@@ -414,6 +640,16 @@ class RestaurantControllerTest {
     }
 
     private static Restaurant laCasona(boolean open, boolean suspended) {
-        return new Restaurant(1L, 7L, "La Casona", "Comida criolla", "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                1L,
+                7L,
+                "La Casona",
+                "Comida criolla",
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }

@@ -15,6 +15,7 @@ import com.nur.pedidos.order.domain.model.OrderStatus;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.restaurant.application.RegisterRestaurantCommand;
 import com.nur.pedidos.restaurant.application.RegisterRestaurantUseCase;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -85,7 +86,8 @@ class OrderLockingTest {
     @Test
     void anAcceptanceWaitsForTheCancellationInProgressAndIsThenRefused() throws Exception {
         Long restaurantId = registerRestaurant
-                .execute(new RegisterRestaurantCommand(OWNER, "La Casona", null, "Calle Sucre 245"))
+                .execute(new RegisterRestaurantCommand(
+                        OWNER, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null))
                 .getId();
         Long orderId = orderRepository.save(pendingOrderAt(restaurantId)).getId();
         CountDownLatch locked = new CountDownLatch(1);

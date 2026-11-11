@@ -44,6 +44,11 @@ class InMemoryOrderRepository implements OrderRepository {
     }
 
     @Override
+    public PageResult<Order> findPage(int page, int size) {
+        return pageOf(order -> true, page, size);
+    }
+
+    @Override
     public PageResult<Order> findPageOfCustomer(Long customerId, int page, int size) {
         return pageOf(order -> order.isPlacedBy(customerId), page, size);
     }

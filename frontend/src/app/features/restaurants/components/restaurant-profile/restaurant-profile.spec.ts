@@ -9,6 +9,8 @@ const LA_CASONA: Restaurant = {
   description: 'Comida criolla casera',
   address: 'Calle Sucre 245',
   open: true,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 
 @Component({

@@ -149,6 +149,23 @@ class OrderPersistenceAdapterTest {
     }
 
     @Test
+    void listsTheOrdersOfEveryCustomerAndRestaurantWithTheNewestFirst() {
+        Order monday = adapter.save(placedBy(7L, "2026-11-02T12:00:00Z"));
+        Order sunday = adapter.save(at(5L, OrderStatus.CANCELLED, "2026-11-08T12:00:00Z"));
+        Order friday = adapter.save(placedBy(8L, "2026-11-06T12:00:00Z"));
+        flushAndClear();
+
+        PageResult<Order> first = adapter.findPage(0, 2);
+        PageResult<Order> second = adapter.findPage(1, 2);
+
+        assertThat(first.items()).extracting(Order::getId).containsExactly(sunday.getId(), friday.getId());
+        assertThat(second.items()).extracting(Order::getId).containsExactly(monday.getId());
+        assertThat(first)
+                .extracting(PageResult::totalItems, PageResult::totalPages)
+                .containsExactly(3L, 2);
+    }
+
+    @Test
     void listsOnlyTheOrdersOfTheCustomerWithTheNewestFirst() {
         Order monday = adapter.save(placedBy(7L, "2026-11-02T12:00:00Z"));
         adapter.save(placedBy(8L, "2026-11-08T12:00:00Z"));

@@ -18,6 +18,8 @@ const LA_CASONA: Restaurant = {
   description: 'Comida criolla casera',
   address: 'Calle Sucre 245',
   open: true,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 const MENU: Catalog = {
   categories: [
@@ -32,6 +34,7 @@ const MENU: Catalog = {
           description: 'Con arroz y huevo',
           price: 45,
           available: true,
+          imageUrl: null,
         },
         {
           id: 11,
@@ -40,6 +43,7 @@ const MENU: Catalog = {
           description: null,
           price: 60.5,
           available: false,
+          imageUrl: null,
         },
       ],
     },
@@ -54,6 +58,7 @@ const MENU: Catalog = {
           description: null,
           price: 10,
           available: true,
+          imageUrl: null,
         },
       ],
     },

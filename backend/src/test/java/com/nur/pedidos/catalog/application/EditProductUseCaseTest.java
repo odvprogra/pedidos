@@ -34,7 +34,7 @@ class EditProductUseCaseTest {
         restaurantDirectory.register(OWNER, RESTAURANT);
         mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
         drinks = categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
-        Product soldOut = Product.create(mainDishes, "Silpancho", "Con arroz", new BigDecimal("45"));
+        Product soldOut = Product.create(mainDishes, "Silpancho", "Con arroz", new BigDecimal("45"), null);
         soldOut.markSoldOut();
         silpancho = productRepository.save(soldOut);
     }
@@ -42,7 +42,7 @@ class EditProductUseCaseTest {
     @Test
     void editsTheProductAndKeepsItsAvailability() {
         Product edited = editProduct.execute(new EditProductCommand(
-                OWNER, silpancho.getId(), mainDishes.getId(), "Silpancho doble", null, new BigDecimal("60")));
+                OWNER, silpancho.getId(), mainDishes.getId(), "Silpancho doble", null, new BigDecimal("60"), null));
 
         assertThat(edited.getName()).isEqualTo("Silpancho doble");
         assertThat(productRepository.get(silpancho.getId()))
@@ -51,9 +51,23 @@ class EditProductUseCaseTest {
     }
 
     @Test
+    void changesTheImageOfTheProduct() {
+        editProduct.execute(new EditProductCommand(
+                OWNER,
+                silpancho.getId(),
+                mainDishes.getId(),
+                "Silpancho",
+                null,
+                new BigDecimal("45"),
+                "https://f.test/s.jpg"));
+
+        assertThat(productRepository.get(silpancho.getId()).getImageUrl()).isEqualTo("https://f.test/s.jpg");
+    }
+
+    @Test
     void movesTheProductToAnotherCategoryOfTheRestaurant() {
         editProduct.execute(new EditProductCommand(
-                OWNER, silpancho.getId(), drinks.getId(), "Silpancho", null, new BigDecimal("45")));
+                OWNER, silpancho.getId(), drinks.getId(), "Silpancho", null, new BigDecimal("45"), null));
 
         assertThat(productRepository.get(silpancho.getId()).getCategoryId()).isEqualTo(drinks.getId());
     }
@@ -62,10 +76,10 @@ class EditProductUseCaseTest {
     void refusesToEditAProductOfAnotherRestaurant() {
         Category foreignCategory = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
         Product foreign =
-                productRepository.save(Product.create(foreignCategory, "Napolitana", null, new BigDecimal("70")));
+                productRepository.save(Product.create(foreignCategory, "Napolitana", null, new BigDecimal("70"), null));
 
         assertThatThrownBy(() -> editProduct.execute(new EditProductCommand(
-                        OWNER, foreign.getId(), mainDishes.getId(), "Mía", null, new BigDecimal("1"))))
+                        OWNER, foreign.getId(), mainDishes.getId(), "Mía", null, new BigDecimal("1"), null)))
                 .isInstanceOf(CatalogNotOwnerException.class)
                 .extracting("code")
                 .isEqualTo("catalog.not_owner");
@@ -77,15 +91,21 @@ class EditProductUseCaseTest {
         Category foreignCategory = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
 
         assertThatThrownBy(() -> editProduct.execute(new EditProductCommand(
-                        OWNER, silpancho.getId(), foreignCategory.getId(), "Silpancho", null, new BigDecimal("45"))))
+                        OWNER,
+                        silpancho.getId(),
+                        foreignCategory.getId(),
+                        "Silpancho",
+                        null,
+                        new BigDecimal("45"),
+                        null)))
                 .isInstanceOf(CatalogNotOwnerException.class);
         assertThat(productRepository.get(silpancho.getId()).getCategoryId()).isEqualTo(mainDishes.getId());
     }
 
     @Test
     void failsWhenTheProductDoesNotExist() {
-        assertThatThrownBy(() -> editProduct.execute(
-                        new EditProductCommand(OWNER, 99L, mainDishes.getId(), "Silpancho", null, BigDecimal.TEN)))
+        assertThatThrownBy(() -> editProduct.execute(new EditProductCommand(
+                        OWNER, 99L, mainDishes.getId(), "Silpancho", null, BigDecimal.TEN, null)))
                 .isInstanceOf(ProductNotFoundException.class)
                 .extracting("code")
                 .isEqualTo("catalog.product_not_found");
@@ -94,7 +114,7 @@ class EditProductUseCaseTest {
     @Test
     void failsWhenTheNewCategoryDoesNotExist() {
         assertThatThrownBy(() -> editProduct.execute(
-                        new EditProductCommand(OWNER, silpancho.getId(), 99L, "Silpancho", null, BigDecimal.TEN)))
+                        new EditProductCommand(OWNER, silpancho.getId(), 99L, "Silpancho", null, BigDecimal.TEN, null)))
                 .isInstanceOf(CategoryNotFoundException.class);
         assertThat(productRepository.get(silpancho.getId()).getCategoryId()).isEqualTo(mainDishes.getId());
     }
@@ -102,7 +122,7 @@ class EditProductUseCaseTest {
     @Test
     void failsWhenTheOwnerHasNoRestaurant() {
         assertThatThrownBy(() -> editProduct.execute(new EditProductCommand(
-                        9L, silpancho.getId(), mainDishes.getId(), "Silpancho", null, BigDecimal.TEN)))
+                        9L, silpancho.getId(), mainDishes.getId(), "Silpancho", null, BigDecimal.TEN, null)))
                 .isInstanceOf(RestaurantNotFoundException.class);
         assertThat(productRepository.get(silpancho.getId()).getPrice()).isEqualTo(new BigDecimal("45.00"));
     }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +18,10 @@ class GetOwnRestaurantUseCaseTest {
 
     @Test
     void returnsTheRestaurantOfTheOwner() {
-        restaurantRepository.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
-        restaurantRepository.save(Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", NOW));
+        restaurantRepository.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
+        restaurantRepository.save(
+                Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null, NOW));
 
         Restaurant restaurant = getOwnRestaurant.execute(8L);
 
@@ -28,7 +31,8 @@ class GetOwnRestaurantUseCaseTest {
 
     @Test
     void failsWhenTheOwnerHasNoRestaurant() {
-        restaurantRepository.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        restaurantRepository.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThatThrownBy(() -> getOwnRestaurant.execute(8L))
                 .isInstanceOf(RestaurantNotFoundException.class)

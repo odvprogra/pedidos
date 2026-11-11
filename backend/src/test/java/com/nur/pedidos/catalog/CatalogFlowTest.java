@@ -38,7 +38,7 @@ class CatalogFlowTest {
                 .isEqualTo(HttpStatus.CONFLICT);
         Long silpancho = owner.post(
                         "/api/v1/restaurants/mine/products",
-                        new ProductBody(mainDishes, "Silpancho", "Con arroz y huevo", new BigDecimal("45")))
+                        new ProductBody(mainDishes, "Silpancho", "Con arroz y huevo", new BigDecimal("45"), null))
                 .expectStatus()
                 .isCreated()
                 .expectBody(ProductView.class)
@@ -65,7 +65,8 @@ class CatalogFlowTest {
                                 "Silpancho",
                                 "Con arroz y huevo",
                                 new BigDecimal("45.00"),
-                                false))))));
+                                false,
+                                null))))));
     }
 
     @Test
@@ -130,7 +131,7 @@ class CatalogFlowTest {
                 .isCreated();
         Long silpancho = owner.post(
                         "/api/v1/restaurants/mine/products",
-                        new ProductBody(mainDishes, "Silpancho", null, new BigDecimal("45")))
+                        new ProductBody(mainDishes, "Silpancho", null, new BigDecimal("45"), null))
                 .expectBody(ProductView.class)
                 .returnResult()
                 .getResponseBody()
@@ -145,7 +146,8 @@ class CatalogFlowTest {
                 .expectStatus()
                 .isOk()
                 .expectBody(RestaurantView.class)
-                .isEqualTo(new RestaurantView(restaurant, "La Casona", null, "Calle Sucre 245", false));
+                .isEqualTo(new RestaurantView(
+                        restaurant, "La Casona", null, "Calle Sucre 245", "TRADITIONAL", null, false));
         client.get()
                 .uri("/api/v1/restaurants/" + restaurant + "/catalog")
                 .exchange()
@@ -156,7 +158,7 @@ class CatalogFlowTest {
                         mainDishes,
                         "Platos fuertes",
                         List.of(new ProductView(
-                                silpancho, mainDishes, "Silpancho", null, new BigDecimal("45.00"), false))))));
+                                silpancho, mainDishes, "Silpancho", null, new BigDecimal("45.00"), false, null))))));
 
         owner.act("/api/v1/restaurants/mine/open").expectStatus().isNoContent();
 
@@ -181,6 +183,70 @@ class CatalogFlowTest {
     }
 
     @Test
+    void anOwnerChangesTheDetailsAndImagesThatVisitorsSee() {
+        Owner owner = ownerWithRestaurant("eva@visita.com");
+        Long restaurant = owner.get("/api/v1/restaurants/mine")
+                .expectBody(RestaurantView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+        Long rolls = owner.post("/api/v1/restaurants/mine/categories", new CategoryBody("Rolls"))
+                .expectBody(CategoryView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+        Long maki = owner.post(
+                        "/api/v1/restaurants/mine/products",
+                        new ProductBody(rolls, "Maki", null, new BigDecimal("55"), "https://f.test/maki.jpg"))
+                .expectStatus()
+                .isCreated()
+                .expectBody(ProductView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+
+        owner.put(
+                        "/api/v1/restaurants/mine",
+                        new RestaurantDetailsBody(
+                                "Sushi Ito", "Rolls y nigiris", "Av. Banzer 120", "SUSHI", "https://f.test/ito.png"))
+                .expectStatus()
+                .isOk();
+        owner.put(
+                        "/api/v1/restaurants/mine",
+                        new RestaurantDetailsBody("Sushi Ito", null, "Av. Banzer 120", "SUSHI", "ito.png"))
+                .expectStatus()
+                .isEqualTo(422)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("restaurant.invalid_image_url");
+
+        client.get()
+                .uri("/api/v1/restaurants/" + restaurant)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(RestaurantView.class)
+                .isEqualTo(new RestaurantView(
+                        restaurant,
+                        "Sushi Ito",
+                        "Rolls y nigiris",
+                        "Av. Banzer 120",
+                        "SUSHI",
+                        "https://f.test/ito.png",
+                        false));
+        client.get()
+                .uri("/api/v1/restaurants/" + restaurant + "/catalog")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.categories[0].products[0].id")
+                .isEqualTo(maki)
+                .jsonPath("$.categories[0].products[0].imageUrl")
+                .isEqualTo("https://f.test/maki.jpg");
+    }
+
+    @Test
     void aVisitorIsToldThatAnUnknownRestaurantDoesNotExist() {
         client.get()
                 .uri("/api/v1/restaurants/999999/catalog")
@@ -194,7 +260,7 @@ class CatalogFlowTest {
 
     private Owner ownerWithRestaurant(String email) {
         Owner owner = owner(email);
-        owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245"))
+        owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245", "TRADITIONAL"))
                 .expectStatus()
                 .isCreated();
         return owner;
@@ -241,6 +307,17 @@ class CatalogFlowTest {
                     .exchange();
         }
 
+        RestTestClient.ResponseSpec put(String uri, Object body) {
+            return client.put()
+                    .uri(uri)
+                    .cookie("SESSION", session)
+                    .cookie("XSRF-TOKEN", csrfToken)
+                    .header("X-XSRF-TOKEN", csrfToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .exchange();
+        }
+
         RestTestClient.ResponseSpec act(String uri) {
             return client.post()
                     .uri(uri)
@@ -262,22 +339,32 @@ class CatalogFlowTest {
 
     private record RegistrationBody(String name, String email, String password, String role) {}
 
-    private record RestaurantBody(String name, String address) {}
+    private record RestaurantBody(String name, String address, String category) {}
 
     private record CategoryBody(String name) {}
 
     private record CategoryView(Long id, String name) {}
 
-    private record ProductBody(Long categoryId, String name, String description, BigDecimal price) {}
+    private record ProductBody(Long categoryId, String name, String description, BigDecimal price, String imageUrl) {}
 
     private record ProductView(
-            Long id, Long categoryId, String name, String description, BigDecimal price, boolean available) {}
+            Long id,
+            Long categoryId,
+            String name,
+            String description,
+            BigDecimal price,
+            boolean available,
+            String imageUrl) {}
 
     private record SectionView(Long id, String name, List<ProductView> products) {}
 
     private record CatalogView(List<SectionView> categories) {}
 
-    private record RestaurantView(Long id, String name, String description, String address, boolean open) {}
+    private record RestaurantView(
+            Long id, String name, String description, String address, String category, String imageUrl, boolean open) {}
+
+    private record RestaurantDetailsBody(
+            String name, String description, String address, String category, String imageUrl) {}
 
     private record RestaurantPage(List<RestaurantView> items, int page, int size, long totalItems, int totalPages) {}
 }

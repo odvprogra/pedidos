@@ -63,3 +63,24 @@ test('E2E 02 · the restaurant cannot skip a step of the order', async ({ page }
   expect(response).toContain('409');
   expect(response).toContain('order.invalid_transition');
 });
+
+test('E2E 02 · the restaurant edits its details and customers see them', async ({ page }) => {
+  const restaurant = await openRestaurant('La Esquina', [{ name: 'Sopa de maní', price: 20 }]);
+
+  await logIn(page, restaurant.owner);
+  await page.getByRole('button', { name: 'Editar datos' }).click();
+  await page.getByLabel('Nombre del restaurante').fill('La Esquina Paceña');
+  await page.getByLabel('Tipo de comida').selectOption({ label: 'Parrillas' });
+  await page.getByLabel('Dirección').fill('Av. 6 de Agosto 1450');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+
+  await expect(
+    page.getByRole('main').getByText('Guardaste los cambios de La Esquina Paceña.'),
+  ).toBeVisible();
+  await expect(page.locator('[data-category]')).toHaveText('Parrillas');
+
+  await page.goto(`/restaurantes/${restaurant.id}`);
+  await expect(page.getByRole('heading', { level: 1, name: 'La Esquina Paceña' })).toBeVisible();
+  await expect(page.locator('[data-category]')).toHaveText('Parrillas');
+  await expect(page.getByRole('main')).toContainText('Av. 6 de Agosto 1450');
+});

@@ -16,6 +16,7 @@ const SILPANCHO: Product = {
   description: 'Con arroz y huevo',
   price: 45.5,
   available: false,
+  imageUrl: null,
 };
 
 @Component({
@@ -99,8 +100,34 @@ describe('ProductForm', () => {
       await submit();
 
       expect(host.saved).toEqual([
-        { categoryId: 5, name: 'Limonada', description: 'Jarra de un litro', price: 15.5 },
+        {
+          categoryId: 5,
+          name: 'Limonada',
+          description: 'Jarra de un litro',
+          price: 15.5,
+          imageUrl: '',
+        },
       ]);
+    });
+
+    it('sends the photo of the product without spaces around it', async () => {
+      await fill('name', 'Limonada');
+      await fill('price', '15');
+      await fill('image', '  https://fotos.pedidos.test/limonada.jpg ');
+      await submit();
+
+      expect(host.saved[0].imageUrl).toBe('https://fotos.pedidos.test/limonada.jpg');
+    });
+
+    it('explains a photo that is not a web address and does not send it', async () => {
+      await fill('name', 'Limonada');
+      await fill('price', '15');
+      await fill('image', 'limonada.jpg');
+      await submit();
+
+      expect(messageOf('image')).toBe('Pega una dirección que empiece con http:// o https://.');
+      expect(field('image').getAttribute('aria-invalid')).toBe('true');
+      expect(host.saved).toEqual([]);
     });
 
     it('sends the category the owner chooses', async () => {
@@ -200,6 +227,7 @@ describe('ProductForm', () => {
       expect(field('name').value).toBe('Silpancho');
       expect(field('description').value).toBe('Con arroz y huevo');
       expect(field('price').value).toBe('45,50');
+      expect(field('image').value).toBe('');
       expect((field('category') as HTMLSelectElement).selectedOptions[0].textContent).toContain(
         'Platos fuertes',
       );
@@ -217,7 +245,7 @@ describe('ProductForm', () => {
       await submit();
 
       expect(host.saved).toEqual([
-        { categoryId: 3, name: 'Silpancho', description: '', price: 48 },
+        { categoryId: 3, name: 'Silpancho', description: '', price: 48, imageUrl: '' },
       ]);
     });
   });

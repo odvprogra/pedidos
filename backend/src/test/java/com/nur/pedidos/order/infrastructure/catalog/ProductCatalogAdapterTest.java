@@ -28,8 +28,8 @@ class ProductCatalogAdapterTest {
                 .thenReturn(new Catalog(
                         List.of(mainDishes),
                         List.of(
-                                new Product(10L, 4L, 3L, "Silpancho", "Con huevo", new BigDecimal("45.00"), true),
-                                new Product(11L, 4L, 3L, "Pique macho", null, new BigDecimal("60.00"), false))));
+                                new Product(10L, 4L, 3L, "Silpancho", "Con huevo", new BigDecimal("45.00"), true, null),
+                                new Product(11L, 4L, 3L, "Pique macho", null, new BigDecimal("60.00"), false, null))));
 
         assertThat(catalog.productsOf(4L))
                 .containsExactly(

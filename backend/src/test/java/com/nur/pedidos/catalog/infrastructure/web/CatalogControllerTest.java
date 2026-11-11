@@ -44,8 +44,15 @@ class CatalogControllerTest {
                         List.of(mainDishes, drinks),
                         List.of(
                                 new Product(
-                                        10L, 4L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.00"), true),
-                                new Product(11L, 4L, 3L, "Pique macho", null, new BigDecimal("60.50"), false))));
+                                        10L,
+                                        4L,
+                                        3L,
+                                        "Silpancho",
+                                        "Con arroz y huevo",
+                                        new BigDecimal("45.00"),
+                                        true,
+                                        null),
+                                new Product(11L, 4L, 3L, "Pique macho", null, new BigDecimal("60.50"), false, null))));
 
         var response = mvc.get().uri(CATALOG).with(sessionOf("OWNER", 7L));
 
@@ -62,7 +69,8 @@ class CatalogControllerTest {
                           "name": "Silpancho",
                           "description": "Con arroz y huevo",
                           "price": 45.00,
-                          "available": true
+                          "available": true,
+                          "imageUrl": null
                         },
                         {
                           "id": 11,
@@ -70,7 +78,8 @@ class CatalogControllerTest {
                           "name": "Pique macho",
                           "description": null,
                           "price": 60.50,
-                          "available": false
+                          "available": false,
+                          "imageUrl": null
                         }
                       ]
                     },

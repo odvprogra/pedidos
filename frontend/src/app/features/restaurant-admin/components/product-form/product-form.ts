@@ -26,9 +26,11 @@ import { map } from 'rxjs';
 import { Category, Product, ProductDraft } from '../../models/catalog';
 import { parsePrice, priceText, priceValidator } from '../../models/price';
 
-type ProductField = 'name' | 'description' | 'price';
+type ProductField = 'name' | 'description' | 'price' | 'imageUrl';
 
 const DESCRIPTION_LIMIT = 300;
+const IMAGE_URL_LIMIT = 500;
+const WEB_ADDRESS = /^\s*(https?:\/\/\S+)?\s*$/i;
 
 const MESSAGES: Record<ProductField, ValidationMessages> = {
   name: {
@@ -43,6 +45,10 @@ const MESSAGES: Record<ProductField, ValidationMessages> = {
     required: 'Escribe el precio.',
     priceFormat: 'Escribe el precio con números, como 45 o 45,50.',
     pricePositive: 'El precio tiene que ser mayor a cero.',
+  },
+  imageUrl: {
+    pattern: 'Pega una dirección que empiece con http:// o https://.',
+    maxlength: `Usa hasta ${IMAGE_URL_LIMIT} caracteres.`,
   },
 };
 
@@ -71,6 +77,7 @@ export class ProductForm implements OnInit {
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]],
     description: ['', Validators.maxLength(DESCRIPTION_LIMIT)],
     price: ['', [Validators.required, priceValidator]],
+    imageUrl: ['', [Validators.pattern(WEB_ADDRESS), Validators.maxLength(IMAGE_URL_LIMIT)]],
   });
   protected readonly descriptionLength = toSignal(
     this.form.controls.description.valueChanges.pipe(map((description) => description.length)),
@@ -99,12 +106,14 @@ export class ProductForm implements OnInit {
             name: product.name,
             description: product.description ?? '',
             price: priceText(product.price),
+            imageUrl: product.imageUrl ?? '',
           }
         : {
             categoryId: this.categoryId(),
             name: '',
             description: '',
             price: '',
+            imageUrl: '',
           },
     );
   }
@@ -138,6 +147,7 @@ export class ProductForm implements OnInit {
       name: value.name.trim(),
       description: value.description.trim(),
       price,
+      imageUrl: value.imageUrl.trim(),
     });
   }
 }

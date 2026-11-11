@@ -75,6 +75,25 @@
     </app-form-field>
   </div>
 
+  @let imageUrlError = errorOf('imageUrl');
+  <app-form-field
+    label="Foto (opcional)"
+    fieldId="product-image"
+    hint="Pega la dirección web de la foto del plato."
+    [error]="imageUrlError"
+  >
+    <input
+      appTextInput
+      id="product-image"
+      type="url"
+      inputmode="url"
+      formControlName="imageUrl"
+      autocomplete="off"
+      placeholder="https://"
+      [attr.aria-invalid]="imageUrlError !== null"
+    />
+  </app-form-field>
+
   @if (alert(); as message) {
     <app-alert class="block">{{ message }}</app-alert>
   }

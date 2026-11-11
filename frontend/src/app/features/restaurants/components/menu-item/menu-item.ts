@@ -14,12 +14,13 @@ import {
 import { MAX_QUANTITY } from '@core/cart/cart';
 import { Badge } from '@shared/ui/badge/badge';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
+import { CoverImage } from '@shared/ui/cover-image/cover-image';
 import { formatPrice } from '@shared/utils/format-price';
 import { Product } from '../../models/catalog';
 
 @Component({
   selector: 'app-menu-item',
-  imports: [Badge, ConfirmPanel],
+  imports: [Badge, ConfirmPanel, CoverImage],
   templateUrl: './menu-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

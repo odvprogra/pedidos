@@ -7,8 +7,9 @@
 - Acciones que no son CRUD como subrecurso con verbo: `POST /api/v1/orders/{id}/cancel`.
 - Rutas en kebab-case; JSON en camelCase.
 - La verificación del sistema queda fuera de la versión: `GET /api/health`.
-- Si el admin necesita otra vista de una colección que ya es pública, va en
-  `/api/v1/admin/<recurso>`, como `GET /api/v1/admin/restaurants`. Sus acciones siguen en el recurso
+- Si el admin necesita otra vista de una colección que ya tiene una ruta para otro rol, va en
+  `/api/v1/admin/<recurso>`: `GET /api/v1/admin/restaurants` (la pública trae solo los visibles) y
+  `GET /api/v1/admin/orders` (`/api/v1/orders` es la del cliente). Sus acciones siguen en el recurso
   (`POST /api/v1/restaurants/{id}/suspend`). Una colección que solo ve el admin, como las cuentas, no
   lleva el prefijo.
 
@@ -132,6 +133,7 @@ sesión, así que un dueño nunca ve ni cambia el de otro.
 | ---------------- | ------------------------------------- | ------ | --------------------------------------------------------- |
 | Registrar        | `POST /api/v1/restaurants`            | Dueño  | `201` + `Location: /api/v1/restaurants/mine` + el recurso |
 | Ver el propio    | `GET /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
+| Editar el propio | `PUT /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
 | Abrir el propio  | `POST /api/v1/restaurants/mine/open`  | Dueño  | `204`                                                     |
 | Cerrar el propio | `POST /api/v1/restaurants/mine/close` | Dueño  | `204`                                                     |
 
@@ -141,18 +143,25 @@ sesión, así que un dueño nunca ve ni cambia el de otro.
   "name": "La Casona",
   "description": "Comida criolla",
   "address": "Calle Sucre 245",
+  "category": "TRADITIONAL",
+  "imageUrl": "https://fotos.pedidos.test/casona.jpg",
   "open": false,
   "suspended": false
 }
 ```
 
-- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300) y `address`
-  (hasta 200). Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
+- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300), `address`
+  (hasta 200), `category` (obligatoria: `TRADITIONAL`, `GRILL`, `CHICKEN`, `PIZZA`, `BURGERS`,
+  `SUSHI`, `CAFE` u `OTHER`) e `imageUrl` (opcional, hasta 500). Una categoría que falta responde
+  `400` con el campo `category`; una que no está en la lista, `400` con `validation_failed`. Una
+  imagen que no es una dirección `http` o `https` responde `422` con `restaurant.invalid_image_url`. Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
   `validation_failed` y el campo en `errors[].field`. Los tres se guardan sin espacios a los
   costados, y una descripción vacía queda en `null`.
 - Un restaurante nuevo empieza cerrado y sin suspender. Un segundo registro del mismo dueño responde
   `409` con `restaurant.already_registered`.
-- Si el dueño todavía no registró su restaurante, `GET`, `open` y `close` responden `404` con
+- Editar recibe los mismos campos que el registro, con las mismas reglas, y responde el recurso. No
+  cambia si está abierto ni si está suspendido.
+- Si el dueño todavía no registró su restaurante, `GET`, `PUT`, `open` y `close` responden `404` con
   `restaurant.not_found`. El frontend usa ese código para mostrar el formulario de registro.
 - Abrir y cerrar son idempotentes: abrir uno abierto o cerrar uno cerrado responde `204` y lo deja
   como estaba.
@@ -190,7 +199,8 @@ sale siempre de la sesión.
           "name": "Silpancho",
           "description": "Con arroz y huevo",
           "price": 45.00,
-          "available": true
+          "available": true,
+          "imageUrl": null
         }
       ]
     },
@@ -202,8 +212,9 @@ sale siempre de la sesión.
 - El menú trae las categorías en el orden en que se crearon, cada una con sus productos también en
   orden de creación. No se pagina: un menú tiene un tamaño acotado y se muestra entero.
 - Crear y renombrar una categoría reciben `{"name": "Bebidas"}`, hasta 60 caracteres. Crear y editar
-  un producto reciben `categoryId`, `name` (hasta 120), `description` (opcional, hasta 300) y
-  `price` (mayor que 0, con hasta 10 dígitos enteros y 2 decimales). Si un campo falta o no cumple,
+  un producto reciben `categoryId`, `name` (hasta 120), `description` (opcional, hasta 300),
+  `price` (mayor que 0, con hasta 10 dígitos enteros y 2 decimales) e `imageUrl` (opcional, hasta
+  500; una dirección que no es `http` o `https` responde `422` con `catalog.invalid_image_url`). Si un campo falta o no cumple,
   responde `400` con `validation_failed` y el campo en `errors[].field`. Los textos se guardan sin
   espacios a los costados, una descripción vacía queda en `null` y el precio vuelve con dos
   decimales (`45` se guarda como `45.00`).
@@ -212,8 +223,8 @@ sale siempre de la sesión.
   restaurante puede usar el mismo nombre.
 - Una categoría con productos no se borra, aunque estén agotados: `409` con
   `catalog.category_not_empty`. Primero se mueven o se borran sus productos.
-- Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción y el
-  precio, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
+- Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción, el
+  precio y la imagen, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
 - El `Location` de una categoría o un producto creado (`/mine/categories/{id}`,
   `/mine/products/{id}`) es la ruta donde se edita y se borra; no tiene `GET`, porque el menú se lee
   entero en `/mine/catalog`.
@@ -244,6 +255,8 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
       "name": "La Casona",
       "description": "Comida criolla",
       "address": "Calle Sucre 245",
+      "category": "TRADITIONAL",
+      "imageUrl": "https://fotos.pedidos.test/casona.jpg",
       "open": true
     }
   ],
@@ -257,7 +270,8 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
 - El listado trae solo los restaurantes visibles, los que no están suspendidos. Primero los
   abiertos y después los cerrados, y dentro de cada grupo en orden de registro (por `id`
   ascendente). Un restaurante que abre o cierra cambia de lugar en la lista.
-- El listado y el detalle traen `id`, `name`, `description`, `address` y `open`. No traen
+- El listado y el detalle traen `id`, `name`, `description`, `address`, `category`, `imageUrl` y
+  `open`. No traen
   `suspended`, que en público siempre sería `false`, ni el dueño.
 - Un restaurante recién registrado ya aparece, cerrado y con el menú vacío: la visibilidad depende
   solo de la suspensión.
@@ -291,6 +305,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
       "name": "La Casona",
       "description": "Comida criolla",
       "address": "Calle Sucre 245",
+      "category": "TRADITIONAL",
+      "imageUrl": "https://fotos.pedidos.test/casona.jpg",
       "open": true,
       "suspended": false
     },
@@ -299,6 +315,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
       "name": "Pizzería Napoli",
       "description": null,
       "address": "Av. Banzer 120",
+      "category": "PIZZA",
+      "imageUrl": null,
       "open": false,
       "suspended": true
     }
@@ -311,8 +329,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
 ```
 
 - La lista va en `/admin/restaurants` porque `GET /api/v1/restaurants` es público y trae solo los
-  visibles, con otra forma y otro orden. Es la única ruta bajo `/admin`: la vista del admin sobre una
-  colección que también tiene vista pública. No se abre en `SecurityConfig`; la protege su
+  visibles, con otra forma y otro orden: es la vista del admin sobre una colección que también tiene
+  vista pública, como `/admin/orders` lo es sobre los pedidos del cliente. No se abre en `SecurityConfig`; la protege su
   `@PreAuthorize`. Las acciones van en el recurso, como en las cuentas.
 - La lista trae todos los restaurantes en orden de registro (por `id` ascendente), con la forma del
   restaurante del dueño. Un local que abre, cierra o se suspende no cambia de lugar. No trae el
@@ -440,6 +458,18 @@ El dueño recibe los pedidos de su restaurante y los lleva hasta que el cliente 
 - Un cliente o un admin reciben `403` con `access_denied`.
 - Si el cliente cancela mientras el dueño acepta, uno de los dos recibe `409`
   ([ADR-0010](../adr/0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)).
+
+## Pedidos de la plataforma
+
+El admin consulta todos los pedidos, de cualquier cliente y restaurante, sin cambiarlos.
+
+| Operación          | Ruta                                      | Acceso | Respuesta                     |
+| ------------------ | ----------------------------------------- | ------ | ----------------------------- |
+| Listar los pedidos | `GET /api/v1/admin/orders?page=0&size=20` | Admin  | `200` + una página de pedidos |
+
+- Cada pedido tiene la forma del pedido del cliente, ítems incluidos, y van los más nuevos primero
+  (`placed_at desc, id desc`). La paginación es la de siempre.
+- Un cliente o un dueño reciben `403` con `access_denied`; sin sesión, `401`.
 
 ## Paginación
 

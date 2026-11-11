@@ -5,6 +5,7 @@ export interface Product {
   description: string | null;
   price: number;
   available: boolean;
+  imageUrl: string | null;
 }
 
 export interface CatalogCategory {

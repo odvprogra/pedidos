@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import com.nur.pedidos.TestcontainersConfiguration;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void savesAndLoadsARestaurantByItsOwner() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", "Comida criolla", "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", "Comida criolla", "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(saved.getId()).isNotNull();
         assertThat(adapter.findByOwnerId(7L))
@@ -44,8 +46,23 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void savesTheCategoryAndTheImageAndTheirChanges() {
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.PIZZA, "https://f.test/a.png", NOW));
+        saved.updateDetails("La Casona", null, "Calle Sucre 245", RestaurantCategory.SUSHI, "https://f.test/b.png");
+
+        adapter.save(saved);
+
+        assertThat(adapter.findByOwnerId(7L))
+                .get()
+                .extracting(Restaurant::getCategory, Restaurant::getImageUrl)
+                .containsExactly(RestaurantCategory.SUSHI, "https://f.test/b.png");
+    }
+
+    @Test
     void keepsARestaurantWithoutDescription() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerId(7L))
                 .get()
@@ -55,14 +72,16 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsNothingWhenTheOwnerHasNoRestaurant() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerId(8L)).isEmpty();
     }
 
     @Test
     void tellsWhetherAnOwnerAlreadyHasARestaurant() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.existsByOwnerId(7L)).isTrue();
         assertThat(adapter.existsByOwnerId(8L)).isFalse();
@@ -70,7 +89,8 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsTheOpeningOfARestaurant() {
-        Restaurant restaurant = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant restaurant = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
         restaurant.open();
 
         adapter.save(restaurant);
@@ -83,7 +103,17 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsTheSuspensionOfARestaurant() {
-        adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+        adapter.save(new Restaurant(
+                null,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                false,
+                true,
+                NOW));
 
         assertThat(adapter.findByOwnerId(7L))
                 .get()
@@ -93,8 +123,10 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsARestaurantByItsId() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
-        Restaurant fogon = adapter.save(Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
+        Restaurant fogon = adapter.save(
+                Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findById(fogon.getId()))
                 .get()
@@ -104,7 +136,8 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsARestaurantToChangeByItsId() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByIdForUpdate(saved.getId()))
                 .get()
@@ -114,7 +147,8 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsARestaurantToChangeByItsOwner() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerIdForUpdate(7L))
                 .get()
@@ -124,21 +158,24 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsNothingToChangeWhenTheIdDoesNotExist() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByIdForUpdate(saved.getId() + 100)).isEmpty();
     }
 
     @Test
     void findsNothingToChangeWhenTheOwnerHasNoRestaurant() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerIdForUpdate(8L)).isEmpty();
     }
 
     @Test
     void findsNothingWhenTheIdDoesNotExist() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findById(saved.getId() + 100)).isEmpty();
     }
@@ -205,8 +242,17 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsAnOpenRestaurantClosedOnceItIsSuspended() {
-        Restaurant restaurant =
-                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", true, false, NOW));
+        Restaurant restaurant = adapter.save(new Restaurant(
+                null,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                true,
+                false,
+                NOW));
         restaurant.suspend();
 
         adapter.save(restaurant);
@@ -219,8 +265,17 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsTheReactivationOfASuspendedRestaurant() {
-        Restaurant restaurant =
-                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+        Restaurant restaurant = adapter.save(new Restaurant(
+                null,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                false,
+                true,
+                NOW));
         restaurant.reactivate();
 
         adapter.save(restaurant);
@@ -275,13 +330,25 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void rejectsASecondRestaurantForTheSameOwner() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
-        assertThatThrownBy(() -> adapter.save(Restaurant.register(7L, "El Fogón", null, "Av. Banzer 120", NOW)))
+        assertThatThrownBy(() -> adapter.save(Restaurant.register(
+                        7L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null, NOW)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private void save(Long ownerId, String name, boolean open, boolean suspended) {
-        adapter.save(new Restaurant(null, ownerId, name, null, "Calle Sucre 245", open, suspended, NOW));
+        adapter.save(new Restaurant(
+                null,
+                ownerId,
+                name,
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW));
     }
 }

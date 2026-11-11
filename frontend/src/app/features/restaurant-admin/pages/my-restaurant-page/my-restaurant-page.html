@@ -9,95 +9,25 @@
 
   @let current = state();
   @if (current.status === 'ready') {
-    <app-restaurant-card
-      class="mt-6 block max-w-2xl"
-      [restaurant]="current.restaurant"
-      [busy]="toggling()"
-      [menuSummary]="menuSummary()"
-      (openChange)="changeOpening($event)"
-    />
+    @if (editing()) {
+      <div class="mt-6 max-w-2xl">
+        <ng-container *ngTemplateOutlet="detailsForm" />
+      </div>
+    } @else {
+      <app-restaurant-card
+        class="mt-6 block max-w-2xl"
+        [restaurant]="current.restaurant"
+        [busy]="toggling()"
+        [menuSummary]="menuSummary()"
+        (openChange)="changeOpening($event)"
+        (editRequested)="startEditing()"
+      />
+    }
   } @else if (current.status === 'missing') {
     <div class="mt-6 grid gap-6 lg:grid-cols-5 lg:items-start">
       <app-registration-steps class="block lg:order-last lg:col-span-2" />
 
-      <form
-        class="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6 lg:col-span-3"
-        aria-labelledby="registration-title"
-        [formGroup]="form"
-        (ngSubmit)="register()"
-      >
-        <h2 id="registration-title" class="text-lg font-extrabold">Datos del restaurante</h2>
-
-        @let nameError = errorOf('name');
-        <app-form-field label="Nombre del restaurante" fieldId="name" [error]="nameError">
-          <input
-            appTextInput
-            id="name"
-            formControlName="name"
-            autocomplete="organization"
-            placeholder="La Casona"
-            [attr.aria-invalid]="nameError !== null"
-          />
-        </app-form-field>
-
-        @let descriptionError = errorOf('description');
-        <app-form-field
-          label="Descripción (opcional)"
-          fieldId="description"
-          hint="Cuéntales qué cocinas, en hasta 300 caracteres."
-          [error]="descriptionError"
-        >
-          <div class="grid gap-1">
-            <textarea
-              appTextInput
-              id="description"
-              rows="3"
-              class="field-sizing-content min-h-28 resize-none"
-              formControlName="description"
-              placeholder="Comida criolla casera, con almuerzos del día."
-              [attr.aria-invalid]="descriptionError !== null"
-            ></textarea>
-            <p
-              aria-hidden="true"
-              class="text-right text-xs font-semibold"
-              [class.text-danger]="descriptionLength() > descriptionLimit"
-              [class.text-muted]="descriptionLength() <= descriptionLimit"
-            >
-              {{ descriptionLength() }}/{{ descriptionLimit }}
-            </p>
-          </div>
-        </app-form-field>
-
-        @let addressError = errorOf('address');
-        <app-form-field
-          label="Dirección"
-          fieldId="address"
-          hint="Donde tus clientes retiran sus pedidos."
-          [error]="addressError"
-        >
-          <input
-            appTextInput
-            id="address"
-            formControlName="address"
-            autocomplete="off"
-            placeholder="Calle Sucre 245, zona Centro"
-            [attr.aria-invalid]="addressError !== null"
-          />
-        </app-form-field>
-
-        @if (formAlert(); as alert) {
-          <app-alert class="block">{{ alert }}</app-alert>
-        }
-
-        <button appButton type="submit" [attr.aria-disabled]="submitting()">
-          @if (submitting()) {
-            <app-spinner />
-            Registrando…
-          } @else {
-            Registrar restaurante
-          }
-        </button>
-      </form>
+      <ng-container *ngTemplateOutlet="detailsForm" />
     </div>
   } @else if (current.status === 'failed') {
     <app-load-error
@@ -127,3 +57,146 @@
     </div>
   }
 </section>
+
+<ng-template #detailsForm>
+  <form
+    class="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6 lg:col-span-3"
+    aria-labelledby="registration-title"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+  >
+    <h2 id="registration-title" class="text-lg font-extrabold">
+      {{ editing() ? 'Editar datos' : 'Datos del restaurante' }}
+    </h2>
+
+    @let nameError = errorOf('name');
+    <app-form-field label="Nombre del restaurante" fieldId="name" [error]="nameError">
+      <input
+        appTextInput
+        id="name"
+        formControlName="name"
+        autocomplete="organization"
+        placeholder="La Casona"
+        [attr.aria-invalid]="nameError !== null"
+      />
+    </app-form-field>
+
+    @let categoryError = errorOf('category');
+    <app-form-field
+      label="Tipo de comida"
+      fieldId="category"
+      hint="Así te encuentran los clientes en la lista de restaurantes."
+      [error]="categoryError"
+    >
+      <select
+        appTextInput
+        id="category"
+        formControlName="category"
+        [attr.aria-invalid]="categoryError !== null"
+      >
+        <option value="" disabled>Elige una opción</option>
+        @for (category of categories; track category.value) {
+          <option [value]="category.value">{{ category.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    @let descriptionError = errorOf('description');
+    <app-form-field
+      label="Descripción (opcional)"
+      fieldId="description"
+      hint="Cuéntales qué cocinas, en hasta 300 caracteres."
+      [error]="descriptionError"
+    >
+      <div class="grid gap-1">
+        <textarea
+          appTextInput
+          id="description"
+          rows="3"
+          class="field-sizing-content min-h-28 resize-none"
+          formControlName="description"
+          placeholder="Comida criolla casera, con almuerzos del día."
+          [attr.aria-invalid]="descriptionError !== null"
+        ></textarea>
+        <p
+          aria-hidden="true"
+          class="text-right text-xs font-semibold"
+          [class.text-danger]="descriptionLength() > descriptionLimit"
+          [class.text-muted]="descriptionLength() <= descriptionLimit"
+        >
+          {{ descriptionLength() }}/{{ descriptionLimit }}
+        </p>
+      </div>
+    </app-form-field>
+
+    @let addressError = errorOf('address');
+    <app-form-field
+      label="Dirección"
+      fieldId="address"
+      hint="Donde tus clientes retiran sus pedidos."
+      [error]="addressError"
+    >
+      <input
+        appTextInput
+        id="address"
+        formControlName="address"
+        autocomplete="off"
+        placeholder="Calle Sucre 245, zona Centro"
+        [attr.aria-invalid]="addressError !== null"
+      />
+    </app-form-field>
+
+    @let imageUrlError = errorOf('imageUrl');
+    <app-form-field
+      label="Logo o foto del local (opcional)"
+      fieldId="imageUrl"
+      hint="Pega la dirección web de la imagen. Si no tienes, mostramos tu inicial."
+      [error]="imageUrlError"
+    >
+      <input
+        appTextInput
+        id="imageUrl"
+        type="url"
+        inputmode="url"
+        formControlName="imageUrl"
+        autocomplete="off"
+        placeholder="https://"
+        [attr.aria-invalid]="imageUrlError !== null"
+      />
+    </app-form-field>
+
+    @if (formAlert(); as alert) {
+      <app-alert class="block">{{ alert }}</app-alert>
+    }
+
+    @if (editing()) {
+      <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <button
+          appSecondaryButton
+          type="button"
+          [attr.aria-disabled]="submitting()"
+          (click)="cancelEditing()"
+        >
+          Cancelar
+        </button>
+        <button appButton type="submit" [attr.aria-disabled]="submitting()">
+          @if (submitting()) {
+            <app-spinner />
+            Guardando…
+          } @else {
+            Guardar cambios
+          }
+        </button>
+      </div>
+    } @else {
+      <button appButton type="submit" [attr.aria-disabled]="submitting()">
+        @if (submitting()) {
+          <app-spinner />
+          Registrando…
+        } @else {
+          Registrar restaurante
+        }
+      </button>
+    }
+  </form>
+</ng-template>

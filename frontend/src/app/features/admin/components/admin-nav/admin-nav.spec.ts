@@ -13,6 +13,7 @@ describe('AdminNav', () => {
         provideRouter([
           { path: 'admin', component: Blank },
           { path: 'admin/restaurantes', component: Blank },
+          { path: 'admin/pedidos', component: Blank },
         ]),
       ],
     });
@@ -38,6 +39,7 @@ describe('AdminNav', () => {
     expect(nav.querySelector('nav')?.getAttribute('aria-label')).toBe('Secciones del panel');
     expect(link(nav, 'Cuentas').getAttribute('href')).toBe('/admin');
     expect(link(nav, 'Restaurantes').getAttribute('href')).toBe('/admin/restaurantes');
+    expect(link(nav, 'Pedidos').getAttribute('href')).toBe('/admin/pedidos');
   });
 
   it('marks the accounts as the current section on the panel', async () => {
@@ -45,6 +47,7 @@ describe('AdminNav', () => {
 
     expect(link(nav, 'Cuentas').getAttribute('aria-current')).toBe('page');
     expect(link(nav, 'Restaurantes').getAttribute('aria-current')).toBeNull();
+    expect(link(nav, 'Pedidos').getAttribute('aria-current')).toBeNull();
   });
 
   it('marks only the restaurants as current on their section', async () => {
@@ -52,5 +55,13 @@ describe('AdminNav', () => {
 
     expect(link(nav, 'Restaurantes').getAttribute('aria-current')).toBe('page');
     expect(link(nav, 'Cuentas').getAttribute('aria-current')).toBeNull();
+  });
+
+  it('marks only the orders as current on their section', async () => {
+    const nav = await navAt('/admin/pedidos');
+
+    expect(link(nav, 'Pedidos').getAttribute('aria-current')).toBe('page');
+    expect(link(nav, 'Cuentas').getAttribute('aria-current')).toBeNull();
+    expect(link(nav, 'Restaurantes').getAttribute('aria-current')).toBeNull();
   });
 });

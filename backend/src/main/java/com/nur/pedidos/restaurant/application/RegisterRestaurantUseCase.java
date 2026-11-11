@@ -21,7 +21,13 @@ public class RegisterRestaurantUseCase {
             throw new RestaurantAlreadyRegisteredException();
         }
         Restaurant restaurant = Restaurant.register(
-                command.ownerId(), command.name(), command.description(), command.address(), clock.instant());
+                command.ownerId(),
+                command.name(),
+                command.description(),
+                command.address(),
+                command.category(),
+                command.imageUrl(),
+                clock.instant());
         return restaurantRepository.save(restaurant);
     }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.nur.pedidos.restaurant.domain.exception.RestaurantAlreadyRegisteredException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.time.Clock;
 import java.time.Instant;
@@ -21,8 +22,8 @@ class RegisterRestaurantUseCaseTest {
 
     @Test
     void savesAClosedRestaurantForTheOwner() {
-        Restaurant restaurant = registerRestaurant.execute(
-                new RegisterRestaurantCommand(7L, "La Casona", "Comida criolla", "Calle Sucre 245"));
+        Restaurant restaurant = registerRestaurant.execute(new RegisterRestaurantCommand(
+                7L, "La Casona", "Comida criolla", "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
 
         assertThat(restaurant.getId()).isNotNull();
         assertThat(restaurantRepository.findByOwnerId(7L))
@@ -38,11 +39,23 @@ class RegisterRestaurantUseCaseTest {
     }
 
     @Test
-    void rejectsASecondRestaurantForTheSameOwner() {
-        registerRestaurant.execute(new RegisterRestaurantCommand(7L, "La Casona", null, "Calle Sucre 245"));
+    void savesTheCategoryAndTheImageOfTheRestaurant() {
+        registerRestaurant.execute(new RegisterRestaurantCommand(
+                7L, "Sushi Ito", null, "Av. Banzer 120", RestaurantCategory.SUSHI, "https://f.test/ito.png"));
 
-        assertThatThrownBy(() -> registerRestaurant.execute(
-                        new RegisterRestaurantCommand(7L, "El Fogón", null, "Av. Banzer 120")))
+        assertThat(restaurantRepository.findByOwnerId(7L))
+                .get()
+                .extracting(Restaurant::getCategory, Restaurant::getImageUrl)
+                .containsExactly(RestaurantCategory.SUSHI, "https://f.test/ito.png");
+    }
+
+    @Test
+    void rejectsASecondRestaurantForTheSameOwner() {
+        registerRestaurant.execute(new RegisterRestaurantCommand(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
+
+        assertThatThrownBy(() -> registerRestaurant.execute(new RegisterRestaurantCommand(
+                        7L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null)))
                 .isInstanceOf(RestaurantAlreadyRegisteredException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.already_registered");
@@ -55,9 +68,11 @@ class RegisterRestaurantUseCaseTest {
 
     @Test
     void letsEachOwnerRegisterTheirOwnRestaurant() {
-        registerRestaurant.execute(new RegisterRestaurantCommand(7L, "La Casona", null, "Calle Sucre 245"));
+        registerRestaurant.execute(new RegisterRestaurantCommand(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
 
-        registerRestaurant.execute(new RegisterRestaurantCommand(8L, "El Fogón", null, "Av. Banzer 120"));
+        registerRestaurant.execute(new RegisterRestaurantCommand(
+                8L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null));
 
         assertThat(restaurantRepository.count()).isEqualTo(2);
         assertThat(restaurantRepository.findByOwnerId(8L))
@@ -68,7 +83,8 @@ class RegisterRestaurantUseCaseTest {
 
     @Test
     void savesNothingWhenTheRestaurantBreaksARule() {
-        assertThatThrownBy(() -> registerRestaurant.execute(new RegisterRestaurantCommand(7L, "La Casona", null, " ")))
+        assertThatThrownBy(() -> registerRestaurant.execute(new RegisterRestaurantCommand(
+                        7L, "La Casona", null, " ", RestaurantCategory.TRADITIONAL, null)))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.address_required");

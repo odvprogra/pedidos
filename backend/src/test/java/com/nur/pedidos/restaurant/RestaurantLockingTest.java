@@ -7,10 +7,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.nur.pedidos.TestcontainersConfiguration;
 import com.nur.pedidos.restaurant.application.CloseRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.EditRestaurantCommand;
+import com.nur.pedidos.restaurant.application.EditRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.OpenRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.SuspendRestaurantUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
 import java.time.Instant;
 import java.util.Optional;
@@ -49,6 +52,9 @@ class RestaurantLockingTest {
 
     @Autowired
     private SuspendRestaurantUseCase suspendRestaurant;
+
+    @Autowired
+    private EditRestaurantUseCase editRestaurant;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -132,6 +138,26 @@ class RestaurantLockingTest {
                 .containsExactly(false, false);
     }
 
+    @Test
+    void anEditWaitsForTheSuspensionInProgressAndKeepsTheRestaurantSuspended() throws Exception {
+        Long owner = 9_105L;
+        Long restaurantId = save(owner, true, false);
+
+        Future<Restaurant> edit = startWhileHolding(
+                () -> restaurantRepository.findByIdForUpdate(restaurantId),
+                Restaurant::suspend,
+                () -> editRestaurant.execute(new EditRestaurantCommand(
+                        owner, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.GRILL, null)));
+
+        assertThat(edit.get(5, SECONDS))
+                .extracting(Restaurant::getName, Restaurant::isSuspended)
+                .containsExactly("El Fogón", true);
+        assertThat(restaurantRepository.findById(restaurantId))
+                .get()
+                .extracting(Restaurant::getName, Restaurant::getCategory, Restaurant::isSuspended, Restaurant::isOpen)
+                .containsExactly("El Fogón", RestaurantCategory.GRILL, true, false);
+    }
+
     private <T> Future<T> startWhileHolding(
             Supplier<Optional<Restaurant>> lockedRead, Consumer<Restaurant> change, Callable<T> competitor)
             throws Exception {
@@ -154,7 +180,17 @@ class RestaurantLockingTest {
 
     private Long save(Long owner, boolean open, boolean suspended) {
         return restaurantRepository
-                .save(new Restaurant(null, owner, "La Casona", null, "Calle Sucre 245", open, suspended, NOW))
+                .save(new Restaurant(
+                        null,
+                        owner,
+                        "La Casona",
+                        null,
+                        "Calle Sucre 245",
+                        RestaurantCategory.TRADITIONAL,
+                        null,
+                        open,
+                        suspended,
+                        NOW))
                 .getId();
     }
 

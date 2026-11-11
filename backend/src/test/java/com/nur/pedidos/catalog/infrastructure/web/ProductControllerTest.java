@@ -83,11 +83,13 @@ class ProductControllerTest {
                           "name": "Silpancho",
                           "description": "Con arroz y huevo",
                           "price": 45.50,
-                          "available": true
+                          "available": true,
+                          "imageUrl": null
                         }
                         """);
         verify(createProduct)
-                .execute(new CreateProductCommand(7L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50")));
+                .execute(new CreateProductCommand(
+                        7L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50"), null));
     }
 
     @ParameterizedTest
@@ -112,7 +114,7 @@ class ProductControllerTest {
         assertThat(response).hasStatus(HttpStatus.CREATED);
         verify(createProduct)
                 .execute(new CreateProductCommand(
-                        7L, 3L, "a".repeat(120), "b".repeat(300), new BigDecimal("9999999999.99")));
+                        7L, 3L, "a".repeat(120), "b".repeat(300), new BigDecimal("9999999999.99"), null));
     }
 
     @Test
@@ -169,8 +171,8 @@ class ProductControllerTest {
                 .extractingPath("$.available")
                 .isEqualTo(false);
         verify(editProduct)
-                .execute(
-                        new EditProductCommand(7L, 10L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50")));
+                .execute(new EditProductCommand(
+                        7L, 10L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50"), null));
     }
 
     @Test
@@ -366,6 +368,6 @@ class ProductControllerTest {
     }
 
     private static Product silpancho(boolean available) {
-        return new Product(10L, 4L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50"), available);
+        return new Product(10L, 4L, 3L, "Silpancho", "Con arroz y huevo", new BigDecimal("45.50"), available, null);
     }
 }

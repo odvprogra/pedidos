@@ -12,6 +12,7 @@ import com.nur.pedidos.restaurant.application.ReactivateRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.SuspendRestaurantUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import com.nur.pedidos.shared.infrastructure.security.SecurityConfig;
 import java.time.Instant;
@@ -67,6 +68,8 @@ class AdminRestaurantControllerTest {
                       "name": "La Casona",
                       "description": "Comida criolla",
                       "address": "Calle Sucre 245",
+                      "category": "TRADITIONAL",
+                      "imageUrl": null,
                       "open": true,
                       "suspended": false
                     },
@@ -75,6 +78,8 @@ class AdminRestaurantControllerTest {
                       "name": "Pizzería Napoli",
                       "description": null,
                       "address": "Calle Sucre 245",
+                      "category": "TRADITIONAL",
+                      "imageUrl": null,
                       "open": false,
                       "suspended": true
                     }
@@ -157,6 +162,8 @@ class AdminRestaurantControllerTest {
                   "name": "La Casona",
                   "description": "Comida criolla",
                   "address": "Calle Sucre 245",
+                  "category": "TRADITIONAL",
+                  "imageUrl": null,
                   "open": false,
                   "suspended": true
                 }
@@ -269,6 +276,16 @@ class AdminRestaurantControllerTest {
     }
 
     private static Restaurant restaurant(Long id, String name, String description, boolean open, boolean suspended) {
-        return new Restaurant(id, 7L, name, description, "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                id,
+                7L,
+                name,
+                description,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }

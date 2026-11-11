@@ -34,9 +34,9 @@ class GetVisibleCatalogUseCaseTest {
         Category mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
         Category drinks = categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
         Category foreign = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
-        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
-        productRepository.save(Product.create(drinks, "Limonada", null, new BigDecimal("10")));
-        productRepository.save(Product.create(foreign, "Napolitana", null, new BigDecimal("70")));
+        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
+        productRepository.save(Product.create(drinks, "Limonada", null, new BigDecimal("10"), null));
+        productRepository.save(Product.create(foreign, "Napolitana", null, new BigDecimal("70"), null));
 
         Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
@@ -48,8 +48,8 @@ class GetVisibleCatalogUseCaseTest {
     @Test
     void keepsTheSoldOutProductsInTheirPlace() {
         Category mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
-        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
-        Product piqueMacho = Product.create(mainDishes, "Pique macho", null, new BigDecimal("60"));
+        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
+        Product piqueMacho = Product.create(mainDishes, "Pique macho", null, new BigDecimal("60"), null);
         piqueMacho.markSoldOut();
         productRepository.save(piqueMacho);
 
@@ -64,7 +64,7 @@ class GetVisibleCatalogUseCaseTest {
     void leavesOutTheCategoriesWithoutProducts() {
         Category mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
         categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
-        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
+        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
 
         Catalog catalog = getVisibleCatalog.execute(RESTAURANT);
 
@@ -84,7 +84,7 @@ class GetVisibleCatalogUseCaseTest {
     @Test
     void hidesTheCatalogOfASuspendedRestaurant() {
         Category mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
-        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
+        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
         restaurantDirectory.suspend(RESTAURANT);
 
         assertThatThrownBy(() -> getVisibleCatalog.execute(RESTAURANT))

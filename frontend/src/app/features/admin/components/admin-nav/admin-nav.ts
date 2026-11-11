@@ -6,7 +6,7 @@ interface AdminSection {
   label: string;
   path: string;
   exact: boolean;
-  icon: 'accounts' | 'restaurants';
+  icon: 'accounts' | 'restaurants' | 'orders';
 }
 
 @Component({
@@ -24,5 +24,6 @@ export class AdminNav {
       exact: false,
       icon: 'restaurants',
     },
+    { label: 'Pedidos', path: `${ADMIN_PATH}/pedidos`, exact: false, icon: 'orders' },
   ];
 }

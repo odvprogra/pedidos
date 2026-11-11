@@ -11,6 +11,7 @@ import com.nur.pedidos.restaurant.application.GetOwnRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.GetVisibleRestaurantUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +59,15 @@ class RestaurantDirectoryAdapterTest {
 
     private static Restaurant laCasona() {
         return new Restaurant(
-                4L, 7L, "La Casona", null, "Calle Sucre 245", false, false, Instant.parse("2026-11-07T15:00:00Z"));
+                4L,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                false,
+                false,
+                Instant.parse("2026-11-07T15:00:00Z"));
     }
 }

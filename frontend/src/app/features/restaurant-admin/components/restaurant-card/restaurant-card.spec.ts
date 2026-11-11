@@ -11,6 +11,8 @@ const LA_CASONA: Restaurant = {
   address: 'Calle Sucre 245',
   open: false,
   suspended: false,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 
 @Component({
@@ -77,7 +79,8 @@ describe('RestaurantCard', () => {
   it('leaves out the description when there is none', async () => {
     await show({ description: null });
 
-    expect(card().querySelector('h2 + p')?.textContent).toContain('Calle Sucre 245');
+    expect(card().querySelector('h2 + p')?.textContent?.trim()).toBe('Comida típica');
+    expect(card().querySelector('h2 + p + p')?.textContent).toContain('Calle Sucre 245');
   });
 
   it('shows a closed restaurant with the switch off', () => {

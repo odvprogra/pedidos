@@ -10,7 +10,7 @@ import {
 } from './catalog';
 
 function product(id: number, categoryId: number, name: string): Product {
-  return { id, categoryId, name, description: null, price: 20, available: true };
+  return { id, categoryId, name, description: null, price: 20, available: true, imageUrl: null };
 }
 
 const SILPANCHO = product(10, 3, 'Silpancho');

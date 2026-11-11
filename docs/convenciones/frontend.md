@@ -12,10 +12,10 @@ Se sigue la guía de estilo de Angular 2025: archivos sin sufijo de tipo para co
 | Página (enrutada)       | `pages/restaurant-list-page/restaurant-list-page.ts` | `RestaurantListPage` |
 | Componente              | `components/restaurant-card/restaurant-card.ts`      | `RestaurantCard`     |
 | Cliente HTTP            | `data-access/restaurant-api.ts`                      | `RestaurantApi`      |
-| Estado compartido       | `data-access/cart-store.ts`                          | `CartStore`          |
+| Estado compartido       | `data-access/menu-store.ts`                          | `MenuStore`          |
 | Modelo                  | `models/restaurant.ts`                               | `Restaurant`         |
 | Rutas de la feature     | `restaurants.routes.ts`                              | `RESTAURANTS_ROUTES` |
-| Componente reutilizable | `shared/ui/status-badge/status-badge.ts`             | `StatusBadge`        |
+| Componente reutilizable | `shared/ui/badge/badge.ts`                           | `Badge`              |
 
 Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I`.
 
@@ -39,7 +39,9 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Todas las URLs usan `environment.apiUrl`.
 - Toda vista con datos cubre cuatro estados: cargando, vacío, error y éxito. El error de carga es
   `app-load-error` (`@shared/ui`): recibe el título y el mensaje, emite `retry` al tocar
-  "Reintentar", y la página le lleva el foco con su método `focus()`.
+  "Reintentar", y la página le lleva el foco con su método `focus()`. El vacío es `app-empty-state`
+  (`@shared/ui`): recibe el título y el mensaje, el ícono va con el atributo `emptyStateIcon` y la
+  acción, si la hay, como contenido.
 - Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
   propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
   Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
@@ -62,10 +64,31 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
 - Un dato secundario de una página, como el resumen del menú en la ficha del restaurante, no muestra
   un error propio si falla: queda su texto neutro y la página sigue usable.
 - Una página que se abre desde otra de la app lleva el foco a su título cuando termina de cargar.
+  El router abre cada página arriba (`withInMemoryScrolling` con `scrollPositionRestoration: 'top'`).
+  Eso no se prueba en `TestBed`, porque el router solo lo activa cuando arranca la app; se revisa
+  en el navegador.
 - Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
   Bolivia: `Bs 45,00`.
+- El carrito sale solo de `CartStore` (`@core/cart`). Las sumas del carrito se hacen en centavos
+  (`estimatedSubtotal`) y se rotulan como "estimado": el total que vale es el que devuelve la API al
+  confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y
+  su error deja el carrito intacto.
+- Agregar algo que no se puede, como un producto agotado o de un restaurante cerrado, es un botón
+  con `disabled`: el motivo ya está a la vista. Un paso de cantidad que llegó a su límite (1 o 99)
+  usa `aria-disabled`, para no perder el foco mientras se toca.
+- Lo que cambia el carrito sin cambiar de pantalla (agregar, cambiar una cantidad, quitar) se anuncia
+  en una región `aria-live="polite"` fija de la página ("Agregaste Silpancho al carrito. Tienes 3
+  productos."), no con un aviso visible. Al quitar una línea, el foco pasa al "Quitar" de la
+  siguiente, o al de la anterior si era la última; con el carrito vacío, al título.
+- Una barra fija abajo, como "Ver carrito" en el menú del celular, lleva `data-cart-bar`, que agranda
+  el margen de scroll inferior para que no tape el elemento con el foco, y va al final del DOM para
+  que el Tab la alcance después del contenido.
+- Un estado corto (Abierto, Cerrado, Agotado, Suspendida) es un `app-badge` (`@shared/ui`) con su
+  `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
+  bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el
+  estado; el color solo lo acompaña.
 
 ## Sesión
 
@@ -109,11 +132,12 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
-- El botón principal lleva `appButton`, y los secundarios, como "Cancelar", "Editar" o "Borrar",
-  `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el principal muestra que
-  está trabajando y usa `aria-disabled` en lugar de `disabled`, para no perder el foco; "Cancelar"
-  también queda con `aria-disabled`, y `submit()` ignora los envíos repetidos. En el celular los
-  botones van uno debajo del otro, en el mismo orden que el Tab.
+- El botón principal lleva `appButton`, también un enlace que es la acción principal (como "Ver
+  restaurantes" cuando un restaurante no existe). Los secundarios, como "Cancelar", "Editar" o
+  "Borrar", llevan `appSecondaryButton` (`tone="danger"` para borrar). Mientras se envía, el
+  principal muestra que está trabajando y usa `aria-disabled` en lugar de `disabled`, para no
+  perder el foco; "Cancelar" también queda con `aria-disabled`, y `submit()` ignora los envíos
+  repetidos. En el celular los botones van uno debajo del otro, en el mismo orden que el Tab.
 - Un formulario que crea o edita un elemento de una lista se abre en el lugar, sin modal: el
   elemento se convierte en su formulario. Hay uno solo abierto a la vez, el foco va a su primer
   campo, Escape o "Cancelar" lo cierran, y al cerrarse el foco vuelve al botón que lo abrió.

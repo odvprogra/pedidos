@@ -13,6 +13,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FieldViolation, ProblemDetails, toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { LoadError } from '@shared/ui/load-error/load-error';
 import { Observable } from 'rxjs';
@@ -64,6 +65,7 @@ interface Notice {
     Button,
     CategoryForm,
     CategoryHeader,
+    EmptyState,
     LoadError,
     ProductForm,
     ProductRow,

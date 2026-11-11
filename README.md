@@ -60,8 +60,8 @@ cd frontend
 npm start
 ```
 
-Al abrir el frontend se muestra el estado de los tres servicios. Si todo está en verde, el entorno
-está listo.
+Al abrir el frontend se muestran los restaurantes. El estado de los tres servicios está en
+http://localhost:4200/estado; si todo está en verde, el entorno está listo.
 
 ## Verificar antes de un pull request
 

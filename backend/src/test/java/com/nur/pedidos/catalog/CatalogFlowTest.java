@@ -1,5 +1,7 @@
 package com.nur.pedidos.catalog;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.nur.pedidos.TestcontainersConfiguration;
 import java.math.BigDecimal;
 import java.util.List;
@@ -108,6 +110,88 @@ class CatalogFlowTest {
                 .isNotFound();
     }
 
+    @Test
+    void aVisitorWithoutSessionBrowsesARestaurantAndItsMenu() {
+        Owner owner = ownerWithRestaurant("ana@visita.com");
+        Long restaurant = owner.get("/api/v1/restaurants/mine")
+                .expectStatus()
+                .isOk()
+                .expectBody(RestaurantView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+        Long mainDishes = owner.post("/api/v1/restaurants/mine/categories", new CategoryBody("Platos fuertes"))
+                .expectBody(CategoryView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+        owner.post("/api/v1/restaurants/mine/categories", new CategoryBody("Bebidas"))
+                .expectStatus()
+                .isCreated();
+        Long silpancho = owner.post(
+                        "/api/v1/restaurants/mine/products",
+                        new ProductBody(mainDishes, "Silpancho", null, new BigDecimal("45")))
+                .expectBody(ProductView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
+        owner.act("/api/v1/restaurants/mine/products/" + silpancho + "/mark-sold-out")
+                .expectStatus()
+                .isNoContent();
+
+        client.get()
+                .uri("/api/v1/restaurants/" + restaurant)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(RestaurantView.class)
+                .isEqualTo(new RestaurantView(restaurant, "La Casona", null, "Calle Sucre 245", false));
+        client.get()
+                .uri("/api/v1/restaurants/" + restaurant + "/catalog")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(CatalogView.class)
+                .isEqualTo(new CatalogView(List.of(new SectionView(
+                        mainDishes,
+                        "Platos fuertes",
+                        List.of(new ProductView(
+                                silpancho, mainDishes, "Silpancho", null, new BigDecimal("45.00"), false))))));
+
+        owner.act("/api/v1/restaurants/mine/open").expectStatus().isNoContent();
+
+        RestaurantPage page = client.get()
+                .uri("/api/v1/restaurants?size=100")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(RestaurantPage.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(page.items())
+                .filteredOn(item -> item.id().equals(restaurant))
+                .extracting(RestaurantView::open)
+                .containsExactly(true);
+        client.get().uri("/api/v1/restaurants/mine").exchange().expectStatus().isUnauthorized();
+        client.get()
+                .uri("/api/v1/restaurants/mine/catalog")
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
+
+    @Test
+    void aVisitorIsToldThatAnUnknownRestaurantDoesNotExist() {
+        client.get()
+                .uri("/api/v1/restaurants/999999/catalog")
+                .exchange()
+                .expectStatus()
+                .isNotFound()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("restaurant.not_found");
+    }
+
     private Owner ownerWithRestaurant(String email) {
         Owner owner = owner(email);
         owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245"))
@@ -192,4 +276,8 @@ class CatalogFlowTest {
     private record SectionView(Long id, String name, List<ProductView> products) {}
 
     private record CatalogView(List<SectionView> categories) {}
+
+    private record RestaurantView(Long id, String name, String description, String address, boolean open) {}
+
+    private record RestaurantPage(List<RestaurantView> items, int page, int size, long totalItems, int totalPages) {}
 }

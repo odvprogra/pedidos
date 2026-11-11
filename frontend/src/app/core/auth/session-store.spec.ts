@@ -1,10 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { CartRestaurant } from '@core/cart/cart';
+import { CART_STORAGE_KEY, CartStore } from '@core/cart/cart-store';
 import { Account } from './account';
 import { SessionStore } from './session-store';
 
 const ANA: Account = { id: 7, name: 'Ana Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
+const LA_CASONA: CartRestaurant = { id: 4, name: 'La Casona', address: 'Calle Sucre 245' };
+const SILPANCHO = { id: 10, name: 'Silpancho', price: 45 };
 
 describe('SessionStore', () => {
   let store: SessionStore;
@@ -18,7 +22,10 @@ describe('SessionStore', () => {
     httpTesting = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpTesting.verify());
+  afterEach(() => {
+    httpTesting.verify();
+    localStorage.clear();
+  });
 
   describe('load', () => {
     it('stays loading until the current account arrives', () => {
@@ -81,6 +88,16 @@ describe('SessionStore', () => {
     expect(store.account()).toBeNull();
   });
 
+  it('keeps the cart when the session ends without logging out', () => {
+    const cart = TestBed.inject(CartStore);
+    store.signIn(ANA);
+    cart.add(LA_CASONA, SILPANCHO);
+
+    store.clear();
+
+    expect(cart.count()).toBe(1);
+  });
+
   describe('logOut', () => {
     beforeEach(() => store.signIn(ANA));
 
@@ -105,6 +122,31 @@ describe('SessionStore', () => {
         );
 
       expect(store.status()).toBe('anonymous');
+    });
+
+    it('empties the cart once the session is closed', () => {
+      const cart = TestBed.inject(CartStore);
+      cart.add(LA_CASONA, SILPANCHO);
+
+      store.logOut().subscribe();
+      httpTesting
+        .expectOne('/api/v1/auth/logout')
+        .flush(null, { status: 204, statusText: 'No Content' });
+
+      expect(cart.count()).toBe(0);
+      expect(localStorage.getItem(CART_STORAGE_KEY)).toBeNull();
+    });
+
+    it('keeps the cart when the session cannot be closed', () => {
+      const cart = TestBed.inject(CartStore);
+      cart.add(LA_CASONA, SILPANCHO);
+
+      store.logOut().subscribe({ error: () => undefined });
+      httpTesting
+        .expectOne('/api/v1/auth/logout')
+        .flush({ status: 500, detail: 'Error' }, { status: 500, statusText: 'Server Error' });
+
+      expect(cart.count()).toBe(1);
     });
 
     it('keeps the session and reports the error when the backend fails', () => {

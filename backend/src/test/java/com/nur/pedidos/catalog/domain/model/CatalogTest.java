@@ -26,6 +26,39 @@ class CatalogTest {
     }
 
     @Test
+    void leavesOutTheCategoriesWithoutProducts() {
+        Product silpancho = product(10L, MAIN_DISHES, "Silpancho");
+        Product cake = product(12L, DESSERTS, "Torta de chocolate");
+        Catalog catalog = new Catalog(List.of(MAIN_DISHES, DRINKS, DESSERTS), List.of(silpancho, cake));
+
+        Catalog withoutEmpty = catalog.withoutEmptyCategories();
+
+        assertThat(withoutEmpty.categories()).containsExactly(MAIN_DISHES, DESSERTS);
+        assertThat(withoutEmpty.productsIn(MAIN_DISHES)).containsExactly(silpancho);
+        assertThat(withoutEmpty.productsIn(DESSERTS)).containsExactly(cake);
+    }
+
+    @Test
+    void keepsACategoryWhoseProductsAreAllSoldOut() {
+        Product lemonade = new Product(11L, 4L, DRINKS.getId(), "Limonada", null, new BigDecimal("10.00"), false);
+        Catalog catalog = new Catalog(List.of(DRINKS), List.of(lemonade));
+
+        Catalog withoutEmpty = catalog.withoutEmptyCategories();
+
+        assertThat(withoutEmpty.categories()).containsExactly(DRINKS);
+        assertThat(withoutEmpty.productsIn(DRINKS))
+                .extracting(Product::isAvailable)
+                .containsExactly(false);
+    }
+
+    @Test
+    void leavesNothingWhenNoCategoryHasProducts() {
+        Catalog catalog = new Catalog(List.of(MAIN_DISHES, DRINKS), List.of());
+
+        assertThat(catalog.withoutEmptyCategories().categories()).isEmpty();
+    }
+
+    @Test
     void keepsItsOwnCopyOfTheLists() {
         List<Category> categories = new ArrayList<>(List.of(MAIN_DISHES));
         Catalog catalog = new Catalog(categories, List.of());

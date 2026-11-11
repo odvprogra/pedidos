@@ -15,6 +15,11 @@ import tools.jackson.databind.json.JsonMapper;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String OWN_RESTAURANT = "/api/v1/restaurants/mine/**";
+    private static final String[] PUBLIC_RESTAURANTS = {
+        "/api/v1/restaurants", "/api/v1/restaurants/*", "/api/v1/restaurants/*/catalog"
+    };
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JsonMapper jsonMapper) throws Exception {
         ProblemDetailsSecurityHandler problemDetails = new ProblemDetailsSecurityHandler(jsonMapper);
@@ -23,6 +28,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/health")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login")
+                        .permitAll()
+                        .requestMatchers(OWN_RESTAURANT)
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_RESTAURANTS)
                         .permitAll()
                         .anyRequest()
                         .authenticated())

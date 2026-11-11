@@ -4,9 +4,9 @@ Las tablas de cada módulo, sus restricciones y las reglas de negocio que depend
 decisión y sus alternativas están en [ADR-0009](adr/0009-modelo-de-datos-y-migraciones-con-flyway.md);
 cómo se escriben las migraciones, en [backend.md](convenciones/backend.md#migraciones).
 
-Cada tabla entra con la migración de la feature que la usa. Ya existen las de `identity`
-(`V1__create_accounts.sql`), la de `restaurant` (`V2__create_restaurants.sql`) y las de `catalog`
-(`V3__create_catalog.sql`); las de `order` todavía no.
+Cada tabla entra con la migración de la feature que la usa: `identity` (`V1__create_accounts.sql`),
+`restaurant` (`V2__create_restaurants.sql`), `catalog` (`V3__create_catalog.sql`) y `order`
+(`V4__create_orders.sql`).
 
 ## Vista general
 
@@ -95,6 +95,9 @@ suspendido o no, que decide el admin.
   `restaurant.already_registered`, y `unique (owner_id)` lo respalda en la base. Ese único
   (`restaurants_owner_id_key`) ya indexa `owner_id`, así que no lleva un índice aparte.
 - Un restaurante nuevo empieza cerrado: el dueño carga el menú y después lo abre.
+- El listado público muestra primero los abiertos y después los cerrados, cada grupo en orden de
+  registro. La tabla es chica, así que la consulta (`where suspended = false order by open desc,
+  id`) no lleva un índice propio.
 - Suspender un restaurante también lo cierra. Al reactivarlo vuelve cerrado y el dueño decide cuándo
   abrir. Mientras está suspendido, el dueño no lo puede abrir: `409` con `restaurant.suspended`.
 - Suspender la cuenta de un dueño no cambia su restaurante. Si el admin quiere sacar el local,
@@ -116,7 +119,8 @@ suspendido o no, que decide el admin.
 
 `categories_restaurant_id_name_key` es un índice único sobre `(restaurant_id, lower(name))`. Como
 empieza por `restaurant_id`, esa columna no lleva un índice aparte. El menú muestra las categorías
-en el orden en que se crearon.
+en el orden en que se crearon. El menú público deja afuera las que no tienen productos; el del
+dueño las muestra todas.
 
 ### `products`
 
@@ -175,7 +179,9 @@ sesión; confirmar exige el rol `CUSTOMER`.
 | `unit_price`   | `numeric(12,2)` | no   | Copia del precio al confirmar, `check > 0` |
 | `quantity`     | `integer`       | no   | `check (quantity between 1 and 99)`        |
 
-`unique (order_id, product_id)`: un producto aparece una sola vez por pedido. `Order` y sus ítems
+`unique (order_id, product_id)`: un producto aparece una sola vez por pedido. Como ese único
+(`order_items_order_id_product_id_key`) empieza por `order_id`, esa columna no lleva un índice
+aparte; `product_id` sí (`order_items_product_id_idx`). `Order` y sus ítems
 son un agregado que se guarda y se carga junto. Es la única relación JPA del modelo; las demás
 claves foráneas se mapean como columnas `Long`.
 
@@ -192,6 +198,11 @@ el total. El caso de uso rechaza el pedido con `422` si:
 | El restaurante no existe, está cerrado o está suspendido     | `order.restaurant_unavailable` |
 | Un producto no existe, es de otro restaurante o está agotado | `order.product_unavailable`    |
 
+Las reglas se revisan en el orden de la tabla y responde la primera que falla. Las tres primeras
+miran solo el pedido (`OrderLines`), así que se revisan antes de consultar a `restaurant` y a
+`catalog`. Que el restaurante reciba pedidos lo decide `Restaurant.acceptsOrders()`: abierto y no
+suspendido.
+
 Si todo está bien, copia el nombre del restaurante y el nombre y el precio actual de cada producto,
 calcula el total como la suma de precio por cantidad y crea el pedido en `PLACED`. Después de eso,
 el pedido no depende del catálogo: editar, agotar o borrar un producto, o renombrar el restaurante,
@@ -199,7 +210,7 @@ no cambia los pedidos ya confirmados.
 
 ### Estados
 
-No hay envío: el cliente retira el pedido en el local.
+No hay envío ni pago en la app: el cliente retira el pedido en el local y lo paga ahí.
 
 ```mermaid
 stateDiagram-v2

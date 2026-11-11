@@ -78,8 +78,9 @@ guarda credenciales.
   lleva el header `X-XSRF-TOKEN` con el valor de la cookie `XSRF-TOKEN`. El `HttpClient` de Angular
   lo hace solo. La primera respuesta del backend, aunque sea un `401`, ya trae esa cookie, así que
   basta con que la app pida `/api/v1/auth/me` al arrancar.
-- Cada endpoint declara quién lo puede usar. `GET /api/health` y las rutas de registro e inicio de
-  sesión son públicas.
+- Cada endpoint declara quién lo puede usar. `GET /api/health`, las rutas de registro e inicio de
+  sesión y los `GET` de [restaurantes y menús públicos](#restaurantes-y-menús-públicos) son
+  públicos.
 
 ## Cuentas
 
@@ -218,6 +219,100 @@ sale siempre de la sesión.
   igual que `/mine`.
 - El menú se edita igual con el restaurante abierto, cerrado o suspendido. Un cambio de precio solo
   afecta a los pedidos que se confirmen después.
+
+## Restaurantes y menús públicos
+
+Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo son públicas para
+`GET`; registrar un restaurante y todo lo que está bajo `/mine` sigue exigiendo sesión.
+
+| Operación                | Ruta                                     | Acceso  | Respuesta          |
+| ------------------------ | ---------------------------------------- | ------- | ------------------ |
+| Listar restaurantes      | `GET /api/v1/restaurants?page=0&size=20` | Público | `200` + una página |
+| Ver un restaurante       | `GET /api/v1/restaurants/{id}`           | Público | `200` + el recurso |
+| Ver el menú de uno       | `GET /api/v1/restaurants/{id}/catalog`   | Público | `200` + el menú    |
+
+```json
+{
+  "items": [
+    {
+      "id": 4,
+      "name": "La Casona",
+      "description": "Comida criolla",
+      "address": "Calle Sucre 245",
+      "open": true
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalItems": 1,
+  "totalPages": 1
+}
+```
+
+- El listado trae solo los restaurantes visibles, los que no están suspendidos. Primero los
+  abiertos y después los cerrados, y dentro de cada grupo en orden de registro (por `id`
+  ascendente). Un restaurante que abre o cierra cambia de lugar en la lista.
+- El listado y el detalle traen `id`, `name`, `description`, `address` y `open`. No traen
+  `suspended`, que en público siempre sería `false`, ni el dueño.
+- Un restaurante recién registrado ya aparece, cerrado y con el menú vacío: la visibilidad depende
+  solo de la suspensión.
+- El menú tiene la misma forma que el del dueño (`/mine/catalog`), en el mismo orden y con los
+  productos agotados en su lugar con `available: false`. Las categorías sin productos no aparecen,
+  así que un menú sin productos responde `{"categories": []}`. Un restaurante cerrado muestra su
+  menú igual.
+- Un restaurante suspendido o un id que no existe responden lo mismo en el detalle y en el menú:
+  `404` con `restaurant.not_found` y el mensaje neutro "No encontramos el restaurante". Así no se
+  distingue un local suspendido de uno que no existe. Un id que no es número responde `400` con
+  `validation_failed`.
+- En `SecurityConfig`, `/api/v1/restaurants/mine/**` se declara antes que las rutas públicas, porque
+  `/api/v1/restaurants/*` y `/*/catalog` también coincidirían con `/mine` y `/mine/catalog`.
+
+## Pedidos
+
+El cliente confirma el carrito y el pedido queda pendiente en el restaurante. No hay envío ni pago:
+lo retira en el local.
+
+| Operación           | Ruta                  | Acceso  | Respuesta                                           |
+| ------------------- | --------------------- | ------- | --------------------------------------------------- |
+| Confirmar un pedido | `POST /api/v1/orders` | Cliente | `201` + `Location: /api/v1/orders/{id}` + el pedido |
+
+```json
+{ "restaurantId": 4, "items": [{ "productId": 10, "quantity": 2 }, { "productId": 12, "quantity": 1 }] }
+```
+
+```json
+{
+  "id": 42,
+  "restaurantId": 4,
+  "restaurantName": "La Casona",
+  "status": "PLACED",
+  "total": 100.50,
+  "placedAt": "2026-11-08T15:00:00Z",
+  "items": [
+    { "productId": 10, "productName": "Silpancho", "unitPrice": 45.00, "quantity": 2, "subtotal": 90.00 },
+    { "productId": 12, "productName": "Limonada", "unitPrice": 10.50, "quantity": 1, "subtotal": 10.50 }
+  ]
+}
+```
+
+- El body trae el restaurante y, por cada producto, su id y la cantidad. Cualquier otro campo, como un
+  precio, un total o un cliente, se ignora: los precios salen del menú y el cliente, de la sesión.
+- Si falta `restaurantId` o `items`, si un ítem es `null` o le falta `productId` o `quantity`,
+  responde `400` con `validation_failed` y el campo en `errors[].field` (`items[0].quantity`). Un
+  valor que no es número también responde `400`.
+- Las reglas del pedido responden `422` con el código de
+  [modelo-de-datos.md](../modelo-de-datos.md#confirmar-un-pedido): `order.empty`,
+  `order.invalid_quantity`, `order.duplicate_product`, `order.restaurant_unavailable` y
+  `order.product_unavailable`. Una lista vacía o una cantidad fuera de 1 a 99 son reglas del pedido,
+  no del formato. Se revisan en ese orden y responde la primera que falla; ante cualquiera, no se
+  guarda nada.
+- Un restaurante que no existe, está suspendido o está cerrado responde lo mismo,
+  `order.restaurant_unavailable`, y un producto que no existe, es de otro restaurante o está agotado,
+  `order.product_unavailable`. El mensaje no dice cuál de los casos fue.
+- El pedido nace en `PLACED`, con `placedAt` en UTC. Cada línea copia el nombre y el precio que el
+  producto tiene al confirmar, y `subtotal` y `total` los calcula el backend.
+- Un dueño o un admin reciben `403` con `access_denied`. El `Location` apunta a la ruta del pedido,
+  que todavía no tiene `GET`: llega con el historial de pedidos.
 
 ## Paginación
 

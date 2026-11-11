@@ -47,7 +47,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
   devuelve requests, responses ni entidades JPA.
 - Si no encuentra algo, lanza la excepción del módulo. Los puertos devuelven `Optional`, nunca
   `null`. La excepción es el puerto hacia otro módulo: su adaptador deja pasar la excepción del caso
-  de uso que llama, como `RestaurantNotFoundException` en `catalog`, por la razón que explica
+  de uso que llama, como `RestaurantNotFoundException` en `catalog`, o la traduce a una excepción
+  del propio módulo y la relanza, como `RestaurantUnavailableException` en `order`. Nunca la atrapa
+  para seguir, por la razón que explica
   [arquitectura.md](../arquitectura.md#comunicación-entre-módulos).
 
 ## Infraestructura
@@ -68,6 +70,10 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 
 - Cada método de controller que exige un rol lo declara con `@PreAuthorize("hasRole('OWNER')")`.
   Las rutas públicas se agregan en `SecurityConfig`; todo lo demás exige sesión.
+- Una ruta pública va en un controller aparte, sin `@PreAuthorize` ni `CurrentUser`
+  (`PublicRestaurantController`), y en `SecurityConfig` se abre solo para `GET`. Si su patrón
+  también coincide con rutas que exigen sesión, como `/api/v1/restaurants/*` con `/mine`, esas
+  rutas se declaran antes. Su test prueba que responde sin sesión y que una escritura sigue en `401`.
 - El usuario llega al controller con `@AuthenticationPrincipal CurrentUser user`, y su id viaja en
   el command (`UpdateMenuCommand(ownerId, ...)`). Los casos de uso y el dominio nunca leen el
   contexto de seguridad.

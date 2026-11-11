@@ -26,21 +26,9 @@
     <p class="text-sm font-semibold">{{ roleLabel() }}</p>
     <p>
       @if (account().suspended) {
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-2.5 py-1 text-xs font-bold text-danger"
-          data-status="suspended"
-        >
-          <span aria-hidden="true" class="size-1.5 rounded-full bg-current"></span>
-          Suspendida
-        </span>
+        <app-badge tone="danger" size="sm" data-status="suspended">Suspendida</app-badge>
       } @else {
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success"
-          data-status="active"
-        >
-          <span aria-hidden="true" class="size-1.5 rounded-full bg-current"></span>
-          Activa
-        </span>
+        <app-badge tone="success" size="sm" data-status="active">Activa</app-badge>
       }
     </p>
   </div>

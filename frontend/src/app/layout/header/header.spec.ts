@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
+import { CartStore } from '@core/cart/cart-store';
 import { Header } from './header';
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
@@ -146,6 +147,75 @@ describe('Header', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('a[href="/mi-restaurante"]')).toBeNull();
+  });
+
+  describe('cart link', () => {
+    afterEach(() => localStorage.clear());
+
+    function cartLink(): HTMLAnchorElement | null {
+      return fixture.nativeElement.querySelector('[data-cart-link]');
+    }
+
+    function accessibleName(element: HTMLElement): string {
+      const copy = element.cloneNode(true) as HTMLElement;
+      copy.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove());
+      return (copy.textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    it.each([
+      ['a visitor', null],
+      ['a customer', ANA],
+    ])('takes %s to the cart', async (_case, account) => {
+      if (account) {
+        session.signIn(account);
+      } else {
+        session.clear();
+      }
+      await fixture.whenStable();
+
+      expect(cartLink()?.getAttribute('href')).toBe('/carrito');
+      expect(accessibleName(cartLink() as HTMLAnchorElement)).toBe('Carrito');
+      expect(fixture.nativeElement.querySelector('[data-cart-count]')).toBeNull();
+    });
+
+    it('does not show the cart while the session loads', async () => {
+      await fixture.whenStable();
+
+      expect(cartLink()).toBeNull();
+    });
+
+    it.each([
+      ['an owner', OWNER],
+      ['an admin', ADMIN],
+    ])('does not show the cart to %s', async (_case, account) => {
+      session.signIn(account);
+      await fixture.whenStable();
+
+      expect(cartLink()).toBeNull();
+    });
+
+    it('shows how many units the cart has', async () => {
+      const cart = TestBed.inject(CartStore);
+      const laCasona = { id: 4, name: 'La Casona', address: 'Calle Sucre 245' };
+      cart.add(laCasona, { id: 10, name: 'Silpancho', price: 45 });
+      cart.add(laCasona, { id: 10, name: 'Silpancho', price: 45 });
+      cart.add(laCasona, { id: 12, name: 'Limonada', price: 10 });
+      session.signIn(ANA);
+      await fixture.whenStable();
+
+      const count = fixture.nativeElement.querySelector('[data-cart-count]') as HTMLElement;
+      expect(count.textContent?.trim()).toBe('3');
+      expect(count.getAttribute('aria-hidden')).toBe('true');
+      expect(accessibleName(cartLink() as HTMLAnchorElement)).toBe('Carrito: 3 productos');
+    });
+
+    it('marks the cart link while the cart is open', async () => {
+      session.clear();
+      await TestBed.inject(Router).navigateByUrl('/carrito');
+      await fixture.whenStable();
+
+      expect(cartLink()?.getAttribute('aria-current')).toBe('page');
+    });
   });
 
   it('disables the button while the session is closing', async () => {

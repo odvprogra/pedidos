@@ -1,0 +1,84 @@
+<a
+  class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+  [routerLink]="[restaurant().id]"
+  [attr.aria-label]="label()"
+  [attr.aria-describedby]="describedBy()"
+>
+  <div
+    class="relative hidden h-20 overflow-hidden sm:block"
+    data-band
+    [class]="restaurant().open ? 'bg-brand' : 'bg-muted'"
+  >
+    <svg
+      aria-hidden="true"
+      class="absolute -top-3 right-4 size-28 text-surface/15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+    </svg>
+  </div>
+
+  <div class="flex flex-1 gap-3 p-4 sm:flex-col sm:gap-0 sm:px-4 sm:pt-0 sm:pb-5">
+    <div class="flex shrink-0 items-start sm:-mt-7 sm:items-end sm:justify-between sm:gap-3">
+      <span
+        aria-hidden="true"
+        class="relative grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-xl font-extrabold text-ink sm:size-14 sm:border-4 sm:border-surface sm:text-2xl sm:shadow-md"
+        data-initial
+      >
+        {{ initial() }}
+      </span>
+      <span class="hidden sm:block">
+        <app-badge data-status [tone]="tone()">{{ statusLabel() }}</app-badge>
+      </span>
+    </div>
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex items-start justify-between gap-2 sm:mt-3">
+        <h2
+          class="text-lg leading-snug font-extrabold wrap-anywhere transition group-hover:text-brand motion-reduce:transition-none"
+        >
+          {{ restaurant().name }}
+        </h2>
+        <span class="shrink-0 sm:hidden">
+          <app-badge size="sm" data-status [tone]="tone()">{{ statusLabel() }}</app-badge>
+        </span>
+      </div>
+      @if (restaurant().description; as description) {
+        <p
+          class="mt-1 line-clamp-2 text-sm wrap-anywhere text-muted"
+          [id]="idPrefix() + '-description'"
+        >
+          {{ description }}
+        </p>
+      }
+      <p
+        class="mt-auto flex items-start gap-1.5 pt-2 text-sm font-semibold sm:pt-4"
+        [id]="idPrefix() + '-address'"
+      >
+        <svg
+          aria-hidden="true"
+          class="mt-px size-4 shrink-0 text-brand"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+          <circle cx="12" cy="9.5" r="2.5" />
+        </svg>
+        <span class="wrap-anywhere">
+          <span class="sr-only">Dirección: </span>{{ restaurant().address }}
+        </span>
+      </p>
+    </div>
+  </div>
+</a>

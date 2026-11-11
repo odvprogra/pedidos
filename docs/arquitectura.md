@@ -98,6 +98,29 @@ restaurante, el adaptador deja pasar `RestaurantNotFoundException` en lugar de c
 para rollback, así que atraparla y seguir terminaría en `UnexpectedRollbackException`. Por eso los
 endpoints del menú responden el mismo `404` con `restaurant.not_found` que `/mine`.
 
+El menú público usa el mismo puerto: `RestaurantDirectory.ensureVisible(restaurantId)` llama a
+`GetVisibleRestaurantUseCase` y deja pasar su `RestaurantNotFoundException` si el restaurante no
+existe o está suspendido. Así la regla de visibilidad vive en `restaurant` (`Restaurant.isVisible()`)
+y `catalog` no lee ni repite el estado del restaurante. La única copia es la consulta paginada del
+listado (`findAllBySuspendedFalse`), que la traduce a SQL porque una página no se puede filtrar en
+memoria: si la regla cambia, cambian las dos juntas.
+
+`order` tiene dos puertos propios. `RestaurantDirectory.restaurantTakingOrders(restaurantId)` lo
+implementa `OrderRestaurantDirectoryAdapter`, en `order/infrastructure/restaurant`: llama a
+`GetVisibleRestaurantUseCase` y pregunta `Restaurant.acceptsOrders()`. Si el restaurante no existe o
+está suspendido, atrapa `RestaurantNotFoundException` y lanza `RestaurantUnavailableException`, porque
+para un pedido es un `422` con `order.restaurant_unavailable`, no un `404`. Traducir así es seguro: la
+transacción ya quedó marcada para rollback, pero la nueva excepción la termina igual, sin intentar el
+commit. Lo que no se hace es atraparla y seguir. `ProductCatalog.productsOf(restaurantId)` lo
+implementa `ProductCatalogAdapter`, en `order/infrastructure/catalog`, con los productos de
+`GetVisibleCatalogUseCase`: un producto de otro restaurante no está en ese menú, así que no se puede
+pedir. Si el restaurante se suspende entre las dos lecturas, traduce la `RestaurantNotFoundException`
+de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
+`ProductSnapshot`), y el dominio de `order` no conoce los modelos de los otros módulos.
+
+Los adaptadores son beans de Spring, y el nombre del bean sale del de la clase. Por eso el de `order`
+se llama `OrderRestaurantDirectoryAdapter` y no `RestaurantDirectoryAdapter`, que ya usa `catalog`.
+
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en
 [modelo-de-datos.md](modelo-de-datos.md).
@@ -172,6 +195,9 @@ src/app/
   falla por cualquier motivo, la app arranca sin sesión.
 - Cada rol tiene su inicio, que da `homeFor(role)`: `/` para el cliente, `/mi-restaurante` para el
   dueño y `/admin` para el admin. El header le da al dueño y al admin un enlace a su inicio.
+- La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
+  sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
+  quedó en `/estado`, sin enlace en la interfaz.
 - `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol. Sin sesión llevan a
   `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva al inicio de ese rol. `guestGuard`
   saca de `/ingresar` y `/registro` a quien ya tiene sesión y lo lleva a su inicio.
@@ -183,6 +209,13 @@ src/app/
   ruta interna que no es `/ingresar` ni `/registro`); si no, al inicio del rol.
 - El CSRF lo resuelve el `HttpClient` de Angular por defecto: lee la cookie `XSRF-TOKEN` y manda el
   header `X-XSRF-TOKEN`.
+- El carrito (`CartStore`, en `core/cart`) se ve con o sin sesión, igual que `/carrito`, que no lleva
+  guard: la página decide qué ofrece a cada uno. El visitante ve "Ingresar para confirmar", con
+  `returnUrl=/carrito`; el cliente, "Confirmar pedido"; el dueño y el admin, un aviso de que solo los
+  clientes piden. Ellos tampoco ven "Agregar" en el menú ni el carrito en el header.
+- `SessionStore.logOut()` vacía el carrito cuando el backend cierra la sesión. `clear()` no lo
+  toca, porque también lo llaman la sesión vencida y el arranque sin sesión: así el carrito sobrevive
+  al paso por `/ingresar`.
 
 ### Reglas de importación
 

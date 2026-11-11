@@ -1,0 +1,120 @@
+<section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Restaurantes</p>
+      <h1
+        #heading
+        tabindex="-1"
+        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+      >
+        ¿Qué se te antoja hoy?
+      </h1>
+      <p class="mt-2 text-muted">
+        Elige un restaurante, mira su menú y retira tu pedido en el local.
+      </p>
+    </div>
+    @if (result(); as current) {
+      @if (current.totalItems > 0) {
+        <p
+          class="inline-flex items-center gap-2 self-start rounded-full bg-surface px-4 py-2 text-sm font-bold shadow-sm sm:self-auto"
+          data-total
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 text-brand"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+            <path d="M7 2v20" />
+            <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+          </svg>
+          {{ totalLabel() }}
+        </p>
+      }
+    }
+  </header>
+
+  @if (problem(); as problem) {
+    <app-load-error
+      class="mt-6 block"
+      heading="No pudimos cargar los restaurantes"
+      [message]="problem"
+      (retry)="retry()"
+    />
+  } @else if (result(); as result) {
+    @if (result.items.length === 0) {
+      <app-empty-state
+        class="mt-6 block"
+        heading="Todavía no hay restaurantes"
+        message="Cuando un restaurante se sume a Pedidos, lo vas a ver aquí. Vuelve pronto."
+      >
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />
+        </svg>
+      </app-empty-state>
+    } @else {
+      <ul
+        role="list"
+        class="mt-6 grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3"
+        [class.opacity-60]="loading()"
+        [attr.aria-busy]="loading()"
+      >
+        @for (restaurant of result.items; track restaurant.id) {
+          <li>
+            <app-restaurant-tile class="block h-full" [restaurant]="restaurant" />
+          </li>
+        }
+      </ul>
+
+      @if (result.totalPages > 1) {
+        <app-pagination
+          class="mt-8 block"
+          [page]="result.page"
+          [totalPages]="result.totalPages"
+          [disabled]="loading()"
+          (pageChange)="goTo($event)"
+        />
+      }
+    }
+  } @else {
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status">
+      <span class="sr-only">Cargando restaurantes…</span>
+      @for (placeholder of placeholders; track placeholder) {
+        <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+          <div class="h-20 animate-pulse bg-line motion-reduce:animate-none"></div>
+          <div class="grid gap-3 px-4 pb-5">
+            <div
+              class="-mt-7 size-14 animate-pulse rounded-xl border-4 border-surface bg-line motion-reduce:animate-none"
+            ></div>
+            <div
+              class="h-5 w-40 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div
+              class="h-3.5 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div
+              class="mt-2 h-3.5 w-32 animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

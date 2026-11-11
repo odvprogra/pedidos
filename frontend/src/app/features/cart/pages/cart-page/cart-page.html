@@ -1,0 +1,187 @@
+<section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+  @if (placement(); as placed) {
+    <app-order-placed [order]="placed.order" [address]="placed.address" />
+  } @else {
+    <h1
+      #heading
+      tabindex="-1"
+      class="text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+    >
+      Tu carrito
+    </h1>
+    <p class="sr-only" aria-live="polite" data-cart-announcement>{{ announcement() }}</p>
+
+    @if (restaurant(); as restaurant) {
+      <p class="mt-1 text-muted">
+        De
+        <a
+          class="rounded font-bold text-brand underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          [routerLink]="['/restaurantes', restaurant.id]"
+        >
+          {{ restaurant.name }}
+        </a>
+      </p>
+
+      <div class="mt-6 grid gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
+        <div
+          class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm lg:col-span-2"
+        >
+          <h2 class="sr-only">Productos</h2>
+          <ul role="list" class="divide-y divide-line">
+            @for (item of items(); track item.productId) {
+              <li>
+                <app-cart-line
+                  [item]="item"
+                  [locked]="placing() || buyer() === 'other'"
+                  (quantityChange)="setQuantity(item, $event)"
+                  (removed)="remove(item)"
+                />
+              </li>
+            }
+          </ul>
+          <div class="border-t border-line px-4 py-3 sm:px-5">
+            @if (buyer() === 'other') {
+              <button appSecondaryButton tone="danger" type="button" (click)="empty()">
+                Vaciar carrito
+              </button>
+            } @else {
+              <a appSecondaryButton [routerLink]="['/restaurantes', restaurant.id]">
+                <svg
+                  aria-hidden="true"
+                  class="size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.75"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Agregar más productos
+              </a>
+            }
+          </div>
+        </div>
+
+        <aside
+          class="rounded-2xl border border-line bg-surface p-5 shadow-sm lg:sticky lg:top-24"
+          aria-labelledby="cart-summary-heading"
+        >
+          <h2 id="cart-summary-heading" class="text-lg font-extrabold">Resumen</h2>
+          <dl class="mt-4 grid gap-2">
+            <div class="flex justify-between gap-4 text-muted">
+              <dt>Productos</dt>
+              <dd data-cart-units>{{ units() }}</dd>
+            </div>
+            <div class="flex justify-between gap-4 text-lg font-extrabold">
+              <dt>Subtotal estimado</dt>
+              <dd class="whitespace-nowrap" data-cart-subtotal>{{ subtotal() }}</dd>
+            </div>
+          </dl>
+          <p class="mt-2 text-xs text-muted">
+            El total se confirma al hacer el pedido, con los precios del menú en ese momento.
+          </p>
+
+          <div class="mt-5 flex items-start gap-2 rounded-xl bg-canvas px-4 py-3 text-sm">
+            <svg
+              aria-hidden="true"
+              class="mt-px size-5 shrink-0 text-brand"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+              <circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <p>
+              <span class="block font-bold wrap-anywhere">Retiras en {{ restaurant.address }}</span>
+              <span class="block text-muted">Sin envío: lo pagas al retirarlo en el local.</span>
+            </p>
+          </div>
+
+          @if (failure(); as failure) {
+            <app-alert class="mt-5 block">
+              {{ failure.message }}
+              @if (failure.showsMenuLink) {
+                <a
+                  class="mt-1 inline-flex min-h-11 items-center rounded font-bold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                  [routerLink]="['/restaurantes', restaurant.id]"
+                >
+                  Revisar el menú
+                </a>
+              }
+            </app-alert>
+          }
+
+          <div class="mt-5 grid gap-3">
+            @if (placing()) {
+              <p class="sr-only" role="status">Confirmando tu pedido…</p>
+            }
+            @switch (buyer()) {
+              @case ('customer') {
+                <button
+                  appButton
+                  type="button"
+                  [attr.aria-disabled]="placing()"
+                  (click)="confirm()"
+                >
+                  @if (placing()) {
+                    <app-spinner />
+                    Confirmando pedido…
+                  } @else {
+                    Confirmar pedido
+                  }
+                </button>
+              }
+              @case ('guest') {
+                <a appButton [routerLink]="logInPath" [queryParams]="{ returnUrl: returnUrl }">
+                  Ingresar para confirmar
+                </a>
+                <p class="text-center text-sm text-muted">
+                  ¿No tienes cuenta?
+                  <a
+                    class="rounded font-bold text-brand underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    [routerLink]="registerPath"
+                    [queryParams]="{ returnUrl: returnUrl }"
+                  >
+                    Crea una
+                  </a>
+                </p>
+              }
+              @default {
+                <app-alert tone="warning">
+                  Solo las cuentas de cliente pueden hacer pedidos.
+                </app-alert>
+              }
+            }
+          </div>
+        </aside>
+      </div>
+    } @else {
+      <app-empty-state
+        class="mt-6 block"
+        heading="Tu carrito está vacío"
+        message="Elige un restaurante y agrega lo que se te antoje."
+      >
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5.5 8h13l-1.2 12h-10.6z" />
+          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+        </svg>
+        <a appButton routerLink="/restaurantes" class="mt-1">Ver restaurantes</a>
+      </app-empty-state>
+    }
+  }
+</section>

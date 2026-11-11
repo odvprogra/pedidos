@@ -2,11 +2,17 @@ package com.nur.pedidos.restaurant.application;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
 import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
+import com.nur.pedidos.shared.domain.model.PageResult;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 class InMemoryRestaurantRepository implements RestaurantRepository {
+
+    private static final Comparator<Restaurant> OPEN_FIRST =
+            Comparator.comparing(Restaurant::isOpen).reversed().thenComparing(Restaurant::getId);
 
     private final Map<Long, Restaurant> restaurants = new HashMap<>();
     private long sequence;
@@ -16,6 +22,11 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
         Long id = restaurant.getId() != null ? restaurant.getId() : ++sequence;
         restaurants.put(id, copyOf(restaurant, id));
         return copyOf(restaurant, id);
+    }
+
+    @Override
+    public Optional<Restaurant> findById(Long id) {
+        return Optional.ofNullable(restaurants.get(id)).map(restaurant -> copyOf(restaurant, id));
     }
 
     @Override
@@ -29,6 +40,20 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
     @Override
     public boolean existsByOwnerId(Long ownerId) {
         return findByOwnerId(ownerId).isPresent();
+    }
+
+    @Override
+    public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
+        List<Restaurant> visible = restaurants.values().stream()
+                .filter(Restaurant::isVisible)
+                .sorted(OPEN_FIRST)
+                .toList();
+        List<Restaurant> items = visible.stream()
+                .skip((long) page * size)
+                .limit(size)
+                .map(restaurant -> copyOf(restaurant, restaurant.getId()))
+                .toList();
+        return new PageResult<>(items, page, size, visible.size());
     }
 
     int count() {

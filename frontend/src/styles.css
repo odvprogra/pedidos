@@ -33,6 +33,10 @@
     @apply scroll-pt-44;
   }
 
+  html:has([data-cart-bar]) {
+    @apply scroll-pb-24 lg:scroll-pb-0;
+  }
+
   body {
     @apply bg-canvas text-ink antialiased;
   }

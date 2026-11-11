@@ -77,28 +77,24 @@
     @let page = state();
     @if (page.status === 'ready') {
       @if (page.catalog.categories.length === 0 && !isAddingCategory()) {
-        <div
-          class="mt-6 grid justify-items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center"
+        <app-empty-state
+          class="mt-6 block"
+          heading="Tu menú está vacío"
+          message="Empieza con una categoría, como «Platos fuertes» o «Bebidas». Después agrégale sus productos con su precio."
         >
-          <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
-            <svg
-              aria-hidden="true"
-              class="size-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.25"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M4 5h16M4 12h16M4 19h10" />
-            </svg>
-          </span>
-          <h2 class="text-lg font-extrabold">Tu menú está vacío</h2>
-          <p class="max-w-md text-muted">
-            Empieza con una categoría, como «Platos fuertes» o «Bebidas». Después agrégale sus
-            productos con su precio.
-          </p>
+          <svg
+            emptyStateIcon
+            aria-hidden="true"
+            class="size-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 5h16M4 12h16M4 19h10" />
+          </svg>
           <button
             appButton
             id="new-category"
@@ -108,7 +104,7 @@
           >
             Crear la primera categoría
           </button>
-        </div>
+        </app-empty-state>
       }
 
       @for (category of page.catalog.categories; track category.id) {

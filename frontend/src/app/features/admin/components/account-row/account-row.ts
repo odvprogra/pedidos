@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ROLE_LABELS } from '@core/auth/account';
+import { Badge } from '@shared/ui/badge/badge';
 import { SecondaryButton, SecondaryButtonTone } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel, ConfirmTone } from '@shared/ui/confirm-panel/confirm-panel';
 import { Spinner } from '@shared/ui/spinner/spinner';
@@ -31,7 +32,7 @@ const ACTION_TONES: Record<AccountAction, ActionTones> = {
 
 @Component({
   selector: 'app-account-row',
-  imports: [ConfirmPanel, SecondaryButton, Spinner],
+  imports: [Badge, ConfirmPanel, SecondaryButton, Spinner],
   templateUrl: './account-row.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

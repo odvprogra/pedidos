@@ -14,4 +14,12 @@ public record Catalog(List<Category> categories, List<Product> products) {
                 .filter(product -> product.getCategoryId().equals(category.getId()))
                 .toList();
     }
+
+    public Catalog withoutEmptyCategories() {
+        return new Catalog(
+                categories.stream()
+                        .filter(category -> !productsIn(category).isEmpty())
+                        .toList(),
+                products);
+    }
 }

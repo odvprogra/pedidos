@@ -74,7 +74,7 @@ cd frontend && npm run lint && npm test -- --watch=false && npm run build
 ```
 
 `./mvnw verify` revisa formato, reglas de arquitectura y tests (necesita Docker encendido). La CI
-corre lo mismo en cada pull request.
+corre lo mismo en cada pull request, más los E2E.
 
 ## Correr todas las pruebas
 
@@ -90,6 +90,9 @@ Los E2E recrean la base `pedidos_e2e` y levantan su propio backend (puerto 8090)
 así que no tocan la base `pedidos` ni la app de desarrollo. Tardan unos minutos: la mayor parte es el
 arranque. Para verlos en una ventana de Chrome: `npm run test:headed`. Detalle en
 [docs/convenciones/testing.md](docs/convenciones/testing.md).
+
+Qué test prueba cada punto del checklist de evaluación, y cómo correr uno solo, está en
+[docs/rubrica.md](docs/rubrica.md).
 
 ## Configuración
 
@@ -124,4 +127,6 @@ En desarrollo, Angular redirige las peticiones a `/api` hacia el backend usando
   [API](docs/convenciones/api.md), [tests](docs/convenciones/testing.md),
   [Git y pull requests](docs/convenciones/git.md)
 - [Decisiones de arquitectura](docs/adr/README.md)
+- [Rúbrica: qué test prueba cada punto](docs/rubrica.md)
+- [Pendientes: limitaciones conocidas y mejoras futuras](docs/pendientes.md)
 - [Contexto para asistentes de IA](AGENTS.md)

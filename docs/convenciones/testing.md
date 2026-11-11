@@ -112,6 +112,10 @@ datos reales. Viven en `e2e/`, con Playwright
   `data-*` solo cuando el texto no alcanza, como el total o la insignia de estado.
 - Descripciones en inglés, con el número del flujo del enunciado: `test('E2E 02 · ...')`.
 - Si un test falla, `npm run report` abre el reporte con la traza y la captura.
+- La CI los corre en cada pull request, en el job `E2E`: construye el backend, instala el frontend y
+  Chrome, y ejecuta el mismo `npm test`. El reporte queda como artefacto `playwright-report`.
+- `scripts/reset-database.mjs` espera a que PostgreSQL acepte conexiones antes de recrear la base,
+  porque en la CI el contenedor recién arranca.
 
 ## Qué no se hace
 

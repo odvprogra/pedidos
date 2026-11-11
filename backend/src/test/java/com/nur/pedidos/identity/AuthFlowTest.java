@@ -3,6 +3,7 @@ package com.nur.pedidos.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.nur.pedidos.TestcontainersConfiguration;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -95,6 +96,23 @@ class AuthFlowTest {
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
+    }
+
+    @Test
+    void storesTheRegisteredAccountWithItsPasswordHashed() {
+        Long accountId =
+                register("nora@correo.com", fetchCsrfToken()).getResponseBody().id();
+
+        Map<String, Object> stored = jdbcTemplate.queryForMap(
+                "select name, email, role, password_hash from accounts where id = ?", accountId);
+
+        assertThat(stored)
+                .containsEntry("name", "Luis Vaca")
+                .containsEntry("email", "nora@correo.com")
+                .containsEntry("role", "OWNER");
+        assertThat((String) stored.get("password_hash"))
+                .startsWith("{bcrypt}$2")
+                .doesNotContain(PASSWORD);
     }
 
     @Test

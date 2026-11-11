@@ -19,6 +19,7 @@ const SILPANCHO: Product = {
   description: 'Con arroz y huevo',
   price: 45,
   available: true,
+  imageUrl: null,
 };
 const PIQUE_MACHO: Product = {
   id: 12,
@@ -27,6 +28,7 @@ const PIQUE_MACHO: Product = {
   description: null,
   price: 60.5,
   available: false,
+  imageUrl: null,
 };
 const MENU: Catalog = {
   categories: [
@@ -473,6 +475,7 @@ describe('CatalogPage', () => {
         name: 'Limonada',
         description: '',
         price: 15.5,
+        imageUrl: '',
       });
       request.flush(
         {
@@ -482,6 +485,7 @@ describe('CatalogPage', () => {
           description: null,
           price: 15.5,
           available: true,
+          imageUrl: null,
         },
         { status: 201, statusText: 'Created' },
       );
@@ -509,6 +513,7 @@ describe('CatalogPage', () => {
         name: 'Silpancho',
         description: 'Con arroz y huevo',
         price: 48,
+        imageUrl: '',
       });
       request.flush({ ...SILPANCHO, categoryId: 5, price: 48 });
       await stable();

@@ -191,6 +191,18 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`@shared/utils/restaurant-status`). Lo usan la ficha del dueño, el panel del admin y la lista y el
   menú públicos, que le pasan `publicStatus(restaurant)` porque la API pública no devuelve
   restaurantes suspendidos.
+- La categoría de un restaurante se nombra con `RESTAURANT_CATEGORY_LABELS`
+  (`@shared/utils/restaurant-category`), que también da el orden del `select` del formulario. Va
+  debajo del nombre, en la tarjeta del listado, en la ficha del menú y en la del dueño.
+- La imagen de un restaurante o de un producto es un `app-cover-image` (`@shared/ui`): muestra la
+  dirección con `NgOptimizedImage` en modo `fill` y, si no hay imagen o no carga, no dibuja nada y
+  queda a la vista lo que tiene detrás: la inicial del local o el fondo de la miniatura. Es
+  decorativa (`alt=""`), porque el nombre siempre está al lado, y su contenedor necesita posición
+  (`absolute inset-0` en el cuadro de la inicial, `relative` en una miniatura). Un producto agotado
+  la muestra en gris (`grayscale`).
+- Los datos del restaurante se editan con el mismo formulario del registro, que aparece en el lugar
+  de la ficha al tocar "Editar datos", con "Guardar cambios" y "Cancelar". Al abrirlo, el foco va al
+  nombre; al guardar o cancelar, vuelve a "Editar datos".
 - El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
   las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
   tono. Los nombres son los del enunciado (Pendiente, Aceptado, En preparación, Listo, Completado)

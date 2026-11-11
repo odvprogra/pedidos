@@ -5,6 +5,7 @@ export interface Product {
   description: string | null;
   price: number;
   available: boolean;
+  imageUrl: string | null;
 }
 
 export interface Category {
@@ -25,6 +26,7 @@ export interface ProductDraft {
   name: string;
   description: string;
   price: number;
+  imageUrl: string;
 }
 
 export function addCategory(catalog: Catalog, category: Category): Catalog {

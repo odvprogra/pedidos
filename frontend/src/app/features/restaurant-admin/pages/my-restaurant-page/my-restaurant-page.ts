@@ -11,12 +11,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
+import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { FormField } from '@shared/ui/form-field/form-field';
 import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
@@ -28,6 +30,11 @@ import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
 import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
+import {
+  RESTAURANT_CATEGORIES,
+  RESTAURANT_CATEGORY_LABELS,
+  RestaurantCategory,
+} from '@shared/utils/restaurant-category';
 import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
 import { map } from 'rxjs';
 import { RegistrationSteps } from '../../components/registration-steps/registration-steps';
@@ -35,7 +42,7 @@ import { RestaurantCard } from '../../components/restaurant-card/restaurant-card
 import { CatalogApi } from '../../data-access/catalog-api';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { Catalog, summarize } from '../../models/catalog';
-import { Restaurant } from '../../models/restaurant';
+import { Restaurant, RestaurantDetails } from '../../models/restaurant';
 import {
   describeRestaurantError,
   isAlreadyRegistered,
@@ -50,15 +57,20 @@ type PageState =
   | { status: 'failed'; message: string }
   | { status: 'ready'; restaurant: Restaurant };
 
-type RegistrationField = 'name' | 'description' | 'address';
+type DetailsField = 'name' | 'category' | 'description' | 'address' | 'imageUrl';
 
 const DESCRIPTION_LIMIT = 300;
+const IMAGE_URL_LIMIT = 500;
+const WEB_ADDRESS = /^\s*(https?:\/\/\S+)?\s*$/i;
 
-const MESSAGES: Record<RegistrationField, ValidationMessages> = {
+const MESSAGES: Record<DetailsField, ValidationMessages> = {
   name: {
     required: 'Escribe el nombre de tu restaurante.',
     pattern: 'Escribe el nombre de tu restaurante.',
     maxlength: 'Usa hasta 120 caracteres.',
+  },
+  category: {
+    required: 'Elige qué tipo de comida ofreces.',
   },
   description: {
     maxlength: `Usa hasta ${DESCRIPTION_LIMIT} caracteres.`,
@@ -68,11 +80,16 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     pattern: 'Escribe dónde queda tu restaurante.',
     maxlength: 'Usa hasta 200 caracteres.',
   },
+  imageUrl: {
+    pattern: 'Pega una dirección que empiece con http:// o https://.',
+    maxlength: `Usa hasta ${IMAGE_URL_LIMIT} caracteres.`,
+  },
 };
 
 @Component({
   selector: 'app-my-restaurant-page',
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     Alert,
     Announce,
@@ -82,6 +99,7 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
     PageHeader,
     RegistrationSteps,
     RestaurantCard,
+    SecondaryButton,
     Skeleton,
     Spinner,
     StickyNotice,
@@ -99,12 +117,18 @@ export class MyRestaurantPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
+  private readonly card = viewChild(RestaurantCard);
   private readonly menu = signal<Catalog | null>(null);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
+  protected readonly categories = RESTAURANT_CATEGORIES.map((category) => ({
+    value: category,
+    label: RESTAURANT_CATEGORY_LABELS[category],
+  }));
+  protected readonly editing = signal(false);
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly notice = new NoticeSlot();
   protected readonly submitting = signal(false);
@@ -117,8 +141,10 @@ export class MyRestaurantPage implements OnInit {
   });
   protected readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]],
+    category: ['' as RestaurantCategory | '', Validators.required],
     description: ['', Validators.maxLength(DESCRIPTION_LIMIT)],
     address: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    imageUrl: ['', [Validators.pattern(WEB_ADDRESS), Validators.maxLength(IMAGE_URL_LIMIT)]],
   });
   protected readonly descriptionLength = toSignal(
     this.form.controls.description.valueChanges.pipe(map((description) => description.length)),
@@ -143,7 +169,7 @@ export class MyRestaurantPage implements OnInit {
     this.load(this.arrivedFromAnotherPage);
   }
 
-  protected errorOf(field: RegistrationField): string | null {
+  protected errorOf(field: DetailsField): string | null {
     return validationMessage(this.form.controls[field], MESSAGES[field]);
   }
 
@@ -151,7 +177,7 @@ export class MyRestaurantPage implements OnInit {
     this.load(true, true);
   }
 
-  protected register(): void {
+  protected submit(): void {
     if (this.submitting()) {
       return;
     }
@@ -160,11 +186,53 @@ export class MyRestaurantPage implements OnInit {
       focusFirstInvalid(this.host.nativeElement, this.injector);
       return;
     }
+    const details = { ...this.form.getRawValue() } as RestaurantDetails;
+    if (this.editing()) {
+      this.save(details);
+    } else {
+      this.register(details);
+    }
+  }
 
+  protected startEditing(): void {
+    const current = this.state();
+    if (current.status !== 'ready') {
+      return;
+    }
+    const restaurant = current.restaurant;
+    this.form.reset({
+      name: restaurant.name,
+      category: restaurant.category,
+      description: restaurant.description ?? '',
+      address: restaurant.address,
+      imageUrl: restaurant.imageUrl ?? '',
+    });
+    this.formAlert.set(null);
+    this.notice.clear();
+    this.editing.set(true);
+    afterNextRender(
+      () => this.host.nativeElement.querySelector<HTMLInputElement>('#name')?.focus(),
+      {
+        injector: this.injector,
+      },
+    );
+  }
+
+  protected cancelEditing(): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.editing.set(false);
+    this.formAlert.set(null);
+    this.form.reset();
+    this.focusEditButton();
+  }
+
+  private register(details: RestaurantDetails): void {
     this.submitting.set(true);
     this.formAlert.set(null);
     this.restaurantApi
-      .register(this.form.getRawValue())
+      .register(details)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (restaurant) => {
@@ -185,6 +253,37 @@ export class MyRestaurantPage implements OnInit {
               'warning',
               'Ya tenías un restaurante registrado. Te mostramos sus datos.',
             );
+            this.load(true);
+            return;
+          }
+          applyFieldErrors(this.form, problem.errors ?? []);
+          this.formAlert.set(describeRestaurantError(problem));
+          focusFirstInvalid(this.host.nativeElement, this.injector);
+        },
+      });
+  }
+
+  private save(details: RestaurantDetails): void {
+    this.submitting.set(true);
+    this.formAlert.set(null);
+    this.restaurantApi
+      .update(details)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.submitting.set(false);
+          this.editing.set(false);
+          this.state.set({ status: 'ready', restaurant });
+          this.notice.show('success', `Guardaste los cambios de ${restaurant.name}.`);
+          this.focusEditButton();
+        },
+        error: (error: unknown) => {
+          this.submitting.set(false);
+          const problem = toProblemDetails(error);
+          if (isNotRegistered(problem)) {
+            this.editing.set(false);
+            this.form.reset();
+            this.notice.show('warning', describeRestaurantError(problem));
             this.load(true);
             return;
           }
@@ -271,6 +370,10 @@ export class MyRestaurantPage implements OnInit {
     } else {
       this.focusHeading();
     }
+  }
+
+  private focusEditButton(): void {
+    afterNextRender(() => this.card()?.focusEdit(), { injector: this.injector });
   }
 
   private focusHeading(): void {

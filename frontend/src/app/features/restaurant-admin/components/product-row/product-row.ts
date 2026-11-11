@@ -14,6 +14,7 @@ import {
 import { Badge } from '@shared/ui/badge/badge';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
+import { CoverImage } from '@shared/ui/cover-image/cover-image';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { formatPrice } from '@shared/utils/format-price';
 import { Product } from '../../models/catalog';
@@ -22,7 +23,7 @@ export type ProductTask = 'availability' | 'deletion';
 
 @Component({
   selector: 'app-product-row',
-  imports: [Badge, ConfirmPanel, SecondaryButton, Spinner],
+  imports: [Badge, ConfirmPanel, CoverImage, SecondaryButton, Spinner],
   templateUrl: './product-row.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

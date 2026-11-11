@@ -10,6 +10,7 @@ const SILPANCHO: Product = {
   description: 'Con arroz y huevo',
   price: 45,
   available: true,
+  imageUrl: null,
 };
 
 @Component({

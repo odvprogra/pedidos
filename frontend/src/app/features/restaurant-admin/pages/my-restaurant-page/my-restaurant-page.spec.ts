@@ -25,6 +25,7 @@ const MENU: Catalog = {
           description: null,
           price: 45,
           available: true,
+          imageUrl: null,
         },
       ],
     },
@@ -37,6 +38,8 @@ const LA_CASONA: Restaurant = {
   address: 'Calle Sucre 245',
   open: false,
   suspended: false,
+  category: 'TRADITIONAL',
+  imageUrl: null,
 };
 
 describe('MyRestaurantPage', () => {
@@ -72,8 +75,9 @@ describe('MyRestaurantPage', () => {
     return page().querySelector('h1') as HTMLElement;
   }
 
-  function field(id: string): HTMLInputElement | HTMLTextAreaElement {
-    return page().querySelector(`#${id}`) as HTMLInputElement | HTMLTextAreaElement;
+  function field(id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
+    return page().querySelector(`#${id}`) as
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   }
 
   function messageOf(id: string): string {
@@ -107,9 +111,10 @@ describe('MyRestaurantPage', () => {
   }
 
   function fill(id: string, value: string): void {
-    field(id).value = value;
-    field(id).dispatchEvent(new Event('input'));
-    field(id).dispatchEvent(new Event('blur'));
+    const control = field(id);
+    control.value = value;
+    control.dispatchEvent(new Event(control instanceof HTMLSelectElement ? 'change' : 'input'));
+    control.dispatchEvent(new Event('blur'));
   }
 
   function failWith(url: string, status: number, code?: string, extra: object = {}): void {
@@ -139,6 +144,7 @@ describe('MyRestaurantPage', () => {
 
   async function submitValidForm(): Promise<void> {
     fill('name', 'La Casona');
+    fill('category', 'TRADITIONAL');
     fill('description', 'Comida criolla casera');
     fill('address', 'Calle Sucre 245');
     submitButton().click();
@@ -315,6 +321,8 @@ describe('MyRestaurantPage', () => {
         name: 'La Casona',
         description: 'Comida criolla casera',
         address: 'Calle Sucre 245',
+        category: 'TRADITIONAL',
+        imageUrl: '',
       });
       expect(submitButton().getAttribute('aria-disabled')).toBe('true');
       expect(submitButton().textContent).toContain('Registrando…');
@@ -323,6 +331,7 @@ describe('MyRestaurantPage', () => {
 
     it('sends an empty description when the owner leaves it out', async () => {
       fill('name', 'La Casona');
+      fill('category', 'TRADITIONAL');
       fill('address', 'Calle Sucre 245');
       submitButton().click();
       await fixture.whenStable();
@@ -332,6 +341,8 @@ describe('MyRestaurantPage', () => {
         name: 'La Casona',
         description: '',
         address: 'Calle Sucre 245',
+        category: 'TRADITIONAL',
+        imageUrl: '',
       });
       request.flush({ ...LA_CASONA, description: null }, { status: 201, statusText: 'Created' });
     });
@@ -349,6 +360,74 @@ describe('MyRestaurantPage', () => {
         '¡Listo! Registraste La Casona. Está cerrado: ábrelo cuando quieras recibir pedidos.',
       ]);
       expect(document.activeElement).toBe(heading());
+    });
+
+    it('offers the categories of the list, with none chosen at first', async () => {
+      const options = Array.from((field('category') as HTMLSelectElement).options, (option) =>
+        option.textContent?.trim(),
+      );
+
+      expect(options).toEqual([
+        'Elige una opción',
+        'Comida típica',
+        'Parrillas',
+        'Pollos',
+        'Pizzas',
+        'Hamburguesas',
+        'Sushi',
+        'Cafeterías',
+        'Otros',
+      ]);
+      expect(field('category').value).toBe('');
+    });
+
+    it('asks for the category before registering', async () => {
+      fill('name', 'La Casona');
+      fill('address', 'Calle Sucre 245');
+
+      submitButton().click();
+      await fixture.whenStable();
+
+      expect(messageOf('category')).toBe('Elige qué tipo de comida ofreces.');
+      expect(document.activeElement?.id).toBe('category');
+      httpTesting.expectNone(REGISTER_URL);
+    });
+
+    it.each([
+      ['logo.png', 'Pega una dirección que empiece con http:// o https://.'],
+      [
+        'ftp://fotos.pedidos.test/logo.png',
+        'Pega una dirección que empiece con http:// o https://.',
+      ],
+      [`https://fotos.pedidos.test/${'a'.repeat(480)}`, 'Usa hasta 500 caracteres.'],
+    ])('explains why the image %s is not valid', async (value, message) => {
+      fill('imageUrl', value);
+      await fixture.whenStable();
+
+      expect(messageOf('imageUrl')).toBe(message);
+      expect(field('imageUrl').getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('sends the category and the image of the restaurant', async () => {
+      fill('name', 'Sushi Ito');
+      fill('category', 'SUSHI');
+      fill('address', 'Av. Banzer 120');
+      fill('imageUrl', 'https://fotos.pedidos.test/ito.png');
+      submitButton().click();
+      await fixture.whenStable();
+
+      const request = httpTesting.expectOne(REGISTER_URL);
+      expect(request.request.body).toEqual({
+        name: 'Sushi Ito',
+        description: '',
+        address: 'Av. Banzer 120',
+        category: 'SUSHI',
+        imageUrl: 'https://fotos.pedidos.test/ito.png',
+      });
+      request.flush(
+        { ...LA_CASONA, name: 'Sushi Ito', category: 'SUSHI' },
+        { status: 201, statusText: 'Created' },
+      );
     });
 
     it('marks the fields rejected by the backend validation', async () => {
@@ -432,6 +511,107 @@ describe('MyRestaurantPage', () => {
       fixture.destroy();
 
       expect(request.cancelled).toBe(true);
+    });
+  });
+
+  describe('editing the details', () => {
+    const EDIT_URL = '/api/v1/restaurants/mine';
+
+    async function startEditing(changes: Partial<Restaurant> = {}): Promise<void> {
+      await showRestaurant(changes);
+      button('Editar datos').click();
+      await fixture.whenStable();
+    }
+
+    it('opens the form with the current details and the focus on the name', async () => {
+      await startEditing({ imageUrl: 'https://fotos.pedidos.test/casona.jpg' });
+
+      expect(page().querySelector('app-restaurant-card')).toBeNull();
+      expect(page().querySelector('form h2')?.textContent?.trim()).toBe('Editar datos');
+      expect(field('name').value).toBe('La Casona');
+      expect(field('category').value).toBe('TRADITIONAL');
+      expect(field('description').value).toBe('Comida criolla casera');
+      expect(field('address').value).toBe('Calle Sucre 245');
+      expect(field('imageUrl').value).toBe('https://fotos.pedidos.test/casona.jpg');
+      expect(submitButton().textContent?.trim()).toBe('Guardar cambios');
+      expect(document.activeElement?.id).toBe('name');
+    });
+
+    it('saves the changes, shows them on the card and says so', async () => {
+      await startEditing();
+      fill('name', 'El Fogón');
+      fill('category', 'GRILL');
+      fill('imageUrl', 'https://fotos.pedidos.test/fogon.png');
+
+      submitButton().click();
+      await fixture.whenStable();
+
+      const request = httpTesting.expectOne(EDIT_URL);
+      expect(request.request.method).toBe('PUT');
+      expect(request.request.body).toEqual({
+        name: 'El Fogón',
+        description: 'Comida criolla casera',
+        address: 'Calle Sucre 245',
+        category: 'GRILL',
+        imageUrl: 'https://fotos.pedidos.test/fogon.png',
+      });
+      expect(submitButton().textContent).toContain('Guardando…');
+      request.flush({
+        ...LA_CASONA,
+        name: 'El Fogón',
+        category: 'GRILL',
+        imageUrl: 'https://fotos.pedidos.test/fogon.png',
+      });
+      await fixture.whenStable();
+
+      expect(page().querySelector('form')).toBeNull();
+      expect(page().querySelector('app-restaurant-card h2')?.textContent?.trim()).toBe('El Fogón');
+      expect(page().querySelector('[data-category]')?.textContent?.trim()).toBe('Parrillas');
+      expect(notice()).toContain('Guardaste los cambios de El Fogón.');
+      expect(document.activeElement).toBe(button('Editar datos'));
+    });
+
+    it('goes back to the card without saving when the owner cancels', async () => {
+      await startEditing();
+      fill('name', 'Otro nombre');
+
+      button('Cancelar').click();
+      await fixture.whenStable();
+
+      httpTesting.expectNone(EDIT_URL);
+      expect(page().querySelector('form')).toBeNull();
+      expect(page().querySelector('app-restaurant-card h2')?.textContent?.trim()).toBe('La Casona');
+      expect(document.activeElement).toBe(button('Editar datos'));
+    });
+
+    it('keeps the form with the reason when the backend rejects a change', async () => {
+      await startEditing();
+
+      submitButton().click();
+      await fixture.whenStable();
+      failWith(EDIT_URL, 422, 'restaurant.invalid_image_url');
+      await fixture.whenStable();
+
+      expect(page().querySelector('form [role="alert"]')?.textContent).toContain(
+        'Detalle del servidor',
+      );
+      expect(field('name').value).toBe('La Casona');
+      expect(submitButton().getAttribute('aria-disabled')).toBe('false');
+    });
+
+    it('offers the registration again when the restaurant no longer exists', async () => {
+      await startEditing();
+
+      submitButton().click();
+      await fixture.whenStable();
+      failWith(EDIT_URL, 404, 'restaurant.not_found');
+      await fixture.whenStable();
+      failWith(MINE_URL, 404, 'restaurant.not_found');
+      await fixture.whenStable();
+
+      expect(page().querySelector('form h2')?.textContent?.trim()).toBe('Datos del restaurante');
+      expect(field('name').value).toBe('');
+      expect(heading().textContent).toContain('Registra tu restaurante');
     });
   });
 

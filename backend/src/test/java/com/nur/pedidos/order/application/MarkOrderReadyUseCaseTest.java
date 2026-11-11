@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 class MarkOrderReadyUseCaseTest {
 
@@ -35,8 +37,8 @@ class MarkOrderReadyUseCaseTest {
     }
 
     @Test
-    void marksAnAcceptedOrderAsReadyAtTheTimeOfTheClock() {
-        Order saved = orderRepository.save(order(7L, LA_CASONA, OrderStatus.ACCEPTED));
+    void marksAnOrderInPreparationAsReadyAtTheTimeOfTheClock() {
+        Order saved = orderRepository.save(order(7L, LA_CASONA, OrderStatus.IN_PREPARATION));
 
         Order changed = markOrderReady.execute(OWNER, saved.getId());
 
@@ -49,17 +51,20 @@ class MarkOrderReadyUseCaseTest {
 
     @Test
     void changesOnlyThatOrder() {
-        Order first = orderRepository.save(order(7L, LA_CASONA, OrderStatus.ACCEPTED));
-        Order second = orderRepository.save(order(8L, LA_CASONA, OrderStatus.ACCEPTED));
+        Order first = orderRepository.save(order(7L, LA_CASONA, OrderStatus.IN_PREPARATION));
+        Order second = orderRepository.save(order(8L, LA_CASONA, OrderStatus.IN_PREPARATION));
 
         markOrderReady.execute(OWNER, first.getId());
 
-        assertThat(orderRepository.get(second.getId()).getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(orderRepository.get(second.getId()).getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
     }
 
-    @Test
-    void refusesAnOrderThatWasNotAcceptedYet() {
-        Order saved = orderRepository.save(order(7L, LA_CASONA, OrderStatus.PLACED));
+    @ParameterizedTest
+    @EnumSource(
+            value = OrderStatus.class,
+            names = {"PLACED", "ACCEPTED"})
+    void refusesAnOrderThatIsNotInPreparationYet(OrderStatus status) {
+        Order saved = orderRepository.save(order(7L, LA_CASONA, status));
 
         assertThatThrownBy(() -> markOrderReady.execute(OWNER, saved.getId()))
                 .isInstanceOf(InvalidOrderTransitionException.class)
@@ -67,18 +72,18 @@ class MarkOrderReadyUseCaseTest {
                 .isEqualTo("order.invalid_transition");
         assertThat(orderRepository.get(saved.getId()))
                 .extracting(Order::getStatus, Order::getUpdatedAt)
-                .containsExactly(OrderStatus.PLACED, PLACED_AT);
+                .containsExactly(status, PLACED_AT);
     }
 
     @Test
     void refusesAnOrderOfAnotherRestaurant() {
-        Order foreign = orderRepository.save(order(7L, EL_FOGON, OrderStatus.ACCEPTED));
+        Order foreign = orderRepository.save(order(7L, EL_FOGON, OrderStatus.IN_PREPARATION));
 
         assertThatThrownBy(() -> markOrderReady.execute(OWNER, foreign.getId()))
                 .isInstanceOf(OrderNotOwnerException.class)
                 .extracting("code")
                 .isEqualTo("order.not_owner");
-        assertThat(orderRepository.get(foreign.getId()).getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(orderRepository.get(foreign.getId()).getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
     }
 
     @Test
@@ -91,12 +96,12 @@ class MarkOrderReadyUseCaseTest {
 
     @Test
     void failsWhenTheOwnerHasNoRestaurant() {
-        Order saved = orderRepository.save(order(7L, LA_CASONA, OrderStatus.ACCEPTED));
+        Order saved = orderRepository.save(order(7L, LA_CASONA, OrderStatus.IN_PREPARATION));
 
         assertThatThrownBy(() -> markOrderReady.execute(9L, saved.getId()))
                 .isInstanceOf(RestaurantNotFoundException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.not_found");
-        assertThat(orderRepository.get(saved.getId()).getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        assertThat(orderRepository.get(saved.getId()).getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
     }
 }

@@ -249,21 +249,23 @@ class OrderPersistenceAdapterTest {
     void keepsOnlyTheRequestedStatusesWithTheirRealTotals() {
         Order placed = adapter.save(at(4L, OrderStatus.PLACED, "2026-11-08T12:00:00Z"));
         Order accepted = adapter.save(at(4L, OrderStatus.ACCEPTED, "2026-11-08T11:00:00Z"));
+        Order inPreparation = adapter.save(at(4L, OrderStatus.IN_PREPARATION, "2026-11-08T10:30:00Z"));
         Order ready = adapter.save(at(4L, OrderStatus.READY, "2026-11-08T10:00:00Z"));
         adapter.save(at(4L, OrderStatus.PICKED_UP, "2026-11-08T09:00:00Z"));
         adapter.save(at(4L, OrderStatus.CANCELLED, "2026-11-08T08:00:00Z"));
         adapter.save(at(5L, OrderStatus.PLACED, "2026-11-08T13:00:00Z"));
         flushAndClear();
-        Set<OrderStatus> inProgress = Set.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.READY);
+        Set<OrderStatus> inProgress =
+                Set.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.IN_PREPARATION, OrderStatus.READY);
 
         PageResult<Order> first = adapter.findPageOfRestaurant(4L, inProgress, 0, 2);
         PageResult<Order> second = adapter.findPageOfRestaurant(4L, inProgress, 1, 2);
 
         assertThat(first.items()).extracting(Order::getId).containsExactly(placed.getId(), accepted.getId());
-        assertThat(second.items()).extracting(Order::getId).containsExactly(ready.getId());
+        assertThat(second.items()).extracting(Order::getId).containsExactly(inPreparation.getId(), ready.getId());
         assertThat(first)
                 .extracting(PageResult::totalItems, PageResult::totalPages)
-                .containsExactly(3L, 2);
+                .containsExactly(4L, 2);
     }
 
     @Test

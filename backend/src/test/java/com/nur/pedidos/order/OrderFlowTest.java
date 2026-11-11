@@ -182,12 +182,13 @@ class OrderFlowTest {
                 .jsonPath("$.code")
                 .isEqualTo("order.invalid_transition");
         menu.owner().act("/api/v1/restaurants/mine/close").expectStatus().isNoContent();
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/start-preparing"), "IN_PREPARATION");
         expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-ready"), "READY");
         expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-picked-up"), "PICKED_UP");
 
         expectStatus(customer.get("/api/v1/orders/" + orderId), "PICKED_UP");
         menu.owner()
-                .get(MINE + "?status=PLACED&status=ACCEPTED&status=READY")
+                .get(MINE + "?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY")
                 .expectStatus()
                 .isOk()
                 .expectBody()

@@ -13,6 +13,7 @@ import com.nur.pedidos.order.application.ListRestaurantOrdersUseCase;
 import com.nur.pedidos.order.application.MarkOrderPickedUpUseCase;
 import com.nur.pedidos.order.application.MarkOrderReadyUseCase;
 import com.nur.pedidos.order.application.RejectOrderUseCase;
+import com.nur.pedidos.order.application.StartPreparingOrderUseCase;
 import com.nur.pedidos.order.domain.exception.InvalidOrderTransitionException;
 import com.nur.pedidos.order.domain.exception.OrderNotFoundException;
 import com.nur.pedidos.order.domain.exception.OrderNotOwnerException;
@@ -61,6 +62,9 @@ class RestaurantOrderControllerTest {
     private RejectOrderUseCase rejectOrder;
 
     @MockitoBean
+    private StartPreparingOrderUseCase startPreparingOrder;
+
+    @MockitoBean
     private MarkOrderReadyUseCase markOrderReady;
 
     @MockitoBean
@@ -105,11 +109,12 @@ class RestaurantOrderControllerTest {
 
     @Test
     void filtersByTheRequestedStatusesAndPage() {
-        Set<OrderStatus> inProgress = Set.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.READY);
+        Set<OrderStatus> inProgress =
+                Set.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.IN_PREPARATION, OrderStatus.READY);
         when(listRestaurantOrders.execute(3L, inProgress, 1, 10)).thenReturn(new PageResult<>(List.of(), 1, 10, 4));
 
         var response = mvc.get()
-                .uri(ORDERS + "?status=PLACED&status=ACCEPTED&status=READY&page=1&size=10")
+                .uri(ORDERS + "?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=1&size=10")
                 .with(sessionOf("OWNER", 3L));
 
         assertThat(response)
@@ -166,6 +171,16 @@ class RestaurantOrderControllerTest {
     }
 
     @Test
+    void startsPreparingAnOrderOfTheRestaurant() {
+        when(startPreparingOrder.execute(3L, 42L)).thenReturn(order(OrderStatus.IN_PREPARATION));
+
+        var response = asOwner(HttpMethod.POST, "/42/start-preparing");
+
+        assertThat(response).hasStatusOk().bodyJson().extractingPath("$.status").isEqualTo("IN_PREPARATION");
+        verify(startPreparingOrder).execute(3L, 42L);
+    }
+
+    @Test
     void marksAnOrderOfTheRestaurantAsReady() {
         when(markOrderReady.execute(3L, 42L)).thenReturn(order(OrderStatus.READY));
 
@@ -203,7 +218,8 @@ class RestaurantOrderControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"/abc/accept", "/abc/reject", "/abc/mark-ready", "/abc/mark-picked-up"})
+    @ValueSource(
+            strings = {"/abc/accept", "/abc/reject", "/abc/start-preparing", "/abc/mark-ready", "/abc/mark-picked-up"})
     void rejectsAnOrderIdThatIsNotANumber(String path) {
         var response = asOwner(HttpMethod.POST, path);
 
@@ -211,7 +227,7 @@ class RestaurantOrderControllerTest {
             assertThat(json).extractingPath("$.code").isEqualTo("validation_failed");
             assertThat(json).extractingPath("$.errors[0].field").isEqualTo("id");
         });
-        verifyNoInteractions(acceptOrder, rejectOrder, markOrderReady, markOrderPickedUp);
+        verifyNoInteractions(acceptOrder, rejectOrder, startPreparingOrder, markOrderReady, markOrderPickedUp);
     }
 
     @ParameterizedTest
@@ -224,7 +240,8 @@ class RestaurantOrderControllerTest {
                 .bodyJson()
                 .extractingPath("$.code")
                 .isEqualTo("unauthenticated");
-        verifyNoInteractions(listRestaurantOrders, acceptOrder, rejectOrder, markOrderReady, markOrderPickedUp);
+        verifyNoInteractions(
+                listRestaurantOrders, acceptOrder, rejectOrder, startPreparingOrder, markOrderReady, markOrderPickedUp);
     }
 
     @ParameterizedTest
@@ -238,11 +255,12 @@ class RestaurantOrderControllerTest {
                 .bodyJson()
                 .extractingPath("$.code")
                 .isEqualTo("access_denied");
-        verifyNoInteractions(listRestaurantOrders, acceptOrder, rejectOrder, markOrderReady, markOrderPickedUp);
+        verifyNoInteractions(
+                listRestaurantOrders, acceptOrder, rejectOrder, startPreparingOrder, markOrderReady, markOrderPickedUp);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"/42/accept", "/42/reject", "/42/mark-ready", "/42/mark-picked-up"})
+    @ValueSource(strings = {"/42/accept", "/42/reject", "/42/start-preparing", "/42/mark-ready", "/42/mark-picked-up"})
     void rejectsAnActionWithoutCsrfToken(String path) {
         var response = mvc.post().uri(ORDERS + path).with(sessionOf("OWNER", 3L));
 
@@ -251,7 +269,7 @@ class RestaurantOrderControllerTest {
                 .bodyJson()
                 .extractingPath("$.code")
                 .isEqualTo("csrf_invalid");
-        verifyNoInteractions(acceptOrder, rejectOrder, markOrderReady, markOrderPickedUp);
+        verifyNoInteractions(acceptOrder, rejectOrder, startPreparingOrder, markOrderReady, markOrderPickedUp);
     }
 
     static Stream<Arguments> queriesThatBreakTheFormat() {
@@ -275,6 +293,7 @@ class RestaurantOrderControllerTest {
                 Arguments.of(HttpMethod.GET, ""),
                 Arguments.of(HttpMethod.POST, "/42/accept"),
                 Arguments.of(HttpMethod.POST, "/42/reject"),
+                Arguments.of(HttpMethod.POST, "/42/start-preparing"),
                 Arguments.of(HttpMethod.POST, "/42/mark-ready"),
                 Arguments.of(HttpMethod.POST, "/42/mark-picked-up"));
     }

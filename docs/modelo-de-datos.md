@@ -224,21 +224,27 @@ stateDiagram-v2
     PLACED --> ACCEPTED: el dueño acepta
     PLACED --> REJECTED: el dueño rechaza
     PLACED --> CANCELLED: el cliente cancela
-    ACCEPTED --> READY: el dueño lo marca listo
+    ACCEPTED --> IN_PREPARATION: el dueño empieza a prepararlo
+    IN_PREPARATION --> READY: el dueño lo marca listo
     READY --> PICKED_UP: el dueño lo entrega
     PICKED_UP --> [*]
     REJECTED --> [*]
     CANCELLED --> [*]
 ```
 
-| Estado      | En la interfaz     | Método del dominio  |
-| ----------- | ------------------ | ------------------- |
-| `PLACED`    | Pendiente          | `Order.place(...)`  |
-| `ACCEPTED`  | En preparación     | `accept(now)`       |
-| `READY`     | Listo para retirar | `markReady(now)`    |
-| `PICKED_UP` | Retirado           | `markPickedUp(now)` |
-| `REJECTED`  | Rechazado          | `reject(now)`       |
-| `CANCELLED` | Cancelado          | `cancel(now)`       |
+| Estado           | En la interfaz | En el enunciado | Método del dominio    |
+| ---------------- | -------------- | --------------- | --------------------- |
+| `PLACED`         | Pendiente      | PENDIENTE       | `Order.place(...)`    |
+| `ACCEPTED`       | Aceptado       | ACEPTADO        | `accept(now)`         |
+| `IN_PREPARATION` | En preparación | EN PREPARACIÓN  | `startPreparing(now)` |
+| `READY`          | Listo          | LISTO           | `markReady(now)`      |
+| `PICKED_UP`      | Completado     | COMPLETADO      | `markPickedUp(now)`   |
+| `REJECTED`       | Rechazado      | —               | `reject(now)`         |
+| `CANCELLED`      | Cancelado      | —               | `cancel(now)`         |
+
+`PICKED_UP` es el COMPLETADO del enunciado: sin envío, el pedido termina cuando el cliente lo retira.
+`IN_PREPARATION` entró con la migración `V5__add_order_in_preparation_status.sql`, que amplía el
+`check` de `status`.
 
 - Solo esas transiciones son válidas. Cualquier otra responde `409` con `order.invalid_transition`,
   también repetir la misma: aceptar un pedido aceptado o cancelar uno cancelado. Las decide

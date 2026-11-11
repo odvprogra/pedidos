@@ -63,6 +63,7 @@ class RestaurantSuspensionFlowTest {
                 .expectBody()
                 .jsonPath("$.code")
                 .isEqualTo("restaurant.suspended");
+        expectStatus(menu.owner().act(MINE + "/orders/" + accepted + "/start-preparing"), "IN_PREPARATION");
         expectStatus(menu.owner().act(MINE + "/orders/" + accepted + "/mark-ready"), "READY");
         expectStatus(menu.owner().act(MINE + "/orders/" + accepted + "/mark-picked-up"), "PICKED_UP");
         expectStatus(menu.owner().act(MINE + "/orders/" + pending + "/accept"), "ACCEPTED");

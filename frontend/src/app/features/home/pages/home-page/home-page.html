@@ -14,12 +14,7 @@
     />
   </div>
 
-  <button
-    type="button"
-    class="rounded-xl bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-strong disabled:cursor-default disabled:opacity-60"
-    [disabled]="loading()"
-    (click)="check()"
-  >
+  <button appButton type="button" [disabled]="loading()" (click)="check()">
     Volver a verificar
   </button>
 </section>

@@ -34,12 +34,16 @@ com.nur.pedidos
 │   ├── application/        Un caso de uso por clase + commands
 │   └── infrastructure/
 │       ├── persistence/    @Entity, repositorios Spring Data y adaptadores de los puertos
+│       ├── security/       El hash de contraseñas y el adaptador de sesiones, que delega en shared
+│       ├── startup/        Lo que corre al arrancar la aplicación (el primer admin)
 │       └── web/            Controllers, requests y responses
 └── shared/
-    ├── domain/exception/   DomainException, NotFoundException
+    ├── domain/exception/   DomainException y sus subclases por estado HTTP (404, 409, 403, 401)
+    ├── domain/model/       PageResult: una página de resultados, en Java puro
     └── infrastructure/
-        ├── web/            GlobalExceptionHandler, HealthController
-        └── security/       SecurityConfig, CurrentUser, respuestas 401 y 403
+        ├── web/            GlobalExceptionHandler, HealthController, PageResponse
+        ├── security/       SecurityConfig, CurrentUser, SecuritySessions, SessionRevoker, 401 y 403
+        └── time/           El Clock del que sale la hora actual
 ```
 
 ### Recorrido de una petición
@@ -72,8 +76,7 @@ Están verificadas por `ArchitectureTest` (ArchUnit). Si una falla, `./mvnw veri
 9. Los `@Service` de `application` terminan en `UseCase`.
 
 Con la autenticación ([ADR-0008](adr/0008-autenticacion-con-sesion-y-roles.md)) se suman tres
-reglas. Entran en `ArchitectureTest` junto con Spring Security, en la primera feature de
-`identity`:
+reglas:
 
 10. `application` no depende de Spring Security.
 11. `@PreAuthorize` solo se usa en `infrastructure.web`.
@@ -108,6 +111,13 @@ pertenencia se prueba con fakes. `CurrentUser` está en `shared`, así que ning�
 `identity` para saber quién hace la petición. Si un módulo necesita datos de la cuenta, define un
 puerto propio hacia los casos de uso de `identity`, como en cualquier otra comunicación entre
 módulos.
+
+Suspender una cuenta borra todas sus sesiones. `SuspendAccountUseCase` usa el puerto
+`AccountSessions`, y su adaptador en `identity.infrastructure.security` delega en `SessionRevoker`,
+que busca las sesiones por `principal_name` con `FindByIndexNameSessionRepository` y las borra. Así
+`shared` no conoce a `identity` (regla 5) y solo `shared.infrastructure.security` toca las sesiones
+(regla 12). `SessionRevoker` es un `@Component` aparte de `SecuritySessions` porque los tests
+`@WebMvcTest` importan `SecurityConfig` sin un repositorio de sesiones.
 
 ### Cuándo el dominio tiene lógica
 
@@ -148,10 +158,20 @@ src/app/
 `core/auth` concentra la sesión del lado del frontend:
 
 - `SessionStore` pide `GET /api/v1/auth/me` al arrancar la app y expone el usuario actual como
-  señal.
-- `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol.
-- `unauthorizedInterceptor` limpia la sesión ante un 401 y lleva al ingreso, recordando a dónde
-  volver.
+  señal, con tres estados: cargando, sin sesión y con sesión. Un `provideAppInitializer` espera esa
+  respuesta antes de la primera navegación, así los guards nunca ven el estado cargando. Si `/me`
+  falla por cualquier motivo, la app arranca sin sesión.
+- Cada rol tiene su inicio, que da `homeFor(role)`: `/admin` para el admin y `/` para clientes y
+  dueños.
+- `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol. Sin sesión llevan a
+  `/ingresar?returnUrl=<ruta>`; con otro rol, `roleGuard` lleva al inicio de ese rol. `guestGuard`
+  saca de `/ingresar` y `/registro` a quien ya tiene sesión y lo lleva a su inicio.
+- `unauthorizedInterceptor` atiende los 401 de las rutas fuera de `/api/v1/auth/`: limpia la sesión
+  y lleva a `/ingresar?returnUrl=<ruta actual>`, con `sessionExpired=true` si había sesión para que
+  la pantalla avise que terminó. Los 401 de `/me`, `/login` y `/logout` los maneja quien hizo la
+  petición.
+- Después de ingresar o registrarse se vuelve a `returnUrl` solo si `safeReturnUrl` lo acepta (una
+  ruta interna que no es `/ingresar` ni `/registro`); si no, al inicio del rol.
 - El CSRF lo resuelve el `HttpClient` de Angular por defecto: lee la cookie `XSRF-TOKEN` y manda el
   header `X-XSRF-TOKEN`.
 

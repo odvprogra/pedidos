@@ -1,0 +1,109 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Injector,
+  booleanAttribute,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { REGISTER_PATH } from '@core/auth/auth-paths';
+import { homeFor } from '@core/auth/home-path';
+import { safeReturnUrl } from '@core/auth/return-url';
+import { SessionStore } from '@core/auth/session-store';
+import { toProblemDetails } from '@core/http/problem-details';
+import { Alert } from '@shared/ui/alert/alert';
+import { Button } from '@shared/ui/button/button';
+import { FormField } from '@shared/ui/form-field/form-field';
+import { Spinner } from '@shared/ui/spinner/spinner';
+import { TextInput } from '@shared/ui/text-input/text-input';
+import { applyFieldErrors } from '@shared/utils/field-errors';
+import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
+import { ValidationMessages, validationMessage } from '@shared/utils/validation-message';
+import { AuthShell } from '../../components/auth-shell/auth-shell';
+import { PasswordField } from '../../components/password-field/password-field';
+import { AuthApi } from '../../data-access/auth-api';
+import { describeAuthError } from '../../models/auth-error';
+
+type LogInField = 'email' | 'password';
+
+const MESSAGES: Record<LogInField, ValidationMessages> = {
+  email: { required: 'Escribe tu correo.' },
+  password: { required: 'Escribe tu contraseña.' },
+};
+
+@Component({
+  selector: 'app-log-in-page',
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    Alert,
+    AuthShell,
+    Button,
+    FormField,
+    PasswordField,
+    Spinner,
+    TextInput,
+  ],
+  templateUrl: './log-in-page.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class LogInPage {
+  private readonly authApi = inject(AuthApi);
+  private readonly session = inject(SessionStore);
+  private readonly router = inject(Router);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
+  readonly returnUrl = input<string>();
+  readonly sessionExpired = input(false, { transform: booleanAttribute });
+
+  protected readonly registerPath = REGISTER_PATH;
+  protected readonly form = inject(NonNullableFormBuilder).group({
+    email: ['', Validators.required],
+    password: ['', Validators.required],
+  });
+  protected readonly submitting = signal(false);
+  protected readonly attempted = signal(false);
+  protected readonly alert = signal<string | null>(null);
+  protected readonly showExpiredNotice = computed(() => this.sessionExpired() && !this.attempted());
+
+  protected errorOf(field: LogInField): string | null {
+    return validationMessage(this.form.controls[field], MESSAGES[field]);
+  }
+
+  protected submit(): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.attempted.set(true);
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      focusFirstInvalid(this.host.nativeElement, this.injector);
+      return;
+    }
+
+    this.submitting.set(true);
+    this.alert.set(null);
+    this.authApi.logIn(this.form.getRawValue()).subscribe({
+      next: (account) => {
+        this.session.signIn(account);
+        this.router.navigateByUrl(safeReturnUrl(this.returnUrl(), homeFor(account.role))).then(
+          (navigated) => this.submitting.set(navigated),
+          () => this.submitting.set(false),
+        );
+      },
+      error: (error: unknown) => {
+        const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));
+        applyFieldErrors(this.form, fieldErrors);
+        this.alert.set(alert);
+        this.submitting.set(false);
+        focusFirstInvalid(this.host.nativeElement, this.injector);
+      },
+    });
+  }
+}

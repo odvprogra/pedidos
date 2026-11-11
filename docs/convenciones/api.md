@@ -10,27 +10,28 @@
 
 ## Métodos y respuestas
 
-| Operación   | Método          | Respuesta                           |
-| ----------- | --------------- | ----------------------------------- |
-| Listar      | `GET`           | `200` con la lista o la página      |
-| Obtener uno | `GET`           | `200`                               |
-| Crear       | `POST`          | `201` + header `Location` + recurso |
-| Modificar   | `PUT` / `PATCH` | `200` con el recurso actualizado    |
-| Eliminar    | `DELETE`        | `204`                               |
+| Operación   | Método          | Respuesta                             |
+| ----------- | --------------- | ------------------------------------- |
+| Listar      | `GET`           | `200` con la lista o la página        |
+| Obtener uno | `GET`           | `200`                                 |
+| Crear       | `POST`          | `201` + header `Location` + recurso   |
+| Modificar   | `PUT` / `PATCH` | `200` con el recurso actualizado      |
+| Eliminar    | `DELETE`        | `204`                                 |
+| Acción      | `POST`          | `204`, o `200` si devuelve el recurso |
 
 ## Errores
 
 Todas las respuestas de error usan Problem Details ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457))
 con un campo `code` estable que el frontend puede usar para decidir qué mostrar.
 
-| Estado | Cuándo                                                                         | `code`                                            |
-| ------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
-| `400`  | El request no cumple el formato (Bean Validation)                              | `validation_failed`                               |
-| `401`  | No hay sesión, venció o el login no es válido                                  | `unauthenticated`, `identity.invalid_credentials` |
-| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF | `access_denied`, el del dominio, `csrf_invalid`   |
-| `404`  | El recurso no existe (`NotFoundException`)                                     | `<modulo>.not_found`                              |
-| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)           | el del dominio                                    |
-| `422`  | Se rompe una regla del negocio (`DomainException`)                             | el del dominio                                    |
+| Estado | Cuándo                                                                           | `code`                                            |
+| ------ | -------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                               |
+| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials` |
+| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`   |
+| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found`                              |
+| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                    |
+| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                    |
 
 ```json
 {
@@ -61,16 +62,61 @@ guarda credenciales.
 { "id": 7, "name": "Ana Rojas", "email": "ana@correo.com", "role": "CUSTOMER" }
 ```
 
-- El registro recibe nombre, correo, contraseña y rol, y acepta los roles `CUSTOMER` y `OWNER`. Las
-  cuentas `ADMIN` solo se crean por configuración.
+- El registro recibe nombre, correo, contraseña y rol, y acepta los roles `CUSTOMER` y `OWNER`; otro
+  rol responde `400`. Las cuentas `ADMIN` solo se crean por configuración.
+- Las reglas de la cuenta responden `422`: correo sin formato válido (`identity.invalid_email`),
+  contraseña de menos de 8 caracteres (`identity.password_too_short`) o de más de 72 bytes
+  (`identity.password_too_long`). El correo se valida después de quitarle los espacios.
 - Un login fallido responde lo mismo si el correo no existe que si la contraseña no coincide: `401`
-  con `identity.invalid_credentials`. Una cuenta suspendida recibe `403` con
-  `identity.account_suspended`, y un correo ya registrado, `409` con `identity.email_taken`.
+  con `identity.invalid_credentials`. En los dos casos se compara una contraseña con BCrypt, así que
+  también tarda lo mismo. Una cuenta suspendida recibe `403` con
+  `identity.account_suspended` solo si la contraseña es correcta, y un correo ya registrado, `409`
+  con `identity.email_taken`.
+- Registrarse o iniciar sesión con una sesión abierta la reemplaza por una nueva.
+- Cerrar sesión sin sesión responde `401` con `unauthenticated`.
 - Toda petición que modifica (`POST`, `PUT`, `PATCH`, `DELETE`), incluidos el registro y el login,
   lleva el header `X-XSRF-TOKEN` con el valor de la cookie `XSRF-TOKEN`. El `HttpClient` de Angular
-  lo hace solo.
+  lo hace solo. La primera respuesta del backend, aunque sea un `401`, ya trae esa cookie, así que
+  basta con que la app pida `/api/v1/auth/me` al arrancar.
 - Cada endpoint declara quién lo puede usar. `GET /api/health` y las rutas de registro e inicio de
   sesión son públicas.
+
+## Cuentas
+
+El admin ve todas las cuentas y suspende o reactiva las de clientes y dueños. La cuenta del admin la
+crea el backend al arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la configuración en el
+`README.md`).
+
+| Operación        | Ruta                                    | Acceso | Respuesta          |
+| ---------------- | --------------------------------------- | ------ | ------------------ |
+| Listar cuentas   | `GET /api/v1/accounts?page=0&size=20`   | Admin  | `200` + una página |
+| Suspender cuenta | `POST /api/v1/accounts/{id}/suspend`    | Admin  | `204`              |
+| Reactivar cuenta | `POST /api/v1/accounts/{id}/reactivate` | Admin  | `204`              |
+
+```json
+{
+  "items": [
+    { "id": 1, "name": "Administrador", "email": "admin@pedidos.com", "role": "ADMIN", "suspended": false },
+    { "id": 7, "name": "Ana Rojas", "email": "ana@correo.com", "role": "CUSTOMER", "suspended": true }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalItems": 2,
+  "totalPages": 1
+}
+```
+
+- La lista trae todas las cuentas, también las de los admins, en orden de registro (por `id`
+  ascendente). Una cuenta nueva cae en la última página, así que las anteriores no se corren.
+- Cada cuenta trae id, nombre, correo, rol y si está suspendida. Nunca la contraseña.
+
+- Suspender borra todas las sesiones de la cuenta. La próxima petición con cualquiera de ellas
+  responde `401` con `unauthenticated`, y el login, `403` con `identity.account_suspended`.
+- Una cuenta de administrador no se suspende, tampoco la propia: `422` con
+  `identity.admin_not_suspendable`, y sus sesiones siguen abiertas.
+- Un id que no existe responde `404` con `identity.not_found`.
+- Las dos acciones son idempotentes: suspender una cuenta suspendida o reactivar una activa responde
+  `204` y deja la cuenta como estaba.
 
 ## Paginación
 
@@ -79,6 +125,16 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 ```json
 { "items": [], "page": 0, "size": 20, "totalItems": 0, "totalPages": 0 }
 ```
+
+- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es
+  20. Fuera de esos límites, o con un valor que no es número, responde `400` con
+  `validation_failed` y el parámetro en `errors[].field`. El valor no se recorta en silencio.
+- Una página después de la última responde `200` con `items` vacío y los totales reales, no `404`.
+- Cada lista paginada documenta su orden, y el orden es estable: dos pedidos iguales devuelven lo
+  mismo en el mismo orden.
+- En el backend, el puerto devuelve un `PageResult` (`shared.domain.model`) y el controller responde
+  con `PageResponse.from(...)` (`shared.infrastructure.web`). En el frontend, la forma es `Page<T>`
+  (`core/http`).
 
 ## Datos
 

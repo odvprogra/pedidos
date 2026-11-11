@@ -1,0 +1,125 @@
+<div class="grid gap-3 px-4 py-4 sm:px-6 md:grid-cols-accounts md:items-center md:gap-x-4">
+  <div class="flex min-w-0 items-center gap-3">
+    <span
+      aria-hidden="true"
+      class="grid size-10 shrink-0 place-items-center rounded-full text-sm font-extrabold"
+      [class]="avatarStyle()"
+    >
+      {{ initial() }}
+    </span>
+    <div class="min-w-0">
+      <p class="flex min-w-0 items-center gap-2">
+        <span class="truncate font-bold" [class.text-muted]="account().suspended">
+          {{ account().name }}
+        </span>
+        @if (isSelf()) {
+          <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-extrabold text-ink">
+            Tú<span class="sr-only"> (tu cuenta)</span>
+          </span>
+        }
+      </p>
+      <p class="text-sm wrap-anywhere text-muted md:truncate">{{ account().email }}</p>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 md:contents">
+    <p class="text-sm font-semibold">{{ roleLabel() }}</p>
+    <p>
+      @if (account().suspended) {
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-2.5 py-1 text-xs font-bold text-danger"
+          data-status="suspended"
+        >
+          <span aria-hidden="true" class="size-1.5 rounded-full bg-current"></span>
+          Suspendida
+        </span>
+      } @else {
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success"
+          data-status="active"
+        >
+          <span aria-hidden="true" class="size-1.5 rounded-full bg-current"></span>
+          Activa
+        </span>
+      }
+    </p>
+  </div>
+
+  @if (copy(); as copy) {
+    <button
+      #actionButton
+      type="button"
+      class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-surface px-4 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:opacity-60 aria-disabled:hover:bg-surface"
+      [class]="actionButtonStyle()"
+      [attr.aria-disabled]="unavailable()"
+      [attr.aria-expanded]="confirming()"
+      [attr.aria-controls]="confirming() ? confirmId() : null"
+      (click)="toggle()"
+      (keydown.escape)="dismiss()"
+    >
+      @if (busy()) {
+        <app-spinner />
+        {{ copy.working }}
+      } @else {
+        {{ copy.label }}
+        <span class="sr-only">la cuenta de {{ account().name }}</span>
+      }
+    </button>
+
+    @if (confirming()) {
+      <div
+        role="group"
+        class="rounded-xl p-4 md:col-span-4 md:px-5"
+        [id]="confirmId()"
+        [attr.aria-labelledby]="confirmId() + '-question'"
+        [attr.aria-describedby]="confirmId() + '-consequence'"
+        [class]="style()?.panel"
+      >
+        <p class="font-bold" [id]="confirmId() + '-question'">{{ copy.question }}</p>
+        <p class="mt-1 text-sm text-ink/80" [id]="confirmId() + '-consequence'">
+          {{ copy.consequence }}
+        </p>
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            #cancelButton
+            type="button"
+            class="inline-flex min-h-11 items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-bold transition hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            (click)="cancel()"
+            (keydown.escape)="cancel()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-white shadow-md transition focus-visible:outline-2 focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+            [class]="style()?.confirm"
+            [attr.aria-disabled]="unavailable()"
+            [attr.aria-describedby]="confirmId() + '-consequence'"
+            (click)="confirm()"
+            (keydown.escape)="cancel()"
+          >
+            {{ copy.confirm }}
+          </button>
+        </div>
+      </div>
+    }
+  } @else {
+    <p class="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-muted">
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+      Protegida
+      <span class="sr-only">: las cuentas de administrador no se suspenden</span>
+    </p>
+  }
+</div>

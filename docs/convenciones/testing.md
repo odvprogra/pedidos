@@ -10,6 +10,9 @@ Se prueba comportamiento, no líneas. Cada cambio lleva tests en la capa donde v
 | `application`                | Unitario     | JUnit + fakes en memoria de los puertos          | Sin Spring. Se escribe un fake, no se mockea el puerto |
 | `infrastructure.persistence` | Integración  | `@DataJpaTest` + Testcontainers                  | PostgreSQL real con el esquema de Flyway, nunca H2     |
 | `infrastructure.web`         | Slice        | `@WebMvcTest` + `MockMvcTester` + `@MockitoBean` | Estados HTTP, validación, permisos y Problem Details   |
+| `infrastructure.security`    | Unitario     | JUnit + AssertJ                                  | Sin Spring, con la librería real (BCrypt)              |
+| Sesiones en `shared`         | Integración  | `@JdbcTest` + Testcontainers                     | Spring Session JDBC real sobre el esquema de Flyway    |
+| `infrastructure.startup`     | Unitario     | JUnit + mock del caso de uso                     | Qué hace con cada configuración, sin Spring            |
 | Arquitectura                 | ArchUnit     | `ArchitectureTest`                               | No se desactivan reglas                                |
 | Aplicación completa          | Contexto     | `@SpringBootTest` + Testcontainers               | Solo `contextLoads` y flujos críticos, como la sesión  |
 
@@ -34,10 +37,14 @@ niveles:
   escribe con `@ParameterizedTest`. El usuario se simula con el helper
   `TestSessions.sessionOf(rol, id)` de los tests de `shared`, que arma el mismo `CurrentUser` que la
   app: `.with(sessionOf("OWNER", 7L))`. Las peticiones que modifican agregan `.with(csrf())`, y un
-  test de `AuthController` verifica que sin el token se responde `403` con `csrf_invalid`.
+  test de `AuthController` verifica que sin el token se responde `403` con `csrf_invalid`. La cookie
+  `XSRF-TOKEN` no se prueba en el slice: `csrf()` cambia el repositorio de tokens del contexto
+  cacheado, y desde ahí ningún test de ese contexto la recibe. La prueba el flujo completo.
 - **Flujo completo:** un `@SpringBootTest` con Testcontainers usa la cookie real y Spring Session.
   Recorre registro, `/me`, logout (después responde 401) y suspensión (la sesión que estaba abierta
-  responde 401 en la próxima petición).
+  responde 401 en la próxima petición). Arranca con `ADMIN_EMAIL` y `ADMIN_PASSWORD` en
+  `properties`, así el admin que suspende es el que creó el backend al arrancar. También cubre los
+  adaptadores que solo delegan, como `SpringSessionAccountSessions`, que no tienen test propio.
 
 Ningún test desactiva la seguridad (`addFilters = false` o excluir su autoconfiguración) para que
 algo pase.

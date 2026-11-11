@@ -15,6 +15,8 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 | Entidad JPA             | `infrastructure.persistence` | `RestaurantEntity`                                |
 | Repositorio Spring Data | `infrastructure.persistence` | `RestaurantJpaRepository`                         |
 | Adaptador del puerto    | `infrastructure.persistence` | `RestaurantPersistenceAdapter`                    |
+| Adaptador con seguridad | `infrastructure.security`    | `BcryptPasswordHasher`                            |
+| Tarea al arrancar       | `infrastructure.startup`     | `FirstAdminRunner`                                |
 | Controller              | `infrastructure.web`         | `RestaurantController`                            |
 | Request / Response      | `infrastructure.web`         | `RegisterRestaurantRequest`, `RestaurantResponse` |
 
@@ -119,7 +121,9 @@ Lo decidido en [ADR-0009](../adr/0009-modelo-de-datos-y-migraciones-con-flyway.m
 - Sin comentarios ni Javadoc. Si algo necesita explicación, se renombra o se extrae un método. La
   única excepción es un _por qué_ que el código no puede expresar (un workaround, una regla externa),
   en una línea.
-- Inyección siempre por constructor (`@RequiredArgsConstructor` sobre campos `private final`).
+- Inyección siempre por constructor (`@RequiredArgsConstructor` sobre campos `private final`). Si la
+  clase prepara un valor al construirse, como el hash de relleno de `LogInUseCase`, el constructor
+  se escribe a mano.
 - Logs con `@Slf4j`, nunca `System.out`. No se registran contraseñas ni datos personales.
 - Sin código muerto ni comentado.
 - Configuración en `application.yml` con variables de entorno. Ningún secreto en el repositorio.

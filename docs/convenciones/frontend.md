@@ -38,8 +38,19 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   señales). Una librería de estado global (NgRx u otra) requiere una ADR.
 - Todas las URLs usan `environment.apiUrl`.
 - Toda vista con datos cubre cuatro estados: cargando, vacío, error y éxito.
-- Los errores del backend llegan como Problem Details; se muestra el `detail` y los `errors[]` se
-  asocian a los campos del formulario.
+- Los errores del backend llegan como Problem Details. Si la feature conoce el `code`, muestra su
+  propio mensaje en español, debajo del campo o en una alerta; si no lo conoce, muestra el `detail`.
+  Los `errors[]` se asignan a los campos con `applyFieldErrors` (`@shared/utils`).
+- Una lista paginada recibe un `Page<T>` (`@core/http/page`) y usa `app-pagination`
+  (`@shared/ui`). La primera carga muestra el esqueleto; al cambiar de página, la lista anterior
+  queda visible con `aria-busy` y la paginación deshabilitada hasta que llega la nueva. Cuando
+  llega, el foco va al título de la página; si falla, a "Reintentar".
+- Una acción que cambia algo y se puede deshacer se confirma dentro de la misma fila o tarjeta, sin
+  modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el foco vuelve al botón.
+  El resultado se anuncia en un `app-alert dismissible` fijo bajo el header: `tone="success"` (que
+  usa `role="status"`) o el tono de error.
+- Las columnas que comparten un encabezado y sus filas se definen una vez como token en `@theme`
+  (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 
 ## Sesión
 
@@ -47,7 +58,11 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 
 - El usuario actual sale solo de `SessionStore` (`@core/auth`); ninguna feature guarda su propia
   copia.
-- Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`.
+- Las rutas protegidas usan `authGuard` o `roleGuard('OWNER')`; las de ingreso y registro,
+  `guestGuard`. Después de ingresar, o cuando un guard saca a alguien de una ruta, se lo manda a su
+  inicio con `homeFor(role)` (`@core/auth/home-path`), nunca a una ruta fija. El logo del header
+  lleva siempre a la portada pública `/`.
+- Los nombres de los roles en la interfaz salen de `ROLE_LABELS` (`@core/auth/account`).
 - No se guardan credenciales ni datos de sesión en `localStorage` ni en `sessionStorage`. Lo único
   que va a `localStorage` es el carrito de `core/cart` (restaurante, productos y cantidades), que se
   vacía al cerrar sesión ([modelo-de-datos.md](../modelo-de-datos.md#el-carrito)).
@@ -69,12 +84,25 @@ Lo decidido en [ADR-0008](../adr/0008-autenticacion-con-sesion-y-roles.md):
 - Si un conjunto de clases se repite, se crea un componente en `shared/ui`, no una clase con
   `@apply`.
 - Diseño mobile first: la app de cliente se usa sobre todo en el celular.
+- El foco se marca con un contorno sólido (`outline`), nunca solo con un anillo translúcido. Los
+  controles táctiles miden al menos 44 px (`min-h-11`).
+- La tipografía es Plus Jakarta Sans, desde Google Fonts. El build de producción incrusta su hoja de
+  estilos, así que `npm run build` necesita conexión; si hiciera falta compilar sin red, se sirve el
+  archivo desde `public/fonts`.
 
 ## Formularios
 
 - Formularios reactivos tipados (`NonNullableFormBuilder`).
 - Validación al salir del campo y mensajes en español debajo de cada campo.
-- Mientras se envía, el botón se deshabilita y muestra que está trabajando.
+- El botón principal lleva `appButton`. Mientras se envía, muestra que está trabajando y usa
+  `aria-disabled` en lugar de `disabled`, para no perder el foco; `submit()` ignora los envíos
+  repetidos.
+- Al enviar con errores, el foco va al primer campo inválido (`focusFirstInvalid`).
+- Cada campo va en `app-form-field` (etiqueta y mensaje debajo). Los inputs de texto llevan
+  `appTextInput`, que toma el `id` del campo y lo enlaza con su mensaje por `aria-describedby`. Los
+  errores que no son de un campo van en `app-alert`.
+- Los mensajes de cada regla se escriben en la página y se eligen con `validationMessage`
+  (`@shared/utils`), que prioriza el error que mandó el backend.
 
 ## Estilo de código
 

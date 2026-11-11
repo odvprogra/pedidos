@@ -1,0 +1,79 @@
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Alert, AlertTone } from './alert';
+
+@Component({
+  imports: [Alert],
+  template: `
+    <app-alert
+      [tone]="tone()"
+      [dismissible]="dismissible()"
+      (dismissed)="dismissals = dismissals + 1"
+    >
+      {{ message() }}
+    </app-alert>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class Host {
+  readonly tone = signal<AlertTone>('danger');
+  readonly message = signal('Tu sesión terminó.');
+  readonly dismissible = signal(false);
+  dismissals = 0;
+}
+
+describe('Alert', () => {
+  let fixture: ComponentFixture<Host>;
+  let host: Host;
+
+  beforeEach(async () => {
+    fixture = TestBed.createComponent(Host);
+    host = fixture.componentInstance;
+    await fixture.whenStable();
+  });
+
+  function alert(): HTMLElement {
+    return fixture.nativeElement.querySelector('[role="alert"]');
+  }
+
+  function closeButton(): HTMLButtonElement | null {
+    return fixture.nativeElement.querySelector('button[aria-label="Cerrar aviso"]');
+  }
+
+  it('announces that something failed', () => {
+    expect(alert().textContent).toContain('Tu sesión terminó.');
+    expect(alert().classList).toContain('bg-danger-soft');
+  });
+
+  it('announces a warning with its own colors', async () => {
+    host.tone.set('warning');
+    await fixture.whenStable();
+
+    expect(alert().textContent).toContain('Tu sesión terminó.');
+    expect(alert().classList).toContain('bg-warning-soft');
+  });
+
+  it('reports a success politely instead of interrupting', async () => {
+    host.tone.set('success');
+    host.message.set('Suspendiste la cuenta de Ana Rojas.');
+    await fixture.whenStable();
+
+    const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
+    expect(alert()).toBeNull();
+    expect(status.textContent).toContain('Suspendiste la cuenta de Ana Rojas.');
+    expect(status.classList).toContain('bg-success-soft');
+  });
+
+  it('has no close button unless it can be dismissed', () => {
+    expect(closeButton()).toBeNull();
+  });
+
+  it('tells when the close button is pressed', async () => {
+    host.dismissible.set(true);
+    await fixture.whenStable();
+
+    closeButton()?.click();
+
+    expect(host.dismissals).toBe(1);
+  });
+});

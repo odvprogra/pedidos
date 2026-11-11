@@ -13,6 +13,17 @@ const LUIS: Account = { id: 9, name: 'Luis Pérez', email: 'luis@correo.com', ro
 const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
 const ME_URL = '/api/v1/auth/me';
 const ACCOUNTS_URL = '/api/v1/accounts?page=0&size=20';
+const MY_RESTAURANT_URL = '/api/v1/restaurants/mine';
+const MY_MENU_URL = '/api/v1/restaurants/mine/catalog';
+const EMPTY_MENU = { categories: [] };
+const LA_CASONA = {
+  id: 4,
+  name: 'La Casona',
+  description: null,
+  address: 'Calle Sucre 245',
+  open: false,
+  suspended: false,
+};
 
 describe('appConfig', () => {
   let initStatus: ApplicationInitStatus;
@@ -75,16 +86,25 @@ describe('appConfig', () => {
       expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2Fadmin');
     });
 
-    it.each([
-      ['a customer', ANA],
-      ['an owner', LUIS],
-    ])('sends %s back to the home page', async (_case, account) => {
-      await startWith(account);
+    it('sends a customer back to the home page', async () => {
+      await startWith(ANA);
 
       await RouterTestingHarness.create('/admin');
       httpTesting.expectOne('/api/health').flush({});
 
       expect(TestBed.inject(Router).url).toBe('/');
+      httpTesting.expectNone(ACCOUNTS_URL);
+    });
+
+    it('sends an owner to its restaurant', async () => {
+      await startWith(LUIS);
+
+      const harness = await RouterTestingHarness.create('/admin');
+      httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+
+      expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
       httpTesting.expectNone(ACCOUNTS_URL);
     });
 
@@ -104,6 +124,92 @@ describe('appConfig', () => {
       expect(TestBed.inject(Router).url).toBe('/admin');
       expect(harness.routeNativeElement?.textContent).toContain('Cuentas');
       expect(harness.routeNativeElement?.textContent).toContain('admin@pedidos.com');
+    });
+  });
+
+  describe('the restaurant of the owner', () => {
+    it('sends a visitor without a session to log in first', async () => {
+      await startWith(null);
+
+      await RouterTestingHarness.create('/mi-restaurante');
+
+      expect(TestBed.inject(Router).url).toBe('/ingresar?returnUrl=%2Fmi-restaurante');
+    });
+
+    it('sends a customer back to the home page', async () => {
+      await startWith(ANA);
+
+      await RouterTestingHarness.create('/mi-restaurante');
+      httpTesting.expectOne('/api/health').flush({});
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      httpTesting.expectNone(MY_RESTAURANT_URL);
+    });
+
+    it('sends an admin to its panel', async () => {
+      await startWith(ADMIN);
+
+      await RouterTestingHarness.create('/mi-restaurante');
+      httpTesting.expectOne(ACCOUNTS_URL).flush({
+        items: [],
+        page: 0,
+        size: 20,
+        totalItems: 0,
+        totalPages: 0,
+      });
+
+      expect(TestBed.inject(Router).url).toBe('/admin');
+      httpTesting.expectNone(MY_RESTAURANT_URL);
+    });
+
+    it('shows its restaurant to an owner', async () => {
+      await startWith(LUIS);
+
+      const harness = await RouterTestingHarness.create('/mi-restaurante');
+      httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(harness.routeNativeElement?.textContent).toContain('La Casona');
+      expect(harness.routeNativeElement?.textContent).toContain('Calle Sucre 245');
+      expect(harness.routeNativeElement?.textContent).toContain('Todavía no tiene productos');
+    });
+
+    it('takes the focus to the restaurant when the owner comes back from its menu', async () => {
+      await startWith(LUIS);
+      const harness = await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      await harness.navigateByUrl('/mi-restaurante');
+      httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(document.activeElement).toBe(harness.routeNativeElement?.querySelector('h1'));
+    });
+
+    it('shows its menu to an owner', async () => {
+      await startWith(LUIS);
+
+      const harness = await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+      await harness.fixture.whenStable();
+
+      expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Tu menú');
+      expect(harness.routeNativeElement?.textContent).toContain('Tu menú está vacío');
+    });
+
+    it('keeps a customer away from the menu of a restaurant', async () => {
+      await startWith(ANA);
+
+      await RouterTestingHarness.create('/mi-restaurante/menu');
+      httpTesting.expectOne('/api/health').flush({});
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      httpTesting.expectNone(MY_MENU_URL);
     });
   });
 

@@ -4,7 +4,6 @@ import {
   ElementRef,
   Injector,
   OnInit,
-  Signal,
   afterNextRender,
   computed,
   inject,
@@ -15,7 +14,7 @@ import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { Alert, AlertTone } from '@shared/ui/alert/alert';
-import { Button } from '@shared/ui/button/button';
+import { LoadError } from '@shared/ui/load-error/load-error';
 import { Pagination } from '@shared/ui/pagination/pagination';
 import { AccountRow } from '../../components/account-row/account-row';
 import { AccountApi } from '../../data-access/account-api';
@@ -32,7 +31,7 @@ interface Notice {
 
 @Component({
   selector: 'app-account-list-page',
-  imports: [AccountRow, Alert, Button, Pagination],
+  imports: [AccountRow, Alert, LoadError, Pagination],
   templateUrl: './account-list-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -41,7 +40,7 @@ export class AccountListPage implements OnInit {
   private readonly session = inject(SessionStore);
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
-  private readonly retryButton = viewChild<ElementRef<HTMLElement>>('retryButton');
+  private readonly loadError = viewChild(LoadError);
   private requestedPage = 0;
 
   protected readonly placeholders = [1, 2, 3, 4, 5];
@@ -101,14 +100,14 @@ export class AccountListPage implements OnInit {
         this.result.set(result);
         this.loading.set(false);
         if (moveFocus) {
-          this.focusAfterRender(this.heading);
+          this.focusHeading();
         }
       },
       error: (error: unknown) => {
         this.problem.set(describeAccountError(toProblemDetails(error)));
         this.loading.set(false);
         if (moveFocus) {
-          this.focusAfterRender(this.retryButton);
+          this.focusRetry();
         }
       },
     });
@@ -124,7 +123,11 @@ export class AccountListPage implements OnInit {
     );
   }
 
-  private focusAfterRender(target: Signal<ElementRef<HTMLElement> | undefined>): void {
-    afterNextRender(() => target()?.nativeElement.focus(), { injector: this.injector });
+  private focusHeading(): void {
+    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+  }
+
+  private focusRetry(): void {
+    afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
   }
 }

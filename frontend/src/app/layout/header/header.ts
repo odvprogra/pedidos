@@ -1,8 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ROLE_LABELS } from '@core/auth/account';
-import { ADMIN_PATH, LOG_IN_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
+import { ROLE_LABELS, Role } from '@core/auth/account';
+import { ADMIN_PATH, LOG_IN_PATH, MY_RESTAURANT_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
+
+interface RoleLink {
+  path: string;
+  label: string;
+  hiddenDetail: string | null;
+  icon: 'panel' | 'store';
+}
+
+const ROLE_LINKS: Partial<Record<Role, RoleLink>> = {
+  ADMIN: { path: ADMIN_PATH, label: 'Panel', hiddenDetail: 'de administración', icon: 'panel' },
+  OWNER: { path: MY_RESTAURANT_PATH, label: 'Mi restaurante', hiddenDetail: null, icon: 'store' },
+};
 
 @Component({
   selector: 'app-header',
@@ -16,10 +28,12 @@ export class Header {
 
   protected readonly logInPath = LOG_IN_PATH;
   protected readonly registerPath = REGISTER_PATH;
-  protected readonly adminPath = ADMIN_PATH;
   protected readonly status = this.session.status;
   protected readonly account = this.session.account;
-  protected readonly isAdmin = computed(() => this.account()?.role === 'ADMIN');
+  protected readonly roleLink = computed(() => {
+    const account = this.account();
+    return account ? (ROLE_LINKS[account.role] ?? null) : null;
+  });
   protected readonly firstName = computed(() => this.account()?.name.trim().split(/\s+/)[0] ?? '');
   protected readonly initial = computed(() => this.firstName().charAt(0).toUpperCase());
   protected readonly roleLabel = computed(() => {

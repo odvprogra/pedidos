@@ -1,0 +1,49 @@
+<form
+  class="grid gap-3"
+  aria-labelledby="category-form-title"
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  (keydown.escape)="cancelled.emit()"
+>
+  <h2 id="category-form-title" class="text-lg font-extrabold wrap-anywhere">{{ heading() }}</h2>
+
+  @let error = nameError();
+  <app-form-field
+    label="Nombre de la categoría"
+    fieldId="category-name"
+    hint="Por ejemplo: Platos fuertes, Bebidas o Postres."
+    [error]="error"
+  >
+    <input
+      appTextInput
+      id="category-name"
+      formControlName="name"
+      autocomplete="off"
+      placeholder="Platos fuertes"
+      [attr.aria-invalid]="error !== null"
+    />
+  </app-form-field>
+
+  @if (alert(); as message) {
+    <app-alert class="block">{{ message }}</app-alert>
+  }
+
+  <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+    <button
+      appSecondaryButton
+      type="button"
+      [attr.aria-disabled]="saving()"
+      (click)="cancelled.emit()"
+    >
+      Cancelar
+    </button>
+    <button appButton type="submit" [attr.aria-disabled]="saving()">
+      @if (saving()) {
+        <app-spinner />
+        Guardando…
+      } @else {
+        {{ submitLabel() }}
+      }
+    </button>
+  </div>
+</form>

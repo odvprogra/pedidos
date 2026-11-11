@@ -1,0 +1,166 @@
+<article
+  class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+  [attr.aria-labelledby]="idPrefix() + '-name'"
+>
+  <div class="relative h-24 overflow-hidden bg-brand sm:h-28">
+    <svg
+      aria-hidden="true"
+      class="absolute -top-4 right-4 size-36 text-white/15 sm:right-8"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M3 9l1.5-5h15L21 9" />
+      <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+      <path d="M5 12v8h14v-8" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  </div>
+
+  <div class="px-5 pb-6 sm:px-6">
+    <div class="-mt-9 flex items-end justify-between gap-3">
+      <span
+        aria-hidden="true"
+        class="relative grid size-18 shrink-0 place-items-center rounded-2xl border-4 border-surface bg-accent text-3xl font-extrabold text-ink shadow-md"
+      >
+        {{ initial() }}
+      </span>
+      <span
+        class="mb-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
+        data-status
+        [class]="badgeStyle()"
+      >
+        <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
+        {{ statusLabel() }}
+      </span>
+    </div>
+
+    <h2
+      class="mt-4 text-2xl font-extrabold tracking-tight wrap-anywhere"
+      [id]="idPrefix() + '-name'"
+    >
+      {{ restaurant().name }}
+    </h2>
+    @if (restaurant().description; as description) {
+      <p class="mt-1 wrap-anywhere text-muted">{{ description }}</p>
+    }
+    <p class="mt-4 flex items-start gap-2 text-sm font-semibold">
+      <svg
+        aria-hidden="true"
+        class="mt-px size-5 shrink-0 text-brand"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+        <circle cx="12" cy="9.5" r="2.5" />
+      </svg>
+      <span class="wrap-anywhere">
+        <span class="sr-only">Dirección: </span>{{ restaurant().address }}
+      </span>
+    </p>
+  </div>
+
+  <div class="border-t border-line bg-canvas px-5 py-5 sm:px-6">
+    @if (restaurant().suspended) {
+      <div class="flex items-start gap-3 rounded-xl bg-warning-soft p-4 text-warning">
+        <svg
+          aria-hidden="true"
+          class="mt-px size-5 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+        <div>
+          <p class="font-bold">Tu restaurante está suspendido</p>
+          <p class="mt-0.5 text-sm">
+            Los clientes no lo ven y no puedes abrirlo. Habla con el administrador para reactivarlo.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="flex items-center justify-between gap-4">
+        <div class="min-w-0">
+          <p class="font-bold" [id]="idPrefix() + '-open-label'">Recibir pedidos</p>
+          <p class="mt-0.5 text-sm text-muted" [id]="idPrefix() + '-open-hint'">{{ hint() }}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          class="relative inline-flex h-11 w-18 shrink-0 items-center rounded-full p-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:cursor-wait"
+          [class]="restaurant().open ? 'bg-success' : 'bg-muted'"
+          [attr.aria-checked]="restaurant().open"
+          [attr.aria-labelledby]="idPrefix() + '-open-label'"
+          [attr.aria-describedby]="idPrefix() + '-open-hint'"
+          [attr.aria-disabled]="busy()"
+          (click)="toggle()"
+        >
+          <span
+            aria-hidden="true"
+            class="grid size-8 place-items-center rounded-full bg-surface text-muted shadow-md transition-transform motion-reduce:transition-none"
+            [class.translate-x-7]="restaurant().open"
+          >
+            @if (busy()) {
+              <app-spinner />
+            }
+          </span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <a
+    routerLink="menu"
+    class="group flex items-center justify-between gap-4 border-t border-line px-5 py-4 transition hover:bg-brand-soft/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:px-6"
+  >
+    <span class="flex min-w-0 items-center gap-3">
+      <span
+        aria-hidden="true"
+        class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"
+      >
+        <svg
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <path d="M8 8h6M8 12h6M8 16h3" />
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span class="block font-bold">Tu menú</span>
+        <span class="block text-sm text-muted" data-menu-summary>
+          {{ menuSummary() ?? 'Categorías y productos' }}
+        </span>
+      </span>
+    </span>
+    <svg
+      aria-hidden="true"
+      class="size-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand motion-reduce:transition-none"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  </a>
+</article>

@@ -24,14 +24,14 @@
 Todas las respuestas de error usan Problem Details ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457))
 con un campo `code` estable que el frontend puede usar para decidir qué mostrar.
 
-| Estado | Cuándo                                                                           | `code`                                            |
-| ------ | -------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                               |
-| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials` |
-| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`   |
-| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found`                              |
-| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                    |
-| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                    |
+| Estado | Cuándo                                                                           | `code`                                                |
+| ------ | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `400`  | El request no cumple el formato (Bean Validation, JSON o un id que no es número) | `validation_failed`                                   |
+| `401`  | No hay sesión, venció o el login no es válido                                    | `unauthenticated`, `identity.invalid_credentials`     |
+| `403`  | Hay sesión pero el rol no alcanza, el recurso es de otro o falta el token CSRF   | `access_denied`, el del dominio, `csrf_invalid`       |
+| `404`  | El recurso no existe (`NotFoundException`)                                       | `<modulo>.not_found` o `<modulo>.<recurso>_not_found` |
+| `409`  | Conflicto con el estado actual (por ejemplo, un pedido ya entregado)             | el del dominio                                        |
+| `422`  | Se rompe una regla del negocio (`DomainException`)                               | el del dominio                                        |
 
 ```json
 {
@@ -118,6 +118,107 @@ crea el backend al arrancar, con `ADMIN_EMAIL` y `ADMIN_PASSWORD` (ver la config
 - Las dos acciones son idempotentes: suspender una cuenta suspendida o reactivar una activa responde
   `204` y deja la cuenta como estaba.
 
+## Restaurante del dueño
+
+Cada dueño registra un solo restaurante y lo maneja desde `/mine`. El restaurante sale siempre de la
+sesión, así que un dueño nunca ve ni cambia el de otro.
+
+| Operación        | Ruta                                  | Acceso | Respuesta                                                 |
+| ---------------- | ------------------------------------- | ------ | --------------------------------------------------------- |
+| Registrar        | `POST /api/v1/restaurants`            | Dueño  | `201` + `Location: /api/v1/restaurants/mine` + el recurso |
+| Ver el propio    | `GET /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
+| Abrir el propio  | `POST /api/v1/restaurants/mine/open`  | Dueño  | `204`                                                     |
+| Cerrar el propio | `POST /api/v1/restaurants/mine/close` | Dueño  | `204`                                                     |
+
+```json
+{
+  "id": 4,
+  "name": "La Casona",
+  "description": "Comida criolla",
+  "address": "Calle Sucre 245",
+  "open": false,
+  "suspended": false
+}
+```
+
+- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300) y `address`
+  (hasta 200). Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
+  `validation_failed` y el campo en `errors[].field`. Los tres se guardan sin espacios a los
+  costados, y una descripción vacía queda en `null`.
+- Un restaurante nuevo empieza cerrado y sin suspender. Un segundo registro del mismo dueño responde
+  `409` con `restaurant.already_registered`.
+- Si el dueño todavía no registró su restaurante, `GET`, `open` y `close` responden `404` con
+  `restaurant.not_found`. El frontend usa ese código para mostrar el formulario de registro.
+- Abrir y cerrar son idempotentes: abrir uno abierto o cerrar uno cerrado responde `204` y lo deja
+  como estaba.
+- Un restaurante suspendido no se abre: `409` con `restaurant.suspended`. Cerrarlo sí responde
+  `204`. El dueño lo sigue viendo en `/mine`, con `suspended: true`.
+
+## Menú del dueño
+
+El dueño arma el menú de su restaurante con categorías y productos. Como en `/mine`, el restaurante
+sale siempre de la sesión.
+
+| Operación               | Ruta                                                         | Acceso | Respuesta                         |
+| ----------------------- | ------------------------------------------------------------ | ------ | --------------------------------- |
+| Ver el menú propio      | `GET /api/v1/restaurants/mine/catalog`                       | Dueño  | `200` + el menú                   |
+| Crear una categoría     | `POST /api/v1/restaurants/mine/categories`                   | Dueño  | `201` + `Location` + la categoría |
+| Renombrar una categoría | `PUT /api/v1/restaurants/mine/categories/{id}`               | Dueño  | `200` + la categoría              |
+| Borrar una categoría    | `DELETE /api/v1/restaurants/mine/categories/{id}`            | Dueño  | `204`                             |
+| Crear un producto       | `POST /api/v1/restaurants/mine/products`                     | Dueño  | `201` + `Location` + el producto  |
+| Editar un producto      | `PUT /api/v1/restaurants/mine/products/{id}`                 | Dueño  | `200` + el producto               |
+| Borrar un producto      | `DELETE /api/v1/restaurants/mine/products/{id}`              | Dueño  | `204`                             |
+| Marcar agotado          | `POST /api/v1/restaurants/mine/products/{id}/mark-sold-out`  | Dueño  | `204`                             |
+| Marcar disponible       | `POST /api/v1/restaurants/mine/products/{id}/mark-available` | Dueño  | `204`                             |
+
+```json
+{
+  "categories": [
+    {
+      "id": 3,
+      "name": "Platos fuertes",
+      "products": [
+        {
+          "id": 10,
+          "categoryId": 3,
+          "name": "Silpancho",
+          "description": "Con arroz y huevo",
+          "price": 45.00,
+          "available": true
+        }
+      ]
+    },
+    { "id": 5, "name": "Bebidas", "products": [] }
+  ]
+}
+```
+
+- El menú trae las categorías en el orden en que se crearon, cada una con sus productos también en
+  orden de creación. No se pagina: un menú tiene un tamaño acotado y se muestra entero.
+- Crear y renombrar una categoría reciben `{"name": "Bebidas"}`, hasta 60 caracteres. Crear y editar
+  un producto reciben `categoryId`, `name` (hasta 120), `description` (opcional, hasta 300) y
+  `price` (mayor que 0, con hasta 10 dígitos enteros y 2 decimales). Si un campo falta o no cumple,
+  responde `400` con `validation_failed` y el campo en `errors[].field`. Los textos se guardan sin
+  espacios a los costados, una descripción vacía queda en `null` y el precio vuelve con dos
+  decimales (`45` se guarda como `45.00`).
+- Un nombre de categoría que el restaurante ya usa, sin distinguir mayúsculas, responde `409` con
+  `catalog.category_name_taken`. Cambiar solo las mayúsculas del propio nombre sí se puede, y otro
+  restaurante puede usar el mismo nombre.
+- Una categoría con productos no se borra, aunque estén agotados: `409` con
+  `catalog.category_not_empty`. Primero se mueven o se borran sus productos.
+- Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción y el
+  precio, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
+- El `Location` de una categoría o un producto creado (`/mine/categories/{id}`,
+  `/mine/products/{id}`) es la ruta donde se edita y se borra; no tiene `GET`, porque el menú se lee
+  entero en `/mine/catalog`.
+- Un id que no existe responde `404` con `catalog.category_not_found` o `catalog.product_not_found`.
+  Una categoría o un producto de otro restaurante, también el `categoryId` del body, responde `403`
+  con `catalog.not_owner`.
+- Si el dueño todavía no registró su restaurante, todas responden `404` con `restaurant.not_found`,
+  igual que `/mine`.
+- El menú se edita igual con el restaurante abierto, cerrado o suspendido. Un cambio de precio solo
+  afecta a los pedidos que se confirmen después.
+
 ## Paginación
 
 Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
@@ -126,8 +227,8 @@ Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:
 { "items": [], "page": 0, "size": 20, "totalItems": 0, "totalPages": 0 }
 ```
 
-- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto es
-  20. Fuera de esos límites, o con un valor que no es número, responde `400` con
+- `page` empieza en 0 y va hasta 1.000.000; por defecto es 0. `size` va de 1 a 100; por defecto
+  es 20. Fuera de esos límites, o con un valor que no es número, responde `400` con
   `validation_failed` y el parámetro en `errors[].field`. El valor no se recorta en silencio.
 - Una página después de la última responde `200` con `items` vacío y los totales reales, no `404`.
 - Cada lista paginada documenta su orden, y el orden es estable: dos pedidos iguales devuelven lo

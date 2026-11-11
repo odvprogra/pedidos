@@ -29,17 +29,21 @@ src/app/features/<feature>/
 
 ## 1. Modelos y cliente HTTP
 
-1. Interfaces en `models/` con la forma exacta del JSON de la API.
+1. Interfaces en `models/` con la forma exacta del JSON de la API. Los estados, los textos que
+   dependen de los datos y los mensajes de cada `code` del backend van en funciones puras al lado
+   (`restaurant-status.ts`, `restaurant-error.ts`).
 2. `XxxApi` en `data-access/` con `inject(HttpClient)` y URLs desde `environment.apiUrl`. Devuelve
    `Observable` y no guarda estado.
 
 ## 2. Páginas
 
 1. `XxxPage` en `pages/xxx-page/`: inyecta el cliente, maneja el estado con `signal` y `computed`.
-2. Cubre siempre los cuatro estados: cargando (skeleton con `role="status"`), error (mensaje de
-   `toProblemDetails` con `role="alert"` y botón para reintentar), vacío (explica qué hacer) y éxito.
-3. Formularios: `NonNullableFormBuilder`, `markAllAsTouched()` al enviar, botón deshabilitado
-   mientras se guarda y los `errors[]` del backend asignados a cada campo.
+2. Cubre siempre los cuatro estados: cargando (skeleton con `role="status"`), error
+   (`app-load-error` con el mensaje de `toProblemDetails` y "Reintentar"), vacío (explica qué hacer)
+   y éxito.
+3. Formularios: `NonNullableFormBuilder`, `markAllAsTouched()` al enviar, `aria-disabled` (no
+   `disabled`) mientras se guarda, el foco al primer campo inválido (`focusFirstInvalid`) y los
+   `errors[]` del backend asignados con `applyFieldErrors`.
 
 ## 3. Componentes de presentación
 

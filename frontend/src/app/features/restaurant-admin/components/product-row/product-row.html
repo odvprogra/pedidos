@@ -1,0 +1,109 @@
+<article class="grid gap-3 px-4 py-4 sm:px-5" [attr.aria-labelledby]="idPrefix() + '-name'">
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h3 class="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold">
+        <span
+          class="wrap-anywhere"
+          [id]="idPrefix() + '-name'"
+          [class.text-muted]="!product().available"
+        >
+          {{ product().name }}
+        </span>
+        @if (!product().available) {
+          <span
+            class="inline-flex items-center rounded-full bg-line px-2 py-0.5 text-xs font-extrabold text-ink"
+            data-status="sold-out"
+          >
+            Agotado
+          </span>
+        }
+      </h3>
+      @if (product().description; as description) {
+        <p class="mt-0.5 text-sm wrap-anywhere text-muted">{{ description }}</p>
+      }
+    </div>
+    <p class="shrink-0 font-extrabold whitespace-nowrap" [class.text-muted]="!product().available">
+      <span class="sr-only">Precio: </span>{{ price() }}
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <button
+      type="button"
+      role="switch"
+      class="-ml-1 inline-flex min-h-11 items-center gap-3 rounded-xl px-1 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      [class]="switchCursor()"
+      [attr.aria-checked]="product().available"
+      [attr.aria-label]="'Disponible: ' + product().name"
+      [attr.aria-describedby]="progress() ? idPrefix() + '-progress' : null"
+      [attr.aria-disabled]="unavailable()"
+      (click)="toggleAvailability()"
+    >
+      <span
+        aria-hidden="true"
+        class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors"
+        [class]="product().available ? 'bg-success' : 'bg-muted'"
+      >
+        <span
+          class="grid size-5 place-items-center rounded-full bg-surface text-muted shadow-sm transition-transform motion-reduce:transition-none"
+          [class.translate-x-5]="product().available"
+        >
+          @if (working() === 'availability') {
+            <app-spinner />
+          }
+        </span>
+      </span>
+      @if (progress(); as message) {
+        <span class="text-muted" [id]="idPrefix() + '-progress'">{{ message }}</span>
+      } @else {
+        Disponible
+      }
+    </button>
+
+    <div class="flex gap-2">
+      <button
+        appSecondaryButton
+        type="button"
+        [id]="'edit-product-' + product().id"
+        [attr.aria-disabled]="unavailable()"
+        (click)="requestEdit()"
+      >
+        Editar
+        <span class="sr-only">{{ product().name }}</span>
+      </button>
+      <button
+        #deleteButton
+        appSecondaryButton
+        tone="danger"
+        type="button"
+        [id]="'delete-product-' + product().id"
+        [working]="working() === 'deletion'"
+        [attr.aria-disabled]="unavailable()"
+        [attr.aria-expanded]="confirming()"
+        [attr.aria-controls]="confirming() ? idPrefix() + '-confirm' : null"
+        (click)="toggleConfirmation()"
+        (keydown.escape)="dismiss()"
+      >
+        @if (working() === 'deletion') {
+          <app-spinner />
+          Borrando…
+        } @else {
+          Borrar
+          <span class="sr-only">{{ product().name }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (confirming()) {
+    <app-confirm-panel
+      [panelId]="idPrefix() + '-confirm'"
+      [question]="'¿Borrar ' + product().name + ' del menú?'"
+      consequence="Tus clientes dejan de verlo. Los pedidos que ya lo incluían no cambian."
+      confirmLabel="Sí, borrar"
+      [disabled]="unavailable()"
+      (confirmed)="confirmDeletion()"
+      (cancelled)="closeConfirmation()"
+    />
+  }
+</article>

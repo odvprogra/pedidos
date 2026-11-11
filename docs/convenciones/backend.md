@@ -17,6 +17,7 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 | Adaptador del puerto    | `infrastructure.persistence` | `RestaurantPersistenceAdapter`                    |
 | Adaptador con seguridad | `infrastructure.security`    | `BcryptPasswordHasher`                            |
 | Tarea al arrancar       | `infrastructure.startup`     | `FirstAdminRunner`                                |
+| Adaptador a otro módulo | `infrastructure.<modulo>`    | `RestaurantDirectoryAdapter`                      |
 | Controller              | `infrastructure.web`         | `RestaurantController`                            |
 | Request / Response      | `infrastructure.web`         | `RegisterRestaurantRequest`, `RestaurantResponse` |
 
@@ -30,7 +31,7 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Las entidades tienen un constructor con todos los campos (para reconstruirlas desde la base) y
   métodos de fábrica con nombre del negocio para crearlas (`Restaurant.register(...)`).
 - No hay setters. Los cambios de estado son métodos con intención: `order.confirm()`,
-  `restaurant.deactivate()`. Ahí se validan las reglas.
+  `restaurant.open()`. Ahí se validan las reglas.
 - Lombok: solo `@Getter`. Nunca `@Data`, `@Setter` ni `@Builder` en el dominio.
 - Las reglas rotas se lanzan como `DomainException` con un código estable
   (`"order.empty"`, `"restaurant.name_required"`). Se crea una subclase propia solo cuando el error
@@ -45,7 +46,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Recibe un command (`record`) o tipos simples; devuelve modelos de dominio. Nunca recibe ni
   devuelve requests, responses ni entidades JPA.
 - Si no encuentra algo, lanza la excepción del módulo. Los puertos devuelven `Optional`, nunca
-  `null`.
+  `null`. La excepción es el puerto hacia otro módulo: su adaptador deja pasar la excepción del caso
+  de uso que llama, como `RestaurantNotFoundException` en `catalog`, por la razón que explica
+  [arquitectura.md](../arquitectura.md#comunicación-entre-módulos).
 
 ## Infraestructura
 
@@ -54,8 +57,9 @@ Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `P
 - Entidad JPA: `@Getter`, `@Setter`, `@NoArgsConstructor(access = PROTECTED)`. La conversión vive
   en la propia entidad: `static XxxEntity fromDomain(Xxx)` y `Xxx toDomain()`.
 - Relaciones `LAZY` por defecto. Relaciones bidireccionales solo si hacen falta.
-- Requests con Bean Validation (`@NotBlank`, `@Size`, `@Positive`) y un método `toCommand()`.
-  Responses con `static XxxResponse from(Xxx)`.
+- Requests con Bean Validation (`@NotBlank`, `@Size`, `@Positive`) y un método `toCommand()`. Si
+  crear y editar reciben el mismo body, un solo request tiene `toCreateCommand()` y
+  `toEditCommand(id)` (`ProductRequest`). Responses con `static XxxResponse from(Xxx)`.
 - Los controllers no tienen lógica: convierten, llaman al caso de uso y responden.
 
 ## Seguridad

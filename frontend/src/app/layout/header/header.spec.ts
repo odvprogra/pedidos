@@ -12,6 +12,7 @@ class BlankPage {}
 
 const ANA: Account = { id: 7, name: 'Ana María Rojas', email: 'ana@correo.com', role: 'CUSTOMER' };
 const ADMIN: Account = { id: 1, name: 'Administrador', email: 'admin@pedidos.com', role: 'ADMIN' };
+const OWNER: Account = { id: 3, name: 'Luis Pérez', email: 'luis@correo.com', role: 'OWNER' };
 const LOGOUT_URL = '/api/v1/auth/logout';
 
 describe('Header', () => {
@@ -86,7 +87,7 @@ describe('Header', () => {
     await fixture.whenStable();
 
     const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
-    expect(link.textContent).toContain('Panel');
+    expect(link.textContent?.replace(/\s+/g, ' ').trim()).toBe('Panel de administración');
     expect(link.getAttribute('aria-current')).toBeNull();
     expect(text()).toContain('Administrador');
   });
@@ -97,17 +98,54 @@ describe('Header', () => {
     await fixture.whenStable();
 
     const link = fixture.nativeElement.querySelector('a[href="/admin"]') as HTMLAnchorElement;
-    expect(link.getAttribute('aria-current')).toBe('page');
+    expect(link.getAttribute('aria-current')).toBe('true');
   });
 
   it.each([
     ['a customer', ANA],
-    ['an owner', { ...ANA, role: 'OWNER' } as Account],
+    ['an owner', OWNER],
   ])('does not show the panel link to %s', async (_case, account) => {
     session.signIn(account);
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('a[href="/admin"]')).toBeNull();
+  });
+
+  it('gives an owner a link to its restaurant', async () => {
+    session.signIn(OWNER);
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector(
+      'a[href="/mi-restaurante"]',
+    ) as HTMLAnchorElement;
+    expect(link.textContent?.trim()).toBe('Mi restaurante');
+    expect(link.getAttribute('aria-current')).toBeNull();
+    expect(text()).toContain('Dueño de restaurante');
+  });
+
+  it.each(['/mi-restaurante', '/mi-restaurante/menu'])(
+    'marks the restaurant link while the owner is in %s',
+    async (url) => {
+      session.signIn(OWNER);
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
+
+      const link = fixture.nativeElement.querySelector(
+        'a[href="/mi-restaurante"]',
+      ) as HTMLAnchorElement;
+      expect(link.classList).toContain('bg-brand-strong');
+      expect(link.getAttribute('aria-current')).toBe('true');
+    },
+  );
+
+  it.each([
+    ['a customer', ANA],
+    ['an admin', ADMIN],
+  ])('does not show the restaurant link to %s', async (_case, account) => {
+    session.signIn(account);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('a[href="/mi-restaurante"]')).toBeNull();
   });
 
   it('disables the button while the session is closing', async () => {

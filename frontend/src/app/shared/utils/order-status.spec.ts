@@ -4,9 +4,10 @@ describe('the order status', () => {
   it('names each status as the data model says', () => {
     expect(ORDER_STATUS_LABELS).toEqual({
       PLACED: 'Pendiente',
-      ACCEPTED: 'En preparación',
-      READY: 'Listo para retirar',
-      PICKED_UP: 'Retirado',
+      ACCEPTED: 'Aceptado',
+      IN_PREPARATION: 'En preparación',
+      READY: 'Listo',
+      PICKED_UP: 'Completado',
       REJECTED: 'Rechazado',
       CANCELLED: 'Cancelado',
     });

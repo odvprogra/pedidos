@@ -28,8 +28,10 @@ export function canCancel(order: Order): boolean {
   return order.status === 'PLACED';
 }
 
+const IN_PROGRESS: OrderStatus[] = ['PLACED', 'ACCEPTED', 'IN_PREPARATION'];
+
 export function isInProgress(order: Order): boolean {
-  return order.status === 'PLACED' || order.status === 'ACCEPTED';
+  return IN_PROGRESS.includes(order.status);
 }
 
 export function statusHint(order: Order): string {
@@ -38,6 +40,8 @@ export function statusHint(order: Order): string {
     case 'PLACED':
       return `Esperando que ${restaurant} lo acepte. Puedes cancelarlo mientras tanto.`;
     case 'ACCEPTED':
+      return `${restaurant} aceptó tu pedido y pronto empieza a prepararlo. Ya no se puede cancelar.`;
+    case 'IN_PREPARATION':
       return `${restaurant} lo está preparando. Ya no se puede cancelar.`;
     case 'READY':
       return `¡Ya está listo! Retíralo en ${restaurant} y págalo en el local.`;

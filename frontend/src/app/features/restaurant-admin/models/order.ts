@@ -22,15 +22,16 @@ export interface Order {
 export type OrderFilter = 'active' | 'finished';
 
 export const ORDER_FILTERS: Record<OrderFilter, { label: string; statuses: OrderStatus[] }> = {
-  active: { label: 'En curso', statuses: ['PLACED', 'ACCEPTED', 'READY'] },
+  active: { label: 'En curso', statuses: ['PLACED', 'ACCEPTED', 'IN_PREPARATION', 'READY'] },
   finished: { label: 'Terminados', statuses: ['PICKED_UP', 'REJECTED', 'CANCELLED'] },
 };
 
-export type OrderAction = 'reject' | 'accept' | 'mark-ready' | 'mark-picked-up';
+export type OrderAction = 'reject' | 'accept' | 'start-preparing' | 'mark-ready' | 'mark-picked-up';
 
 const ACTIONS: Record<OrderStatus, OrderAction[]> = {
   PLACED: ['reject', 'accept'],
-  ACCEPTED: ['mark-ready'],
+  ACCEPTED: ['start-preparing'],
+  IN_PREPARATION: ['mark-ready'],
   READY: ['mark-picked-up'],
   PICKED_UP: [],
   REJECTED: [],
@@ -58,6 +59,11 @@ const COPY: Record<OrderAction, ActionCopy> = {
     working: 'Rechazando…',
     done: (id) => `Rechazaste el pedido #${id}.`,
   },
+  'start-preparing': {
+    label: 'Empezar a preparar',
+    working: 'Empezando…',
+    done: (id) => `Empezaste a preparar el pedido #${id}.`,
+  },
   'mark-ready': {
     label: 'Marcar listo',
     working: 'Marcando listo…',
@@ -82,7 +88,7 @@ export function emptyCopyFor(filter: OrderFilter): { heading: string; message: s
       }
     : {
         heading: 'Todavía no hay pedidos terminados',
-        message: 'Aquí quedan los pedidos retirados, rechazados y cancelados.',
+        message: 'Aquí quedan los pedidos completados, rechazados y cancelados.',
       };
 }
 

@@ -104,7 +104,8 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   clave las separa (`'product-' + id`, `'category-' + id`). Se cierra con `confirmation.close()`
   cuando la lista se vuelve a cargar y cuando se abre un formulario en el lugar, para que la pregunta
   no reaparezca al volver la fila.
-- Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
+- Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Empezar a preparar, Marcar listo,
+  Entregar) no
   se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
   confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.
 - Al confirmar, el panel se cierra y el botón que lo abrió dice qué está haciendo ("Cancelando…")
@@ -192,9 +193,10 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   restaurantes suspendidos.
 - El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
   las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
-  tono. Los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,
-  Listo para retirar en `success`, Retirado y Cancelado en `neutral` (terminados) y Rechazado en
-  `danger`.
+  tono. Los nombres son los del enunciado (Pendiente, Aceptado, En preparación, Listo, Completado)
+  y los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe),
+  Aceptado y En preparación en `info`, Listo en `success`, Completado y Cancelado en `neutral`
+  (terminados) y Rechazado en `danger`.
 
 ## Sesión
 

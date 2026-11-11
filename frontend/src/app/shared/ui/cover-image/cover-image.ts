@@ -7,7 +7,13 @@ import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angula
   template: `
     @if (src(); as source) {
       @if (!failed()) {
-        <img class="object-cover" alt="" fill [ngSrc]="source" (error)="failed.set(true)" />
+        <img
+          class="bg-surface object-cover"
+          alt=""
+          fill
+          [ngSrc]="source"
+          (error)="failed.set(true)"
+        />
       }
     }
   `,

@@ -1,0 +1,5 @@
+@if (src(); as source) {
+  @if (!failed()) {
+    <img class="bg-surface object-cover" alt="" fill [ngSrc]="source" (error)="failed.set(true)" />
+  }
+}

@@ -4,19 +4,7 @@ import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angula
 @Component({
   selector: 'app-cover-image',
   imports: [NgOptimizedImage],
-  template: `
-    @if (src(); as source) {
-      @if (!failed()) {
-        <img
-          class="bg-surface object-cover"
-          alt=""
-          fill
-          [ngSrc]="source"
-          (error)="failed.set(true)"
-        />
-      }
-    }
-  `,
+  templateUrl: './cover-image.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

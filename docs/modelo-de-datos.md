@@ -287,6 +287,10 @@ sus pedidos terminados. Para ese caso queda propuesto, sin crear, un índice
 `orders_restaurant_id_status_idx` sobre `(restaurant_id, status)` que reemplace al de una columna, en
 una migración nueva.
 
+La lista del admin (`order by placed_at desc, id desc`, sin filtro) recorre todos los pedidos de la
+plataforma y no lleva un índice propio: la tabla es chica y la usa una sola persona. Si crece, un
+índice sobre `(placed_at desc, id desc)` entra en una migración nueva.
+
 ## Referencias entre módulos
 
 | Columna                                              | Apunta a         | Quién garantiza que existe                               |
@@ -311,6 +315,6 @@ placeholder de la marca.
 ## Fuera del modelo
 
 Se dejaron afuera para mantener el alcance. Cada uno entra después con su propia migración si hace
-falta: tipo de cocina, horarios de atención, teléfono del restaurante, orden manual de las
+falta: horarios de atención, teléfono del restaurante, orden manual de las
 categorías, nota del pedido, nombre del cliente en el pedido, cancelar después de aceptar, reseñas y
 favoritos.

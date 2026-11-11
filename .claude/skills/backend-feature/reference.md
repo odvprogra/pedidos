@@ -13,6 +13,7 @@ package com.nur.pedidos.restaurant.domain.model;
 
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.shared.domain.exception.DomainException;
+import com.nur.pedidos.shared.domain.model.ImageUrls;
 import java.time.Instant;
 import lombok.Getter;
 
@@ -21,9 +22,11 @@ public class Restaurant {
 
     private final Long id;
     private final Long ownerId;
-    private final String name;
-    private final String description;
-    private final String address;
+    private String name;
+    private String description;
+    private String address;
+    private RestaurantCategory category;
+    private String imageUrl;
     private boolean open;
     private boolean suspended;
     private final Instant createdAt;
@@ -34,6 +37,8 @@ public class Restaurant {
             String name,
             String description,
             String address,
+            RestaurantCategory category,
+            String imageUrl,
             boolean open,
             boolean suspended,
             Instant createdAt) {
@@ -42,20 +47,43 @@ public class Restaurant {
         this.name = name;
         this.description = description;
         this.address = address;
+        this.category = category;
+        this.imageUrl = imageUrl;
         this.open = open;
         this.suspended = suspended;
         this.createdAt = createdAt;
     }
 
-    public static Restaurant register(Long ownerId, String name, String description, String address, Instant now) {
+    public static Restaurant register(
+            Long ownerId,
+            String name,
+            String description,
+            String address,
+            RestaurantCategory category,
+            String imageUrl,
+            Instant now) {
+        Restaurant restaurant = new Restaurant(null, ownerId, null, null, null, null, null, false, false, now);
+        restaurant.updateDetails(name, description, address, category, imageUrl);
+        return restaurant;
+    }
+
+    public void updateDetails(
+            String name, String description, String address, RestaurantCategory category, String imageUrl) {
         if (name == null || name.isBlank()) {
             throw new DomainException("restaurant.name_required", "El nombre del restaurante es obligatorio");
         }
         if (address == null || address.isBlank()) {
             throw new DomainException("restaurant.address_required", "La dirección del restaurante es obligatoria");
         }
-        return new Restaurant(
-                null, ownerId, name.strip(), stripToNull(description), address.strip(), false, false, now);
+        if (category == null) {
+            throw new DomainException("restaurant.category_required", "La categoría del restaurante es obligatoria");
+        }
+        String validImageUrl = ImageUrls.normalize(imageUrl, "restaurant.invalid_image_url");
+        this.name = name.strip();
+        this.description = stripToNull(description);
+        this.address = address.strip();
+        this.category = category;
+        this.imageUrl = validImageUrl;
     }
 
     public void open() {
@@ -154,7 +182,10 @@ El id del usuario que hace la petición viaja en el command. Sale de la sesión,
 ```java
 package com.nur.pedidos.restaurant.application;
 
-public record RegisterRestaurantCommand(Long ownerId, String name, String description, String address) {}
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
+
+public record RegisterRestaurantCommand(
+        Long ownerId, String name, String description, String address, RestaurantCategory category, String imageUrl) {}
 ```
 
 ## Aplicación: caso de uso que escribe
@@ -187,7 +218,13 @@ public class RegisterRestaurantUseCase {
             throw new RestaurantAlreadyRegisteredException();
         }
         Restaurant restaurant = Restaurant.register(
-                command.ownerId(), command.name(), command.description(), command.address(), clock.instant());
+                command.ownerId(),
+                command.name(),
+                command.description(),
+                command.address(),
+                command.category(),
+                command.imageUrl(),
+                clock.instant());
         return restaurantRepository.save(restaurant);
     }
 }
@@ -271,6 +308,22 @@ create table restaurants (
 );
 ```
 
+La categoría y la imagen entraron después, en otra migración: una migración que ya está en `main` no se edita.
+
+`backend/src/main/resources/db/migration/V6__add_images_and_restaurant_category.sql`
+
+```sql
+alter table restaurants
+    add column category varchar(20) not null default 'OTHER'
+        constraint restaurants_category_check
+            check (category in ('TRADITIONAL', 'GRILL', 'CHICKEN', 'PIZZA', 'BURGERS', 'SUSHI', 'CAFE', 'OTHER')),
+    add column image_url varchar(500);
+
+alter table restaurants alter column category drop default;
+
+alter table products add column image_url varchar(500);
+```
+
 ## Persistencia: entidad JPA
 
 `backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/persistence/RestaurantEntity.java`
@@ -279,8 +332,11 @@ create table restaurants (
 package com.nur.pedidos.restaurant.infrastructure.persistence;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -314,6 +370,13 @@ class RestaurantEntity {
     @Column(nullable = false, length = 200)
     private String address;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RestaurantCategory category;
+
+    @Column(length = 500)
+    private String imageUrl;
+
     @Column(nullable = false)
     private boolean open;
 
@@ -330,6 +393,8 @@ class RestaurantEntity {
         entity.setName(restaurant.getName());
         entity.setDescription(restaurant.getDescription());
         entity.setAddress(restaurant.getAddress());
+        entity.setCategory(restaurant.getCategory());
+        entity.setImageUrl(restaurant.getImageUrl());
         entity.setOpen(restaurant.isOpen());
         entity.setSuspended(restaurant.isSuspended());
         entity.setCreatedAt(restaurant.getCreatedAt());
@@ -337,7 +402,7 @@ class RestaurantEntity {
     }
 
     Restaurant toDomain() {
-        return new Restaurant(id, ownerId, name, description, address, open, suspended, createdAt);
+        return new Restaurant(id, ownerId, name, description, address, category, imageUrl, open, suspended, createdAt);
     }
 }
 ```
@@ -447,22 +512,32 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
 
 ## Web: request
 
-`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RegisterRestaurantRequest.java`
+`backend/src/main/java/com/nur/pedidos/restaurant/infrastructure/web/RestaurantRequest.java`
 
 ```java
 package com.nur.pedidos.restaurant.infrastructure.web;
 
+import com.nur.pedidos.restaurant.application.EditRestaurantCommand;
 import com.nur.pedidos.restaurant.application.RegisterRestaurantCommand;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
+import com.nur.pedidos.shared.domain.model.ImageUrls;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-record RegisterRestaurantRequest(
+record RestaurantRequest(
         @NotBlank @Size(max = 120) String name,
         @Size(max = 300) String description,
-        @NotBlank @Size(max = 200) String address) {
+        @NotBlank @Size(max = 200) String address,
+        @NotNull RestaurantCategory category,
+        @Size(max = ImageUrls.MAX_LENGTH) String imageUrl) {
 
-    RegisterRestaurantCommand toCommand(Long ownerId) {
-        return new RegisterRestaurantCommand(ownerId, name, description, address);
+    RegisterRestaurantCommand toRegisterCommand(Long ownerId) {
+        return new RegisterRestaurantCommand(ownerId, name, description, address, category, imageUrl);
+    }
+
+    EditRestaurantCommand toEditCommand(Long ownerId) {
+        return new EditRestaurantCommand(ownerId, name, description, address, category, imageUrl);
     }
 }
 ```
@@ -475,8 +550,17 @@ record RegisterRestaurantRequest(
 package com.nur.pedidos.restaurant.infrastructure.web;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 
-record RestaurantResponse(Long id, String name, String description, String address, boolean open, boolean suspended) {
+record RestaurantResponse(
+        Long id,
+        String name,
+        String description,
+        String address,
+        RestaurantCategory category,
+        String imageUrl,
+        boolean open,
+        boolean suspended) {
 
     static RestaurantResponse from(Restaurant restaurant) {
         return new RestaurantResponse(
@@ -484,6 +568,8 @@ record RestaurantResponse(Long id, String name, String description, String addre
                 restaurant.getName(),
                 restaurant.getDescription(),
                 restaurant.getAddress(),
+                restaurant.getCategory(),
+                restaurant.getImageUrl(),
                 restaurant.isOpen(),
                 restaurant.isSuspended());
     }
@@ -500,6 +586,7 @@ Cada método declara quién lo puede usar con `@PreAuthorize`. El usuario llega 
 package com.nur.pedidos.restaurant.infrastructure.web;
 
 import com.nur.pedidos.restaurant.application.CloseRestaurantUseCase;
+import com.nur.pedidos.restaurant.application.EditRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.GetOwnRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.OpenRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.RegisterRestaurantUseCase;
@@ -514,6 +601,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -528,14 +616,15 @@ class RestaurantController {
 
     private final RegisterRestaurantUseCase registerRestaurant;
     private final GetOwnRestaurantUseCase getOwnRestaurant;
+    private final EditRestaurantUseCase editRestaurant;
     private final OpenRestaurantUseCase openRestaurant;
     private final CloseRestaurantUseCase closeRestaurant;
 
     @PostMapping
     @PreAuthorize("hasRole('OWNER')")
     ResponseEntity<RestaurantResponse> register(
-            @AuthenticationPrincipal CurrentUser owner, @Valid @RequestBody RegisterRestaurantRequest request) {
-        Restaurant restaurant = registerRestaurant.execute(request.toCommand(owner.id()));
+            @AuthenticationPrincipal CurrentUser owner, @Valid @RequestBody RestaurantRequest request) {
+        Restaurant restaurant = registerRestaurant.execute(request.toRegisterCommand(owner.id()));
         return ResponseEntity.created(OWN_RESTAURANT).body(RestaurantResponse.from(restaurant));
     }
 
@@ -543,6 +632,12 @@ class RestaurantController {
     @PreAuthorize("hasRole('OWNER')")
     RestaurantResponse mine(@AuthenticationPrincipal CurrentUser owner) {
         return RestaurantResponse.from(getOwnRestaurant.execute(owner.id()));
+    }
+
+    @PutMapping("/mine")
+    @PreAuthorize("hasRole('OWNER')")
+    RestaurantResponse edit(@AuthenticationPrincipal CurrentUser owner, @Valid @RequestBody RestaurantRequest request) {
+        return RestaurantResponse.from(editRestaurant.execute(request.toEditCommand(owner.id())));
     }
 
     @PostMapping("/mine/open")
@@ -647,7 +742,7 @@ class RestaurantTest {
     @Test
     void registersAClosedRestaurantWithTrimmedFields() {
         Restaurant restaurant =
-                Restaurant.register(7L, "  La Casona  ", "  Comida criolla  ", "  Calle Sucre 245 ", NOW);
+                Restaurant.register(7L, "  La Casona  ", "  Comida criolla  ", "  Calle Sucre 245 ", RestaurantCategory.TRADITIONAL, null, NOW);
 
         assertThat(restaurant.getId()).isNull();
         assertThat(restaurant.getOwnerId()).isEqualTo(7L);
@@ -663,7 +758,7 @@ class RestaurantTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void rejectsABlankName(String name) {
-        assertThatThrownBy(() -> Restaurant.register(7L, name, null, "Calle Sucre 245", NOW))
+        assertThatThrownBy(() -> Restaurant.register(7L, name, null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.name_required");
@@ -681,7 +776,17 @@ class RestaurantTest {
     }
 
     private static Restaurant restaurant(boolean open, boolean suspended) {
-        return new Restaurant(1L, 7L, "La Casona", null, "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                1L,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }
 ```
@@ -788,6 +893,8 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
                 restaurant.getName(),
                 restaurant.getDescription(),
                 restaurant.getAddress(),
+                restaurant.getCategory(),
+                restaurant.getImageUrl(),
                 restaurant.isOpen(),
                 restaurant.isSuspended(),
                 restaurant.getCreatedAt());
@@ -810,6 +917,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -863,7 +971,17 @@ class OpenRestaurantUseCaseTest {
     }
 
     private static Restaurant restaurant(Long ownerId, boolean open, boolean suspended) {
-        return new Restaurant(null, ownerId, "La Casona", null, "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                null,
+                ownerId,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 
     private boolean isOpen(Long ownerId) {
@@ -899,6 +1017,7 @@ import com.nur.pedidos.restaurant.domain.exception.RestaurantAlreadyRegisteredEx
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.infrastructure.security.SecurityConfig;
 import java.time.Instant;
 import java.util.stream.Stream;
@@ -922,7 +1041,7 @@ class RestaurantControllerTest {
 
     private static final Instant NOW = Instant.parse("2026-11-07T15:00:00Z");
     private static final String REGISTRATION = """
-            {"name": "La Casona", "description": "Comida criolla", "address": "Calle Sucre 245"}
+            {"name": "La Casona", "description": "Comida criolla", "address": "Calle Sucre 245", "category": "TRADITIONAL"}
             """;
 
     @Autowired
@@ -961,12 +1080,14 @@ class RestaurantControllerTest {
                           "name": "La Casona",
                           "description": "Comida criolla",
                           "address": "Calle Sucre 245",
+                          "category": "TRADITIONAL",
+                          "imageUrl": null,
                           "open": false,
                           "suspended": false
                         }
                         """);
         verify(registerRestaurant)
-                .execute(new RegisterRestaurantCommand(7L, "La Casona", "Comida criolla", "Calle Sucre 245"));
+                .execute(new RegisterRestaurantCommand(7L, "La Casona", "Comida criolla", "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null));
     }
 
     @Test
@@ -1065,7 +1186,17 @@ class RestaurantControllerTest {
     }
 
     private static Restaurant laCasona(boolean open, boolean suspended) {
-        return new Restaurant(1L, 7L, "La Casona", "Comida criolla", "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                1L,
+                7L,
+                "La Casona",
+                "Comida criolla",
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }
 ```
@@ -1085,6 +1216,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import com.nur.pedidos.TestcontainersConfiguration;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -1106,7 +1238,7 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void savesAndLoadsARestaurantByItsOwner() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", "Comida criolla", "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", "Comida criolla", "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(saved.getId()).isNotNull();
         assertThat(adapter.findByOwnerId(7L))
@@ -1124,7 +1256,7 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsARestaurantWithoutDescription() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerId(7L))
                 .get()
@@ -1134,14 +1266,14 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsNothingWhenTheOwnerHasNoRestaurant() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findByOwnerId(8L)).isEmpty();
     }
 
     @Test
     void tellsWhetherAnOwnerAlreadyHasARestaurant() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.existsByOwnerId(7L)).isTrue();
         assertThat(adapter.existsByOwnerId(8L)).isFalse();
@@ -1149,7 +1281,7 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsTheOpeningOfARestaurant() {
-        Restaurant restaurant = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant restaurant = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
         restaurant.open();
 
         adapter.save(restaurant);
@@ -1162,7 +1294,7 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void keepsTheSuspensionOfARestaurant() {
-        adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+        adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, false, true, NOW));
 
         assertThat(adapter.findByOwnerId(7L))
                 .get()
@@ -1172,8 +1304,8 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsARestaurantByItsId() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
-        Restaurant fogon = adapter.save(Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", NOW));
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
+        Restaurant fogon = adapter.save(Restaurant.register(8L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findById(fogon.getId()))
                 .get()
@@ -1183,7 +1315,7 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void findsNothingWhenTheIdDoesNotExist() {
-        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
         assertThat(adapter.findById(saved.getId() + 100)).isEmpty();
     }
@@ -1250,14 +1382,14 @@ class RestaurantPersistenceAdapterTest {
 
     @Test
     void rejectsASecondRestaurantForTheSameOwner() {
-        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW));
 
-        assertThatThrownBy(() -> adapter.save(Restaurant.register(7L, "El Fogón", null, "Av. Banzer 120", NOW)))
+        assertThatThrownBy(() -> adapter.save(Restaurant.register(7L, "El Fogón", null, "Av. Banzer 120", RestaurantCategory.TRADITIONAL, null, NOW)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private void save(Long ownerId, String name, boolean open, boolean suspended) {
-        adapter.save(new Restaurant(null, ownerId, name, null, "Calle Sucre 245", open, suspended, NOW));
+        adapter.save(new Restaurant(null, ownerId, name, null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, open, suspended, NOW));
     }
 }
 ```

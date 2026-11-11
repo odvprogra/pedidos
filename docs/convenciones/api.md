@@ -7,8 +7,9 @@
 - Acciones que no son CRUD como subrecurso con verbo: `POST /api/v1/orders/{id}/cancel`.
 - Rutas en kebab-case; JSON en camelCase.
 - La verificación del sistema queda fuera de la versión: `GET /api/health`.
-- Si el admin necesita otra vista de una colección que ya es pública, va en
-  `/api/v1/admin/<recurso>`, como `GET /api/v1/admin/restaurants`. Sus acciones siguen en el recurso
+- Si el admin necesita otra vista de una colección que ya tiene una ruta para otro rol, va en
+  `/api/v1/admin/<recurso>`: `GET /api/v1/admin/restaurants` (la pública trae solo los visibles) y
+  `GET /api/v1/admin/orders` (`/api/v1/orders` es la del cliente). Sus acciones siguen en el recurso
   (`POST /api/v1/restaurants/{id}/suspend`). Una colección que solo ve el admin, como las cuentas, no
   lleva el prefijo.
 
@@ -222,8 +223,8 @@ sale siempre de la sesión.
   restaurante puede usar el mismo nombre.
 - Una categoría con productos no se borra, aunque estén agotados: `409` con
   `catalog.category_not_empty`. Primero se mueven o se borran sus productos.
-- Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción y el
-  precio, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
+- Un producto nuevo está disponible. Editar reemplaza la categoría, el nombre, la descripción, el
+  precio y la imagen, y no cambia si está agotado. Marcar agotado o disponible es idempotente.
 - El `Location` de una categoría o un producto creado (`/mine/categories/{id}`,
   `/mine/products/{id}`) es la ruta donde se edita y se borra; no tiene `GET`, porque el menú se lee
   entero en `/mine/catalog`.
@@ -269,7 +270,8 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
 - El listado trae solo los restaurantes visibles, los que no están suspendidos. Primero los
   abiertos y después los cerrados, y dentro de cada grupo en orden de registro (por `id`
   ascendente). Un restaurante que abre o cierra cambia de lugar en la lista.
-- El listado y el detalle traen `id`, `name`, `description`, `address` y `open`. No traen
+- El listado y el detalle traen `id`, `name`, `description`, `address`, `category`, `imageUrl` y
+  `open`. No traen
   `suspended`, que en público siempre sería `false`, ni el dueño.
 - Un restaurante recién registrado ya aparece, cerrado y con el menú vacío: la visibilidad depende
   solo de la suspensión.
@@ -313,6 +315,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
       "name": "Pizzería Napoli",
       "description": null,
       "address": "Av. Banzer 120",
+      "category": "PIZZA",
+      "imageUrl": null,
       "open": false,
       "suspended": true
     }
@@ -325,8 +329,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
 ```
 
 - La lista va en `/admin/restaurants` porque `GET /api/v1/restaurants` es público y trae solo los
-  visibles, con otra forma y otro orden. Es la única ruta bajo `/admin`: la vista del admin sobre una
-  colección que también tiene vista pública. No se abre en `SecurityConfig`; la protege su
+  visibles, con otra forma y otro orden: es la vista del admin sobre una colección que también tiene
+  vista pública, como `/admin/orders` lo es sobre los pedidos del cliente. No se abre en `SecurityConfig`; la protege su
   `@PreAuthorize`. Las acciones van en el recurso, como en las cuentas.
 - La lista trae todos los restaurantes en orden de registro (por `id` ascendente), con la forma del
   restaurante del dueño. Un local que abre, cierra o se suspende no cambia de lugar. No trae el

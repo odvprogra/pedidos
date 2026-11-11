@@ -40,7 +40,7 @@ com.nur.pedidos
 │       └── web/            Controllers, requests y responses
 └── shared/
     ├── domain/exception/   DomainException y sus subclases por estado HTTP (404, 409, 403, 401)
-    ├── domain/model/       PageResult: una página de resultados, en Java puro
+    ├── domain/model/       PageResult (una página de resultados) e ImageUrls (valida una imagen), en Java puro
     └── infrastructure/
         ├── web/            GlobalExceptionHandler, HealthController, PageResponse
         ├── security/       SecurityConfig, CurrentUser, SecuritySessions, SessionRevoker, 401 y 403

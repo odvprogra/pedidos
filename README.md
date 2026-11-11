@@ -91,6 +91,9 @@ así que no tocan la base `pedidos` ni la app de desarrollo. Tardan unos minutos
 arranque. Para verlos en una ventana de Chrome: `npm run test:headed`. Detalle en
 [docs/convenciones/testing.md](docs/convenciones/testing.md).
 
+Qué test prueba cada punto del checklist de evaluación, y cómo correr uno solo, está en
+[docs/rubrica.md](docs/rubrica.md).
+
 ## Configuración
 
 El backend lee estas variables de entorno, con valores por defecto para desarrollo local:
@@ -124,4 +127,6 @@ En desarrollo, Angular redirige las peticiones a `/api` hacia el backend usando
   [API](docs/convenciones/api.md), [tests](docs/convenciones/testing.md),
   [Git y pull requests](docs/convenciones/git.md)
 - [Decisiones de arquitectura](docs/adr/README.md)
+- [Rúbrica: qué test prueba cada punto](docs/rubrica.md)
+- [Pendientes: limitaciones conocidas y mejoras futuras](docs/pendientes.md)
 - [Contexto para asistentes de IA](AGENTS.md)

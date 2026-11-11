@@ -42,6 +42,9 @@ class ProductEntity {
     @Column(nullable = false)
     private boolean available;
 
+    @Column(length = 500)
+    private String imageUrl;
+
     static ProductEntity fromDomain(Product product) {
         ProductEntity entity = new ProductEntity();
         entity.setId(product.getId());
@@ -50,11 +53,12 @@ class ProductEntity {
         entity.setName(product.getName());
         entity.setDescription(product.getDescription());
         entity.setPrice(product.getPrice());
+        entity.setImageUrl(product.getImageUrl());
         entity.setAvailable(product.isAvailable());
         return entity;
     }
 
     Product toDomain() {
-        return new Product(id, restaurantId, categoryId, name, description, price, available);
+        return new Product(id, restaurantId, categoryId, name, description, price, available, imageUrl);
     }
 }

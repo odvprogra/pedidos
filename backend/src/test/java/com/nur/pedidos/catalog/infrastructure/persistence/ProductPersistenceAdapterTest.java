@@ -44,7 +44,7 @@ class ProductPersistenceAdapterTest {
     @Test
     void savesAndLoadsAProduct() {
         Product saved =
-                adapter.save(Product.create(mainDishes, "Silpancho", "Con arroz y huevo", new BigDecimal("45")));
+                adapter.save(Product.create(mainDishes, "Silpancho", "Con arroz y huevo", new BigDecimal("45"), null));
 
         assertThat(saved.getId()).isNotNull();
         assertThat(adapter.findById(saved.getId()))
@@ -66,8 +66,19 @@ class ProductPersistenceAdapterTest {
     }
 
     @Test
+    void savesTheImageOfAProduct() {
+        Product saved = adapter.save(
+                Product.create(mainDishes, "Silpancho", null, new BigDecimal("45.00"), "https://f.test/s.jpg"));
+
+        assertThat(adapter.findById(saved.getId()))
+                .get()
+                .extracting(Product::getImageUrl)
+                .isEqualTo("https://f.test/s.jpg");
+    }
+
+    @Test
     void keepsAProductWithoutDescription() {
-        Product saved = adapter.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
+        Product saved = adapter.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
 
         assertThat(adapter.findById(saved.getId()))
                 .get()
@@ -83,10 +94,10 @@ class ProductPersistenceAdapterTest {
     @Test
     void listsOnlyTheProductsOfTheRestaurantInTheOrderTheyWereCreated() {
         Category foreign = categories.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
-        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
-        adapter.save(Product.create(foreign, "Napolitana", null, BigDecimal.TEN));
-        adapter.save(Product.create(drinks, "Limonada", null, BigDecimal.TEN));
-        adapter.save(Product.create(mainDishes, "Pique macho", null, BigDecimal.TEN));
+        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
+        adapter.save(Product.create(foreign, "Napolitana", null, BigDecimal.TEN, null));
+        adapter.save(Product.create(drinks, "Limonada", null, BigDecimal.TEN, null));
+        adapter.save(Product.create(mainDishes, "Pique macho", null, BigDecimal.TEN, null));
 
         assertThat(adapter.findAllByRestaurantId(RESTAURANT))
                 .extracting(Product::getName)
@@ -95,7 +106,7 @@ class ProductPersistenceAdapterTest {
 
     @Test
     void tellsWhetherACategoryHasProducts() {
-        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
 
         assertThat(adapter.existsByCategoryId(mainDishes.getId())).isTrue();
         assertThat(adapter.existsByCategoryId(drinks.getId())).isFalse();
@@ -103,8 +114,8 @@ class ProductPersistenceAdapterTest {
 
     @Test
     void keepsTheChangesOfAProduct() {
-        Product product = adapter.save(Product.create(mainDishes, "Silpancho", "Con arroz", BigDecimal.TEN));
-        product.edit(drinks, "Limonada", null, new BigDecimal("15.50"));
+        Product product = adapter.save(Product.create(mainDishes, "Silpancho", "Con arroz", BigDecimal.TEN, null));
+        product.edit(drinks, "Limonada", null, new BigDecimal("15.50"), null);
         product.markSoldOut();
 
         adapter.save(product);
@@ -122,7 +133,7 @@ class ProductPersistenceAdapterTest {
 
     @Test
     void deletesAProduct() {
-        Product product = adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        Product product = adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
 
         adapter.deleteById(product.getId());
 
@@ -131,21 +142,22 @@ class ProductPersistenceAdapterTest {
 
     @Test
     void rejectsAPriceOfZero() {
-        Product free = new Product(null, RESTAURANT, mainDishes.getId(), "Silpancho", null, BigDecimal.ZERO, true);
+        Product free =
+                new Product(null, RESTAURANT, mainDishes.getId(), "Silpancho", null, BigDecimal.ZERO, true, null);
 
         assertThatThrownBy(() -> adapter.save(free)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void rejectsAProductInACategoryThatDoesNotExist() {
-        Product orphan = new Product(null, RESTAURANT, 999_999L, "Silpancho", null, BigDecimal.TEN, true);
+        Product orphan = new Product(null, RESTAURANT, 999_999L, "Silpancho", null, BigDecimal.TEN, true, null);
 
         assertThatThrownBy(() -> adapter.save(orphan)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void refusesToDeleteACategoryWithProducts() {
-        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        adapter.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
         categories.deleteById(mainDishes.getId());
 
         assertThatThrownBy(categoryJpaRepository::flush).isInstanceOf(DataIntegrityViolationException.class);

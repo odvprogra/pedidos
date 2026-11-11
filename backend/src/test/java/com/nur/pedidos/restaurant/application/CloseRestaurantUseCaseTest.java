@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +48,17 @@ class CloseRestaurantUseCaseTest {
     }
 
     private static Restaurant restaurant(Long ownerId, boolean open) {
-        return new Restaurant(null, ownerId, "La Casona", null, "Calle Sucre 245", open, false, NOW);
+        return new Restaurant(
+                null,
+                ownerId,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                false,
+                NOW);
     }
 
     private boolean isOpen(Long ownerId) {

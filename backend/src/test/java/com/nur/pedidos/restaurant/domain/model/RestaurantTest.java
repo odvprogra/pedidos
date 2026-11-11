@@ -18,8 +18,14 @@ class RestaurantTest {
 
     @Test
     void registersAClosedRestaurantWithTrimmedFields() {
-        Restaurant restaurant =
-                Restaurant.register(7L, "  La Casona  ", "  Comida criolla  ", "  Calle Sucre 245 ", NOW);
+        Restaurant restaurant = Restaurant.register(
+                7L,
+                "  La Casona  ",
+                "  Comida criolla  ",
+                "  Calle Sucre 245 ",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                NOW);
 
         assertThat(restaurant.getId()).isNull();
         assertThat(restaurant.getOwnerId()).isEqualTo(7L);
@@ -35,7 +41,8 @@ class RestaurantTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void registersWithoutDescriptionWhenItIsBlank(String description) {
-        Restaurant restaurant = Restaurant.register(7L, "La Casona", description, "Calle Sucre 245", NOW);
+        Restaurant restaurant = Restaurant.register(
+                7L, "La Casona", description, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW);
 
         assertThat(restaurant.getDescription()).isNull();
     }
@@ -44,7 +51,8 @@ class RestaurantTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void rejectsABlankName(String name) {
-        assertThatThrownBy(() -> Restaurant.register(7L, name, null, "Calle Sucre 245", NOW))
+        assertThatThrownBy(() -> Restaurant.register(
+                        7L, name, null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, NOW))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.name_required");
@@ -54,7 +62,8 @@ class RestaurantTest {
     @NullAndEmptySource
     @ValueSource(strings = "   ")
     void rejectsABlankAddress(String address) {
-        assertThatThrownBy(() -> Restaurant.register(7L, "La Casona", null, address, NOW))
+        assertThatThrownBy(() ->
+                        Restaurant.register(7L, "La Casona", null, address, RestaurantCategory.TRADITIONAL, null, NOW))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("restaurant.address_required");
@@ -182,7 +191,108 @@ class RestaurantTest {
         assertThat(restaurant(open, suspended).acceptsOrders()).isEqualTo(acceptsOrders);
     }
 
+    @Test
+    void registersTheCategoryAndTheImageOfTheRestaurant() {
+        Restaurant restaurant = Restaurant.register(
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.GRILL,
+                "  https://fotos.pedidos.test/casona.jpg ",
+                NOW);
+
+        assertThat(restaurant)
+                .extracting(Restaurant::getCategory, Restaurant::getImageUrl)
+                .containsExactly(RestaurantCategory.GRILL, "https://fotos.pedidos.test/casona.jpg");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "   ")
+    void registersWithoutImageWhenItIsBlank(String imageUrl) {
+        Restaurant restaurant = Restaurant.register(
+                7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, imageUrl, NOW);
+
+        assertThat(restaurant.getImageUrl()).isNull();
+    }
+
+    @Test
+    void rejectsARestaurantWithoutCategory() {
+        assertThatThrownBy(() -> Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", null, null, NOW))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("restaurant.category_required");
+    }
+
+    @Test
+    void rejectsAnImageThatIsNotAWebAddress() {
+        assertThatThrownBy(() -> Restaurant.register(
+                        7L, "La Casona", null, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, "casona.jpg", NOW))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo("restaurant.invalid_image_url");
+    }
+
+    @Test
+    void updatesItsDetailsAndKeepsItsStateAndOwner() {
+        Restaurant restaurant = restaurant(true, false);
+
+        restaurant.updateDetails(
+                " El Fogón ", " Parrilla ", " Av. Banzer 120 ", RestaurantCategory.GRILL, "https://f.test/l.png");
+
+        assertThat(restaurant)
+                .extracting(
+                        Restaurant::getName,
+                        Restaurant::getDescription,
+                        Restaurant::getAddress,
+                        Restaurant::getCategory,
+                        Restaurant::getImageUrl,
+                        Restaurant::isOpen,
+                        Restaurant::getOwnerId)
+                .containsExactly(
+                        "El Fogón",
+                        "Parrilla",
+                        "Av. Banzer 120",
+                        RestaurantCategory.GRILL,
+                        "https://f.test/l.png",
+                        true,
+                        7L);
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            nullValues = "null",
+            value = {
+                "'  ', Calle Sucre 245, TRADITIONAL, null, restaurant.name_required",
+                "La Casona, '  ', TRADITIONAL, null, restaurant.address_required",
+                "La Casona, Calle Sucre 245, null, null, restaurant.category_required",
+                "La Casona, Calle Sucre 245, TRADITIONAL, logo.png, restaurant.invalid_image_url"
+            })
+    void changesNothingWhenTheNewDetailsBreakARule(
+            String name, String address, RestaurantCategory category, String imageUrl, String code) {
+        Restaurant restaurant = restaurant(false, false);
+
+        assertThatThrownBy(() -> restaurant.updateDetails(name, "Otra", address, category, imageUrl))
+                .isInstanceOf(DomainException.class)
+                .extracting("code")
+                .isEqualTo(code);
+        assertThat(restaurant)
+                .extracting(Restaurant::getName, Restaurant::getDescription, Restaurant::getCategory)
+                .containsExactly("La Casona", null, RestaurantCategory.TRADITIONAL);
+    }
+
     private static Restaurant restaurant(boolean open, boolean suspended) {
-        return new Restaurant(1L, 7L, "La Casona", null, "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                1L,
+                7L,
+                "La Casona",
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }

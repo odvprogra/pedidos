@@ -32,7 +32,7 @@ public class EditProductUseCase {
         if (!category.belongsTo(restaurantId)) {
             throw new CatalogNotOwnerException();
         }
-        product.edit(category, command.name(), command.description(), command.price());
+        product.edit(category, command.name(), command.description(), command.price(), command.imageUrl());
         return productRepository.save(product);
     }
 }

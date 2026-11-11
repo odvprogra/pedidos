@@ -11,6 +11,7 @@ import com.nur.pedidos.restaurant.application.OpenRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.SuspendRestaurantUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantSuspendedException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.restaurant.domain.port.RestaurantRepository;
 import java.time.Instant;
 import java.util.Optional;
@@ -154,7 +155,17 @@ class RestaurantLockingTest {
 
     private Long save(Long owner, boolean open, boolean suspended) {
         return restaurantRepository
-                .save(new Restaurant(null, owner, "La Casona", null, "Calle Sucre 245", open, suspended, NOW))
+                .save(new Restaurant(
+                        null,
+                        owner,
+                        "La Casona",
+                        null,
+                        "Calle Sucre 245",
+                        RestaurantCategory.TRADITIONAL,
+                        null,
+                        open,
+                        suspended,
+                        NOW))
                 .getId();
     }
 

@@ -44,7 +44,7 @@ class DeleteCategoryUseCaseTest {
     @Test
     void refusesToDeleteACategoryWithProducts() {
         Category drinks = categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
-        productRepository.save(Product.create(drinks, "Limonada", null, new BigDecimal("15")));
+        productRepository.save(Product.create(drinks, "Limonada", null, new BigDecimal("15"), null));
 
         assertThatThrownBy(() -> deleteCategory.execute(OWNER, drinks.getId()))
                 .isInstanceOf(CategoryNotEmptyException.class)
@@ -56,7 +56,7 @@ class DeleteCategoryUseCaseTest {
     @Test
     void refusesToDeleteACategoryWhoseProductsAreSoldOut() {
         Category drinks = categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
-        Product lemonade = Product.create(drinks, "Limonada", null, new BigDecimal("15"));
+        Product lemonade = Product.create(drinks, "Limonada", null, new BigDecimal("15"), null);
         lemonade.markSoldOut();
         productRepository.save(lemonade);
 

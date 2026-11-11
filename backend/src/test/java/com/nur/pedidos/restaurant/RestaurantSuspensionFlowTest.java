@@ -184,7 +184,8 @@ class RestaurantSuspensionFlowTest {
 
     private Menu openRestaurantWithMenu(String ownerEmail) {
         Account owner = register(ownerEmail, "OWNER");
-        Long restaurantId = owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245"))
+        Long restaurantId = owner.post(
+                        "/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245", "TRADITIONAL"))
                 .expectStatus()
                 .isCreated()
                 .expectBody(IdView.class)
@@ -287,7 +288,7 @@ class RestaurantSuspensionFlowTest {
 
     private record CredentialsBody(String email, String password) {}
 
-    private record RestaurantBody(String name, String address) {}
+    private record RestaurantBody(String name, String address, String category) {}
 
     private record CategoryBody(String name) {}
 

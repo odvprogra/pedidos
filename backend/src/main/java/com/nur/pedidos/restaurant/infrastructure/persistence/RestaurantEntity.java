@@ -1,8 +1,11 @@
 package com.nur.pedidos.restaurant.infrastructure.persistence;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,6 +39,13 @@ class RestaurantEntity {
     @Column(nullable = false, length = 200)
     private String address;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RestaurantCategory category;
+
+    @Column(length = 500)
+    private String imageUrl;
+
     @Column(nullable = false)
     private boolean open;
 
@@ -52,6 +62,8 @@ class RestaurantEntity {
         entity.setName(restaurant.getName());
         entity.setDescription(restaurant.getDescription());
         entity.setAddress(restaurant.getAddress());
+        entity.setCategory(restaurant.getCategory());
+        entity.setImageUrl(restaurant.getImageUrl());
         entity.setOpen(restaurant.isOpen());
         entity.setSuspended(restaurant.isSuspended());
         entity.setCreatedAt(restaurant.getCreatedAt());
@@ -59,6 +71,6 @@ class RestaurantEntity {
     }
 
     Restaurant toDomain() {
-        return new Restaurant(id, ownerId, name, description, address, open, suspended, createdAt);
+        return new Restaurant(id, ownerId, name, description, address, category, imageUrl, open, suspended, createdAt);
     }
 }

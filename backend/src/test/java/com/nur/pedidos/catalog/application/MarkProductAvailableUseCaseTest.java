@@ -45,7 +45,7 @@ class MarkProductAvailableUseCaseTest {
 
     @Test
     void acceptsMarkingAnAvailableProductAgain() {
-        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
 
         markAvailable.execute(OWNER, silpancho.getId());
 
@@ -82,7 +82,7 @@ class MarkProductAvailableUseCaseTest {
     }
 
     private static Product soldOut(Category category, String name) {
-        Product product = Product.create(category, name, null, BigDecimal.TEN);
+        Product product = Product.create(category, name, null, BigDecimal.TEN, null);
         product.markSoldOut();
         return product;
     }

@@ -132,6 +132,7 @@ sesión, así que un dueño nunca ve ni cambia el de otro.
 | ---------------- | ------------------------------------- | ------ | --------------------------------------------------------- |
 | Registrar        | `POST /api/v1/restaurants`            | Dueño  | `201` + `Location: /api/v1/restaurants/mine` + el recurso |
 | Ver el propio    | `GET /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
+| Editar el propio | `PUT /api/v1/restaurants/mine`        | Dueño  | `200` + el recurso                                        |
 | Abrir el propio  | `POST /api/v1/restaurants/mine/open`  | Dueño  | `204`                                                     |
 | Cerrar el propio | `POST /api/v1/restaurants/mine/close` | Dueño  | `204`                                                     |
 
@@ -141,18 +142,25 @@ sesión, así que un dueño nunca ve ni cambia el de otro.
   "name": "La Casona",
   "description": "Comida criolla",
   "address": "Calle Sucre 245",
+  "category": "TRADITIONAL",
+  "imageUrl": "https://fotos.pedidos.test/casona.jpg",
   "open": false,
   "suspended": false
 }
 ```
 
-- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300) y `address`
-  (hasta 200). Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
+- El registro recibe `name` (hasta 120 caracteres), `description` (opcional, hasta 300), `address`
+  (hasta 200), `category` (obligatoria: `TRADITIONAL`, `GRILL`, `CHICKEN`, `PIZZA`, `BURGERS`,
+  `SUSHI`, `CAFE` u `OTHER`) e `imageUrl` (opcional, hasta 500). Una categoría que falta responde
+  `400` con el campo `category`; una que no está en la lista, `400` con `validation_failed`. Una
+  imagen que no es una dirección `http` o `https` responde `422` con `restaurant.invalid_image_url`. Un nombre o una dirección en blanco, o un campo más largo, responde `400` con
   `validation_failed` y el campo en `errors[].field`. Los tres se guardan sin espacios a los
   costados, y una descripción vacía queda en `null`.
 - Un restaurante nuevo empieza cerrado y sin suspender. Un segundo registro del mismo dueño responde
   `409` con `restaurant.already_registered`.
-- Si el dueño todavía no registró su restaurante, `GET`, `open` y `close` responden `404` con
+- Editar recibe los mismos campos que el registro, con las mismas reglas, y responde el recurso. No
+  cambia si está abierto ni si está suspendido.
+- Si el dueño todavía no registró su restaurante, `GET`, `PUT`, `open` y `close` responden `404` con
   `restaurant.not_found`. El frontend usa ese código para mostrar el formulario de registro.
 - Abrir y cerrar son idempotentes: abrir uno abierto o cerrar uno cerrado responde `204` y lo deja
   como estaba.
@@ -190,7 +198,8 @@ sale siempre de la sesión.
           "name": "Silpancho",
           "description": "Con arroz y huevo",
           "price": 45.00,
-          "available": true
+          "available": true,
+          "imageUrl": null
         }
       ]
     },
@@ -202,8 +211,9 @@ sale siempre de la sesión.
 - El menú trae las categorías en el orden en que se crearon, cada una con sus productos también en
   orden de creación. No se pagina: un menú tiene un tamaño acotado y se muestra entero.
 - Crear y renombrar una categoría reciben `{"name": "Bebidas"}`, hasta 60 caracteres. Crear y editar
-  un producto reciben `categoryId`, `name` (hasta 120), `description` (opcional, hasta 300) y
-  `price` (mayor que 0, con hasta 10 dígitos enteros y 2 decimales). Si un campo falta o no cumple,
+  un producto reciben `categoryId`, `name` (hasta 120), `description` (opcional, hasta 300),
+  `price` (mayor que 0, con hasta 10 dígitos enteros y 2 decimales) e `imageUrl` (opcional, hasta
+  500; una dirección que no es `http` o `https` responde `422` con `catalog.invalid_image_url`). Si un campo falta o no cumple,
   responde `400` con `validation_failed` y el campo en `errors[].field`. Los textos se guardan sin
   espacios a los costados, una descripción vacía queda en `null` y el precio vuelve con dos
   decimales (`45` se guarda como `45.00`).
@@ -244,6 +254,8 @@ Cualquiera, con o sin sesión, explora los restaurantes y lee sus menús. Solo s
       "name": "La Casona",
       "description": "Comida criolla",
       "address": "Calle Sucre 245",
+      "category": "TRADITIONAL",
+      "imageUrl": "https://fotos.pedidos.test/casona.jpg",
       "open": true
     }
   ],
@@ -291,6 +303,8 @@ Suspender saca un local de la plataforma sin borrar sus datos.
       "name": "La Casona",
       "description": "Comida criolla",
       "address": "Calle Sucre 245",
+      "category": "TRADITIONAL",
+      "imageUrl": "https://fotos.pedidos.test/casona.jpg",
       "open": true,
       "suspended": false
     },

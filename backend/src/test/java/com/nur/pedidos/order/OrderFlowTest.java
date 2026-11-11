@@ -304,7 +304,7 @@ class OrderFlowTest {
 
     private Menu openRestaurantWithMenu(String ownerEmail) {
         Account owner = register(ownerEmail, "OWNER");
-        owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245"))
+        owner.post("/api/v1/restaurants", new RestaurantBody("La Casona", "Calle Sucre 245", "TRADITIONAL"))
                 .expectStatus()
                 .isCreated();
         Long restaurantId = owner.get("/api/v1/restaurants/mine")
@@ -405,7 +405,7 @@ class OrderFlowTest {
 
     private record RegistrationBody(String name, String email, String password, String role) {}
 
-    private record RestaurantBody(String name, String address) {}
+    private record RestaurantBody(String name, String address, String category) {}
 
     private record CategoryBody(String name) {}
 

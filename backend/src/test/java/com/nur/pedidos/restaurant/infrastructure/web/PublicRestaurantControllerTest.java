@@ -11,6 +11,7 @@ import com.nur.pedidos.restaurant.application.GetVisibleRestaurantUseCase;
 import com.nur.pedidos.restaurant.application.ListVisibleRestaurantsUseCase;
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import com.nur.pedidos.shared.infrastructure.security.SecurityConfig;
 import java.time.Instant;
@@ -64,6 +65,8 @@ class PublicRestaurantControllerTest {
                               "name": "El Fogón",
                               "description": "Parrilla al carbón",
                               "address": "Calle Sucre 245",
+                              "category": "TRADITIONAL",
+                              "imageUrl": null,
                               "open": true
                             },
                             {
@@ -71,6 +74,8 @@ class PublicRestaurantControllerTest {
                               "name": "La Casona",
                               "description": null,
                               "address": "Calle Sucre 245",
+                              "category": "TRADITIONAL",
+                              "imageUrl": null,
                               "open": false
                             }
                           ],
@@ -142,6 +147,8 @@ class PublicRestaurantControllerTest {
                           "name": "El Fogón",
                           "description": "Parrilla al carbón",
                           "address": "Calle Sucre 245",
+                          "category": "TRADITIONAL",
+                          "imageUrl": null,
                           "open": false
                         }
                         """);
@@ -208,6 +215,7 @@ class PublicRestaurantControllerTest {
     }
 
     private static Restaurant restaurant(Long id, String name, String description, boolean open) {
-        return new Restaurant(id, 7L, name, description, "Calle Sucre 245", open, false, NOW);
+        return new Restaurant(
+                id, 7L, name, description, "Calle Sucre 245", RestaurantCategory.TRADITIONAL, null, open, false, NOW);
     }
 }

@@ -34,8 +34,9 @@ class MarkProductSoldOutUseCaseTest {
 
     @Test
     void marksOnlyThatProductAsSoldOut() {
-        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
-        Product piqueMacho = productRepository.save(Product.create(mainDishes, "Pique macho", null, BigDecimal.TEN));
+        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
+        Product piqueMacho =
+                productRepository.save(Product.create(mainDishes, "Pique macho", null, BigDecimal.TEN, null));
 
         markSoldOut.execute(OWNER, silpancho.getId());
 
@@ -45,7 +46,7 @@ class MarkProductSoldOutUseCaseTest {
 
     @Test
     void acceptsMarkingASoldOutProductAgain() {
-        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
         markSoldOut.execute(OWNER, silpancho.getId());
 
         markSoldOut.execute(OWNER, silpancho.getId());
@@ -56,7 +57,8 @@ class MarkProductSoldOutUseCaseTest {
     @Test
     void refusesAProductOfAnotherRestaurant() {
         Category foreignCategory = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
-        Product foreign = productRepository.save(Product.create(foreignCategory, "Napolitana", null, BigDecimal.TEN));
+        Product foreign =
+                productRepository.save(Product.create(foreignCategory, "Napolitana", null, BigDecimal.TEN, null));
 
         assertThatThrownBy(() -> markSoldOut.execute(OWNER, foreign.getId()))
                 .isInstanceOf(CatalogNotOwnerException.class)
@@ -75,7 +77,7 @@ class MarkProductSoldOutUseCaseTest {
 
     @Test
     void failsWhenTheOwnerHasNoRestaurant() {
-        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN));
+        Product silpancho = productRepository.save(Product.create(mainDishes, "Silpancho", null, BigDecimal.TEN, null));
 
         assertThatThrownBy(() -> markSoldOut.execute(9L, silpancho.getId()))
                 .isInstanceOf(RestaurantNotFoundException.class);

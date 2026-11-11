@@ -35,8 +35,8 @@ class CreateProductUseCaseTest {
 
     @Test
     void createsAnAvailableProductInACategoryOfTheOwner() {
-        Product product = createProduct.execute(
-                new CreateProductCommand(OWNER, mainDishes.getId(), "Silpancho", "Con arroz", new BigDecimal("45")));
+        Product product = createProduct.execute(new CreateProductCommand(
+                OWNER, mainDishes.getId(), "Silpancho", "Con arroz", new BigDecimal("45"), null));
 
         assertThat(productRepository.get(product.getId()))
                 .extracting(
@@ -51,11 +51,19 @@ class CreateProductUseCaseTest {
     }
 
     @Test
+    void savesTheImageOfTheProduct() {
+        Product product = createProduct.execute(new CreateProductCommand(
+                OWNER, mainDishes.getId(), "Silpancho", null, new BigDecimal("45"), "https://f.test/s.jpg"));
+
+        assertThat(productRepository.get(product.getId()).getImageUrl()).isEqualTo("https://f.test/s.jpg");
+    }
+
+    @Test
     void refusesACategoryOfAnotherRestaurant() {
         Category foreign = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
 
-        assertThatThrownBy(() -> createProduct.execute(
-                        new CreateProductCommand(OWNER, foreign.getId(), "Napolitana", null, new BigDecimal("70"))))
+        assertThatThrownBy(() -> createProduct.execute(new CreateProductCommand(
+                        OWNER, foreign.getId(), "Napolitana", null, new BigDecimal("70"), null)))
                 .isInstanceOf(CatalogNotOwnerException.class)
                 .extracting("code")
                 .isEqualTo("catalog.not_owner");
@@ -65,7 +73,7 @@ class CreateProductUseCaseTest {
     @Test
     void failsWhenTheCategoryDoesNotExist() {
         assertThatThrownBy(() -> createProduct.execute(
-                        new CreateProductCommand(OWNER, 99L, "Silpancho", null, new BigDecimal("45"))))
+                        new CreateProductCommand(OWNER, 99L, "Silpancho", null, new BigDecimal("45"), null)))
                 .isInstanceOf(CategoryNotFoundException.class)
                 .extracting("code")
                 .isEqualTo("catalog.category_not_found");
@@ -75,7 +83,7 @@ class CreateProductUseCaseTest {
     @Test
     void refusesAPriceThatIsNotPositive() {
         assertThatThrownBy(() -> createProduct.execute(
-                        new CreateProductCommand(OWNER, mainDishes.getId(), "Silpancho", null, BigDecimal.ZERO)))
+                        new CreateProductCommand(OWNER, mainDishes.getId(), "Silpancho", null, BigDecimal.ZERO, null)))
                 .isInstanceOf(DomainException.class)
                 .extracting("code")
                 .isEqualTo("catalog.price_not_positive");
@@ -84,8 +92,8 @@ class CreateProductUseCaseTest {
 
     @Test
     void failsWhenTheOwnerHasNoRestaurant() {
-        assertThatThrownBy(() -> createProduct.execute(
-                        new CreateProductCommand(9L, mainDishes.getId(), "Silpancho", null, new BigDecimal("45"))))
+        assertThatThrownBy(() -> createProduct.execute(new CreateProductCommand(
+                        9L, mainDishes.getId(), "Silpancho", null, new BigDecimal("45"), null)))
                 .isInstanceOf(RestaurantNotFoundException.class);
         assertThat(productRepository.count()).isZero();
     }

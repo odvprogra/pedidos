@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import com.nur.pedidos.shared.domain.model.PageResult;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,16 @@ class ListVisibleRestaurantsUseCaseTest {
     }
 
     private void save(Long ownerId, String name, boolean open, boolean suspended) {
-        restaurantRepository.save(new Restaurant(null, ownerId, name, null, "Calle Sucre 245", open, suspended, NOW));
+        restaurantRepository.save(new Restaurant(
+                null,
+                ownerId,
+                name,
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW));
     }
 }

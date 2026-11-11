@@ -93,6 +93,8 @@ class InMemoryRestaurantRepository implements RestaurantRepository {
                 restaurant.getName(),
                 restaurant.getDescription(),
                 restaurant.getAddress(),
+                restaurant.getCategory(),
+                restaurant.getImageUrl(),
                 restaurant.isOpen(),
                 restaurant.isSuspended(),
                 restaurant.getCreatedAt());

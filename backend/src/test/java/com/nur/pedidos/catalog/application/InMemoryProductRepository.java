@@ -62,6 +62,7 @@ class InMemoryProductRepository implements ProductRepository {
                 product.getName(),
                 product.getDescription(),
                 product.getPrice(),
-                product.isAvailable());
+                product.isAvailable(),
+                product.getImageUrl());
     }
 }

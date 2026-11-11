@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.nur.pedidos.restaurant.domain.exception.RestaurantNotFoundException;
 import com.nur.pedidos.restaurant.domain.model.Restaurant;
+import com.nur.pedidos.restaurant.domain.model.RestaurantCategory;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,6 +73,16 @@ class GetVisibleRestaurantUseCaseTest {
     }
 
     private static Restaurant restaurant(Long ownerId, String name, boolean open, boolean suspended) {
-        return new Restaurant(null, ownerId, name, null, "Calle Sucre 245", open, suspended, NOW);
+        return new Restaurant(
+                null,
+                ownerId,
+                name,
+                null,
+                "Calle Sucre 245",
+                RestaurantCategory.TRADITIONAL,
+                null,
+                open,
+                suspended,
+                NOW);
     }
 }

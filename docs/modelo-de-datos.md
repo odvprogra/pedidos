@@ -71,16 +71,18 @@ sesiones de una cuenta suspendida.
 
 ### `restaurants`
 
-| Columna       | Tipo           | Nulo | Notas                                     |
-| ------------- | -------------- | ---- | ----------------------------------------- |
-| `id`          | `bigint`       | no   |                                           |
-| `owner_id`    | `bigint`       | no   | Único: un dueño tiene un solo restaurante |
-| `name`        | `varchar(120)` | no   |                                           |
-| `description` | `varchar(300)` | sí   | Texto corto para la tarjeta del listado   |
-| `address`     | `varchar(200)` | no   | Dónde se retiran los pedidos              |
-| `open`        | `boolean`      | no   | Lo cambia el dueño. `false` por defecto   |
-| `suspended`   | `boolean`      | no   | Lo cambia el admin. `false` por defecto   |
-| `created_at`  | `timestamptz`  | no   |                                           |
+| Columna       | Tipo           | Nulo | Notas                                                 |
+| ------------- | -------------- | ---- | ----------------------------------------------------- |
+| `id`          | `bigint`       | no   |                                                       |
+| `owner_id`    | `bigint`       | no   | Único: un dueño tiene un solo restaurante             |
+| `name`        | `varchar(120)` | no   |                                                       |
+| `description` | `varchar(300)` | sí   | Texto corto para la tarjeta del listado               |
+| `address`     | `varchar(200)` | no   | Dónde se retiran los pedidos                          |
+| `category`    | `varchar(20)`  | no   | Tipo de cocina, uno de la lista de abajo, con `check` |
+| `image_url`   | `varchar(500)` | sí   | Logo o foto: una dirección `http` o `https`           |
+| `open`        | `boolean`      | no   | Lo cambia el dueño. `false` por defecto               |
+| `suspended`   | `boolean`      | no   | Lo cambia el admin. `false` por defecto               |
+| `created_at`  | `timestamptz`  | no   |                                                       |
 
 Un restaurante tiene dos estados independientes: abierto o cerrado, que decide el dueño, y
 suspendido o no, que decide el admin.
@@ -91,6 +93,17 @@ suspendido o no, que decide el admin.
 | Cerrado    | Visible, como "Cerrado" | No             | El dueño los atiende        |
 | Suspendido | Oculto: responde `404`  | No             | El dueño los puede terminar |
 
+- La categoría es el tipo de cocina y sale de una lista fija (`RestaurantCategory`): `TRADITIONAL`
+  (Comida típica), `GRILL` (Parrillas), `CHICKEN` (Pollos), `PIZZA` (Pizzas), `BURGERS`
+  (Hamburguesas), `SUSHI` (Sushi), `CAFE` (Cafeterías) y `OTHER` (Otros). Es obligatoria; los
+  restaurantes que ya existían quedaron en `OTHER` con la migración
+  `V6__add_images_and_restaurant_category.sql`.
+- La imagen es una dirección web que el dueño pega. La app no guarda archivos: si la imagen no
+  carga o no hay, la interfaz muestra el placeholder de la marca. Una dirección que no empieza con
+  `http://` o `https://` responde `422` con `restaurant.invalid_image_url`.
+- El dueño edita el nombre, la descripción, la dirección, la categoría y la imagen cuando quiere.
+  Editar no cambia si está abierto ni si está suspendido, y lee la fila con el mismo bloqueo que
+  abrir y cerrar, para no pisar un cambio de estado que llega a la vez.
 - El dueño registra su restaurante una sola vez. Un segundo registro responde `409` con
   `restaurant.already_registered`, y `unique (owner_id)` lo respalda en la base. Ese único
   (`restaurants_owner_id_key`) ya indexa `owner_id`, así que no lleva un índice aparte.
@@ -139,6 +152,7 @@ dueño las muestra todas.
 | `description`   | `varchar(300)`  | sí   |                                                      |
 | `price`         | `numeric(12,2)` | no   | `check (price > 0)`                                  |
 | `available`     | `boolean`       | no   | `true` por defecto                                   |
+| `image_url`     | `varchar(500)`  | sí   | Foto del producto: una dirección `http` o `https`    |
 
 - Un producto pertenece a una categoría de su mismo restaurante; el caso de uso lo verifica.
 - Dentro de su categoría, los productos se muestran en el orden en que se crearon.
@@ -287,11 +301,12 @@ una migración nueva.
 
 ## Imágenes
 
-Las imágenes de restaurantes y productos se deciden en su propia ADR. El modelo ya las admite: son
-opcionales, así que esa ADR agrega con su migración una columna nullable en `restaurants` y en
-`products`, cuyo tipo depende del almacenamiento (una ruta, la clave de un objeto o el id de una
-tabla de archivos). Los pedidos no copian la imagen. Mientras tanto, la interfaz muestra un
-placeholder con el estilo de la marca.
+Restaurantes y productos guardan su imagen como una dirección web (`image_url`, `varchar(500)`,
+opcional), sin subir archivos a la app
+([ADR-0014](adr/0014-imagenes-como-direcciones-web.md)). El dominio la valida con
+`ImageUrls.normalize` (`shared.domain.model`): sin espacios a los costados, `http` o `https` y un
+host. Los pedidos no copian la imagen. Si no hay imagen o no carga, la interfaz muestra el
+placeholder de la marca.
 
 ## Fuera del modelo
 

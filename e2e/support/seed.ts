@@ -13,6 +13,7 @@ export interface ProductSeed {
   name: string;
   price: number;
   available?: boolean;
+  imageUrl?: string;
 }
 
 export interface Restaurant {
@@ -40,13 +41,15 @@ export async function registerAccount(name: string, role: Role): Promise<Account
 export async function openRestaurant(
   name: string,
   products: ProductSeed[],
-  options: { open?: boolean } = {},
+  options: { open?: boolean; category?: string; imageUrl?: string } = {},
 ): Promise<Restaurant> {
   const owner = await registerAccount(`Dueño de ${name}`, 'OWNER');
   await owner.api.post('/api/v1/restaurants', {
     name,
     description: `La cocina de ${name}`,
     address: 'Calle Sucre 245',
+    category: options.category ?? 'TRADITIONAL',
+    imageUrl: options.imageUrl,
   });
   const { id } = await owner.api.get<Identified>('/api/v1/restaurants/mine');
   const category = await owner.api.post<Identified>('/api/v1/restaurants/mine/categories', {
@@ -58,6 +61,7 @@ export async function openRestaurant(
       categoryId: category.id,
       name: product.name,
       price: product.price,
+      imageUrl: product.imageUrl,
     });
     ids[product.name] = created.id;
     if (product.available === false) {

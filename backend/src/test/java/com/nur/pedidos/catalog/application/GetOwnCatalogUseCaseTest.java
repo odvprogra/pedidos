@@ -35,8 +35,8 @@ class GetOwnCatalogUseCaseTest {
         Category mainDishes = categoryRepository.save(Category.create(RESTAURANT, "Platos fuertes"));
         Category drinks = categoryRepository.save(Category.create(RESTAURANT, "Bebidas"));
         Category foreign = categoryRepository.save(Category.create(OTHER_RESTAURANT, "Pizzas"));
-        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45")));
-        productRepository.save(Product.create(foreign, "Napolitana", null, new BigDecimal("70")));
+        productRepository.save(Product.create(mainDishes, "Silpancho", null, new BigDecimal("45"), null));
+        productRepository.save(Product.create(foreign, "Napolitana", null, new BigDecimal("70"), null));
 
         Catalog catalog = getOwnCatalog.execute(OWNER);
 

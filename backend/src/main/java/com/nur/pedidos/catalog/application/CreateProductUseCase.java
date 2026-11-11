@@ -27,7 +27,8 @@ public class CreateProductUseCase {
         if (!category.belongsTo(restaurantId)) {
             throw new CatalogNotOwnerException();
         }
-        Product product = Product.create(category, command.name(), command.description(), command.price());
+        Product product =
+                Product.create(category, command.name(), command.description(), command.price(), command.imageUrl());
         return productRepository.save(product);
     }
 }

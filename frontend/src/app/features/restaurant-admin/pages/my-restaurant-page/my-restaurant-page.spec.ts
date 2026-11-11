@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
@@ -52,6 +53,12 @@ describe('MyRestaurantPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -140,13 +147,13 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tu restaurante',
-      );
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the restaurant of the owner', async () => {
@@ -185,6 +192,40 @@ describe('MyRestaurantPage', () => {
 
       expect(page().querySelector('[role="alert"]')).toBeNull();
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu restaurante',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showRestaurant();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
+    });
+
+    it('offers the registration when the retry finds no restaurant', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+
+      button('Reintentar').click();
+      await showMissing();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(page().querySelector('form')).toBeTruthy();
+      expect(document.activeElement).toBe(heading());
     });
 
     it('does not take a not found without its code for a missing restaurant', async () => {
@@ -304,9 +345,9 @@ describe('MyRestaurantPage', () => {
       expect(heading().textContent).toContain('Mi restaurante');
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
       expect(status()).toBe('Cerrado');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
+      expect(announced()).toEqual([
         '¡Listo! Registraste La Casona. Está cerrado: ábrelo cuando quieras recibir pedidos.',
-      );
+      ]);
       expect(document.activeElement).toBe(heading());
     });
 
@@ -361,6 +402,39 @@ describe('MyRestaurantPage', () => {
     });
   });
 
+  describe('leaving the page', () => {
+    it('cancels the load when the owner leaves', () => {
+      const request = httpTesting.expectOne(MINE_URL);
+
+      fixture.destroy();
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels the menu summary and a change on their way when the owner leaves', async () => {
+      httpTesting.expectOne(MINE_URL).flush(LA_CASONA);
+      await fixture.whenStable();
+      const menu = httpTesting.expectOne(MENU_URL);
+      toggle().click();
+      const opening = httpTesting.expectOne(OPEN_URL);
+
+      fixture.destroy();
+
+      expect(menu.cancelled).toBe(true);
+      expect(opening.cancelled).toBe(true);
+    });
+
+    it('cancels the registration on its way when the owner leaves', async () => {
+      await showMissing();
+      await submitValidForm();
+      const request = httpTesting.expectOne(REGISTER_URL);
+
+      fixture.destroy();
+
+      expect(request.cancelled).toBe(true);
+    });
+  });
+
   describe('opening and closing', () => {
     it('opens a closed restaurant and says so', async () => {
       await showRestaurant();
@@ -378,9 +452,7 @@ describe('MyRestaurantPage', () => {
       expect(status()).toBe('Abierto');
       expect(toggle().getAttribute('aria-checked')).toBe('true');
       expect(toggle().getAttribute('aria-disabled')).toBe('false');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Abriste La Casona. Ya recibe pedidos.',
-      );
+      expect(announced()).toEqual(['Abriste La Casona. Ya recibe pedidos.']);
     });
 
     it('closes an open restaurant and says so', async () => {
@@ -476,6 +548,22 @@ describe('MyRestaurantPage', () => {
       await fixture.whenStable();
 
       expect(notice()).toBe('');
+    });
+
+    it('takes the focus back to the switch when the owner closes the notice from it', async () => {
+      await showRestaurant();
+      toggle().focus();
+      toggle().click();
+      httpTesting.expectOne(OPEN_URL).flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+      const close = page().querySelector('button[aria-label="Cerrar aviso"]') as HTMLButtonElement;
+      close.focus();
+
+      close.click();
+      await fixture.whenStable();
+
+      expect(notice()).toBe('');
+      expect(document.activeElement).toBe(toggle());
     });
   });
 

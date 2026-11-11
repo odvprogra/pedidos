@@ -96,10 +96,16 @@ suspendido o no, que decide el admin.
   (`restaurants_owner_id_key`) ya indexa `owner_id`, así que no lleva un índice aparte.
 - Un restaurante nuevo empieza cerrado: el dueño carga el menú y después lo abre.
 - El listado público muestra primero los abiertos y después los cerrados, cada grupo en orden de
-  registro. La tabla es chica, así que la consulta (`where suspended = false order by open desc,
-  id`) no lleva un índice propio.
+  registro. La tabla es chica, así que la consulta
+  (`where suspended = false order by open desc, id`) no lleva un índice propio.
 - Suspender un restaurante también lo cierra. Al reactivarlo vuelve cerrado y el dueño decide cuándo
   abrir. Mientras está suspendido, el dueño no lo puede abrir: `409` con `restaurant.suspended`.
+  Las dos acciones son del admin y son idempotentes.
+- La lista del admin trae todos los restaurantes en orden de registro (`order by id`), así que usa la
+  clave primaria y no lleva un índice propio.
+- Abrir, cerrar, suspender y reactivar leen la fila con un bloqueo (`select ... for no key update`),
+  para que el cambio del dueño y el del admin no se pisen
+  ([ADR-0011](adr/0011-cambios-de-estado-del-restaurante-con-bloqueo-de-fila.md)).
 - Suspender la cuenta de un dueño no cambia su restaurante. Si el admin quiere sacar el local,
   también lo suspende.
 - Un restaurante se puede abrir sin productos. Exigirlos haría que `restaurant` dependiera de

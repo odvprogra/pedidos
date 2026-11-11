@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog, Product } from '../../models/catalog';
 import { CatalogPage } from './catalog-page';
 
@@ -62,6 +63,12 @@ describe('CatalogPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return harness.routeNativeElement as HTMLElement;
@@ -156,11 +163,13 @@ describe('CatalogPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the menu loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando tu menú');
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando tu menú…']);
 
       await showMenu();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the categories in order with their products', async () => {
@@ -205,6 +214,27 @@ describe('CatalogPage', () => {
       expect(document.activeElement).toBe(heading());
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(CATALOG_URL, 500);
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      await click(retry);
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu menú',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showMenu();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
+    });
+
     it('takes the focus to retry when loading again fails', async () => {
       failWith(CATALOG_URL, 500);
       await stable();
@@ -236,6 +266,39 @@ describe('CatalogPage', () => {
       await stable();
 
       expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
+    });
+  });
+
+  describe('leaving the page', () => {
+    it('cancels the load when the owner leaves', async () => {
+      const request = httpTesting.expectOne(CATALOG_URL);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels a change on its way when the owner leaves', async () => {
+      await showMenu();
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Sí, borrar'));
+      const request = httpTesting.expectOne(`${PRODUCTS_URL}/10`);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
+    });
+
+    it('cancels a form on its way when the owner leaves', async () => {
+      await showMenu();
+      await click(button('Nueva categoría'));
+      await fill('category-name', 'Postres');
+      await submitForm();
+      const request = httpTesting.expectOne(CATEGORIES_URL);
+
+      await harness.navigateByUrl('/mi-restaurante');
+
+      expect(request.cancelled).toBe(true);
     });
   });
 
@@ -578,6 +641,40 @@ describe('CatalogPage', () => {
       expect(namesIn('Platos fuertes')).toEqual(['Pique macho']);
       expect(notice()).toContain('Borraste Silpancho del menú.');
       expect(document.activeElement).toBe(byId('add-product-3'));
+    });
+
+    it('keeps a single question open across the products and the categories', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Borrar', section('Bebidas')));
+
+      expect(page().querySelectorAll('app-confirm-panel')).toHaveLength(1);
+      expect(text(section('Bebidas'))).toContain('¿Borrar la categoría Bebidas?');
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(button('Cancelar', section('Bebidas')));
+    });
+
+    it('closes the question when a form opens, so it does not come back with the row', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      await click(button('Editar', productRow('Silpancho')));
+      await click(button('Cancelar', page().querySelector('form') as HTMLElement));
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('closes the question when the menu loads again', async () => {
+      await click(button('Borrar', productRow('Silpancho')));
+      const toggle = productRow('Pique macho').querySelector(
+        'button[role="switch"]',
+      ) as HTMLButtonElement;
+
+      await click(toggle);
+      failWith(`${PRODUCTS_URL}/12/mark-available`, 404, 'catalog.product_not_found');
+      await stable();
+      await showMenu();
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Borrar', productRow('Silpancho')).getAttribute('aria-expanded')).toBe('false');
     });
 
     it('loads the menu again when the product no longer exists', async () => {

@@ -1,0 +1,9 @@
+<app-alert
+  class="block rounded-xl shadow-md"
+  dismissible
+  [tone]="tone()"
+  (focusin)="remember($event)"
+  (dismissed)="dismiss()"
+>
+  <ng-content />
+</app-alert>

@@ -3,10 +3,10 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ROLE_LABELS, Role, canShop } from '@core/auth/account';
 import { ADMIN_PATH, LOG_IN_PATH, MY_RESTAURANT_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
-import { describeUnits } from '@core/cart/cart';
 import { CART_PATH } from '@core/cart/cart-paths';
 import { CartStore } from '@core/cart/cart-store';
 import { ORDERS_PATH } from '@core/orders/order-paths';
+import { describeUnits } from '@shared/utils/describe-units';
 
 interface RoleLink {
   path: string;

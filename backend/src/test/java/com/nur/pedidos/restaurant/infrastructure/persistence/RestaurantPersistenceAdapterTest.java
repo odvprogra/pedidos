@@ -103,6 +103,40 @@ class RestaurantPersistenceAdapterTest {
     }
 
     @Test
+    void findsARestaurantToChangeByItsId() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByIdForUpdate(saved.getId()))
+                .get()
+                .extracting(Restaurant::getOwnerId, Restaurant::getName)
+                .containsExactly(7L, "La Casona");
+    }
+
+    @Test
+    void findsARestaurantToChangeByItsOwner() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByOwnerIdForUpdate(7L))
+                .get()
+                .extracting(Restaurant::getId)
+                .isEqualTo(saved.getId());
+    }
+
+    @Test
+    void findsNothingToChangeWhenTheIdDoesNotExist() {
+        Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByIdForUpdate(saved.getId() + 100)).isEmpty();
+    }
+
+    @Test
+    void findsNothingToChangeWhenTheOwnerHasNoRestaurant() {
+        adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
+
+        assertThat(adapter.findByOwnerIdForUpdate(8L)).isEmpty();
+    }
+
+    @Test
     void findsNothingWhenTheIdDoesNotExist() {
         Restaurant saved = adapter.save(Restaurant.register(7L, "La Casona", null, "Calle Sucre 245", NOW));
 
@@ -167,6 +201,76 @@ class RestaurantPersistenceAdapterTest {
 
         assertThat(result.items()).isEmpty();
         assertThat(result.totalItems()).isZero();
+    }
+
+    @Test
+    void keepsAnOpenRestaurantClosedOnceItIsSuspended() {
+        Restaurant restaurant =
+                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", true, false, NOW));
+        restaurant.suspend();
+
+        adapter.save(restaurant);
+
+        assertThat(adapter.findById(restaurant.getId()))
+                .get()
+                .extracting(Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(false, true);
+    }
+
+    @Test
+    void keepsTheReactivationOfASuspendedRestaurant() {
+        Restaurant restaurant =
+                adapter.save(new Restaurant(null, 7L, "La Casona", null, "Calle Sucre 245", false, true, NOW));
+        restaurant.reactivate();
+
+        adapter.save(restaurant);
+
+        assertThat(adapter.findById(restaurant.getId()))
+                .get()
+                .extracting(Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(false, false);
+    }
+
+    @Test
+    void listsEveryRestaurantInRegistrationOrderIncludingTheSuspendedOnes() {
+        save(7L, "La Casona", false, false);
+        save(8L, "El Fogón", true, false);
+        save(9L, "Pizzería Napoli", false, true);
+
+        PageResult<Restaurant> result = adapter.findPageInRegistrationOrder(0, 20);
+
+        assertThat(result.items())
+                .extracting(Restaurant::getName, Restaurant::isOpen, Restaurant::isSuspended)
+                .containsExactly(
+                        tuple("La Casona", false, false),
+                        tuple("El Fogón", true, false),
+                        tuple("Pizzería Napoli", false, true));
+        assertThat(result.totalItems()).isEqualTo(3);
+    }
+
+    @Test
+    void splitsEveryRestaurantInPagesWithTheirRealTotals() {
+        save(7L, "La Casona", true, false);
+        save(8L, "El Fogón", false, true);
+        save(9L, "Sabor Camba", false, false);
+
+        PageResult<Restaurant> secondPage = adapter.findPageInRegistrationOrder(1, 2);
+
+        assertThat(secondPage.items()).extracting(Restaurant::getName).containsExactly("Sabor Camba");
+        assertThat(secondPage.totalItems()).isEqualTo(3);
+        assertThat(secondPage.totalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void returnsAnEmptyPageOfEveryRestaurantAfterTheLastOne() {
+        save(7L, "La Casona", true, false);
+        save(8L, "El Fogón", false, true);
+
+        PageResult<Restaurant> result = adapter.findPageInRegistrationOrder(3, 2);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.totalItems()).isEqualTo(2);
+        assertThat(result.totalPages()).isEqualTo(1);
     }
 
     @Test

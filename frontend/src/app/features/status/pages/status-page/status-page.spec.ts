@@ -57,4 +57,12 @@ describe('StatusPage', () => {
 
     expect(statuses()).toEqual(['ok', 'ok', 'error']);
   });
+
+  it('cancels the health check when the page goes away', () => {
+    const request = httpTesting.expectOne('/api/health');
+
+    fixture.destroy();
+
+    expect(request.cancelled).toBe(true);
+  });
 });

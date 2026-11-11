@@ -10,6 +10,7 @@ import { CategoryHeader } from './category-header';
       [productCount]="productCount()"
       [deleting]="deleting()"
       [locked]="locked()"
+      [(confirming)]="confirming"
       (rename)="renames = renames + 1"
       (deleteConfirmed)="deletions = deletions + 1"
     />
@@ -20,6 +21,7 @@ class Host {
   readonly productCount = signal(0);
   readonly deleting = signal(false);
   readonly locked = signal(false);
+  readonly confirming = signal(false);
   renames = 0;
   deletions = 0;
 }
@@ -118,6 +120,27 @@ describe('CategoryHeader', () => {
 
     expect(header().querySelector('[role="group"]')).toBeNull();
     expect(document.activeElement).toBe(button('Borrar'));
+  });
+
+  it('tells the page whether its question is open', async () => {
+    await askToDelete();
+
+    expect(host.confirming()).toBe(true);
+
+    button('Cancelar').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(false);
+  });
+
+  it('closes its question when the page opens another one', async () => {
+    await askToDelete();
+
+    host.confirming.set(false);
+    await fixture.whenStable();
+
+    expect(header().querySelector('[role="group"]')).toBeNull();
+    expect(button('Borrar').getAttribute('aria-expanded')).toBe('false');
   });
 
   it('says that it is deleting the category', async () => {

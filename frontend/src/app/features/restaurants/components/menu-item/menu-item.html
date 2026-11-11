@@ -58,6 +58,7 @@
           [attr.aria-expanded]="otherRestaurant() && addable() ? confirming() : null"
           [attr.aria-controls]="confirming() ? idPrefix() + '-replace' : null"
           (click)="add()"
+          (keydown.escape)="dismiss()"
         >
           <svg
             aria-hidden="true"

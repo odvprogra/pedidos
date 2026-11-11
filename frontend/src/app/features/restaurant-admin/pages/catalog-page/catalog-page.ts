@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   OnInit,
@@ -10,12 +11,19 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FieldViolation, ProblemDetails, toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { Observable } from 'rxjs';
 import { CategoryForm } from '../../components/category-form/category-form';
 import { CategoryHeader } from '../../components/category-header/category-header';
@@ -51,24 +59,21 @@ type Editing =
 type Working =
   { kind: 'category'; id: number } | { kind: 'product'; id: number; task: ProductTask };
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 @Component({
   selector: 'app-catalog-page',
   imports: [
-    RouterLink,
-    Alert,
+    Announce,
+    BackLink,
     Button,
     CategoryForm,
     CategoryHeader,
     EmptyState,
     LoadError,
+    PageHeader,
     ProductForm,
     ProductRow,
+    Skeleton,
+    StickyNotice,
   ],
   templateUrl: './catalog-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,13 +84,13 @@ export class CatalogPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     this.router.currentNavigation()?.previousNavigation,
   );
   private returnFocusTo: string | null = null;
-  private noticeCount = 0;
 
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
@@ -94,11 +99,9 @@ export class CatalogPage implements OnInit {
   protected readonly formErrors = signal<FieldViolation[]>([]);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly working = signal<Working | null>(null);
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly retrying = signal(false);
+  protected readonly notice = new NoticeSlot();
+  protected readonly confirmation = new ConfirmationSlot<string>();
   protected readonly catalog = computed(() => {
     const current = this.state();
     return current.status === 'ready' ? current.catalog : null;
@@ -113,7 +116,7 @@ export class CatalogPage implements OnInit {
   }
 
   protected retry(): void {
-    this.load(true);
+    this.load(true, true);
   }
 
   protected isAddingCategory(): boolean {
@@ -174,13 +177,16 @@ export class CatalogPage implements OnInit {
     if (editing?.kind === 'category') {
       this.submit(this.catalogApi.renameCategory(editing.id, name), (category) => {
         this.updateCatalog((catalog) => renameCategory(catalog, category));
-        this.announce(`Cambiaste el nombre de la categoría a ${category.name}.`);
+        this.notice.show('success', `Cambiaste el nombre de la categoría a ${category.name}.`);
         this.focusAfterRender(`rename-category-${category.id}`);
       });
     } else if (editing?.kind === 'new-category') {
       this.submit(this.catalogApi.createCategory(name), (category) => {
         this.updateCatalog((catalog) => addCategory(catalog, category));
-        this.announce(`Creaste la categoría ${category.name}. Ahora agrégale productos.`);
+        this.notice.show(
+          'success',
+          `Creaste la categoría ${category.name}. Ahora agrégale productos.`,
+        );
         this.focusAfterRender(`add-product-${category.id}`);
       });
     }
@@ -191,13 +197,16 @@ export class CatalogPage implements OnInit {
     if (editing?.kind === 'product') {
       this.submit(this.catalogApi.editProduct(editing.id, draft), (product) => {
         this.updateCatalog((catalog) => putProduct(catalog, product));
-        this.announce(`Guardaste los cambios de ${product.name}.`);
+        this.notice.show('success', `Guardaste los cambios de ${product.name}.`);
         this.focusAfterRender(`edit-product-${product.id}`);
       });
     } else if (editing?.kind === 'new-product') {
       this.submit(this.catalogApi.createProduct(draft), (product) => {
         this.updateCatalog((catalog) => putProduct(catalog, product));
-        this.announce(`Agregaste ${product.name} a ${this.categoryName(product.categoryId)}.`);
+        this.notice.show(
+          'success',
+          `Agregaste ${product.name} a ${this.categoryName(product.categoryId)}.`,
+        );
         this.focusAfterRender(`add-product-${editing.categoryId}`);
       });
     }
@@ -213,7 +222,8 @@ export class CatalogPage implements OnInit {
       : this.catalogApi.markSoldOut(product.id);
     this.act(request, () => {
       this.updateCatalog((catalog) => putProduct(catalog, { ...product, available }));
-      this.announce(
+      this.notice.show(
+        'success',
         available
           ? `${product.name} vuelve a estar disponible.`
           : `Marcaste ${product.name} como agotado. Tus clientes lo ven, pero no lo pueden pedir.`,
@@ -228,7 +238,7 @@ export class CatalogPage implements OnInit {
     this.working.set({ kind: 'product', id: product.id, task: 'deletion' });
     this.act(this.catalogApi.deleteProduct(product.id), () => {
       this.updateCatalog((catalog) => removeProduct(catalog, product.id));
-      this.announce(`Borraste ${product.name} del menú.`);
+      this.notice.show('success', `Borraste ${product.name} del menú.`);
       this.focusAfterRender(`add-product-${product.categoryId}`);
     });
   }
@@ -240,7 +250,7 @@ export class CatalogPage implements OnInit {
     this.working.set({ kind: 'category', id: category.id });
     this.act(this.catalogApi.deleteCategory(category.id), () => {
       this.updateCatalog((catalog) => removeCategory(catalog, category.id));
-      this.announce(`Borraste la categoría ${category.name}.`);
+      this.notice.show('success', `Borraste la categoría ${category.name}.`);
       this.focusAfterRender('new-category');
     });
   }
@@ -250,6 +260,7 @@ export class CatalogPage implements OnInit {
       return;
     }
     this.editing.set(editing);
+    this.confirmation.close();
     this.returnFocusTo = trigger;
     this.formErrors.set([]);
     this.formAlert.set(null);
@@ -262,7 +273,7 @@ export class CatalogPage implements OnInit {
     this.saving.set(true);
     this.formErrors.set([]);
     this.formAlert.set(null);
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.saving.set(false);
         this.editing.set(null);
@@ -276,7 +287,7 @@ export class CatalogPage implements OnInit {
   }
 
   private act(request: Observable<void>, done: () => void): void {
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.working.set(null);
         done();
@@ -308,37 +319,46 @@ export class CatalogPage implements OnInit {
     } else if (isMenuOutdated(problem)) {
       this.reload(problem);
     } else {
-      this.notify('danger', describeCatalogError(problem));
+      this.notice.show('danger', describeCatalogError(problem));
     }
   }
 
   private reload(problem: ProblemDetails): void {
-    this.notify('warning', describeCatalogError(problem));
+    this.notice.show('warning', describeCatalogError(problem));
     this.load(true);
   }
 
-  private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
-    this.catalogApi.mine().subscribe({
-      next: (catalog) => {
-        this.state.set({ status: 'ready', catalog });
-        if (moveFocus) {
-          this.focusAfterRender(null);
-        }
-      },
-      error: (error: unknown) => {
-        const problem = toProblemDetails(error);
-        if (isNotRegistered(problem)) {
-          this.leave();
-          return;
-        }
-        this.state.set({ status: 'failed', message: describeCatalogError(problem) });
-        this.notice.set(null);
-        if (moveFocus) {
-          afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
-        }
-      },
-    });
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
+    this.confirmation.close();
+    this.catalogApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (catalog) => {
+          this.state.set({ status: 'ready', catalog });
+          this.retrying.set(false);
+          if (moveFocus) {
+            this.focusAfterRender(null);
+          }
+        },
+        error: (error: unknown) => {
+          const problem = toProblemDetails(error);
+          this.retrying.set(false);
+          if (isNotRegistered(problem)) {
+            this.leave();
+            return;
+          }
+          this.state.set({ status: 'failed', message: describeCatalogError(problem) });
+          this.notice.clear();
+          if (moveFocus) {
+            afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
+          }
+        },
+      });
   }
 
   private leave(): void {
@@ -352,15 +372,6 @@ export class CatalogPage implements OnInit {
     }
   }
 
-  private announce(message: string): void {
-    this.notify('success', message);
-  }
-
-  private notify(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
-  }
-
   private categoryName(categoryId: number): string {
     return this.categories().find((category) => category.id === categoryId)?.name ?? '';
   }
@@ -371,7 +382,11 @@ export class CatalogPage implements OnInit {
         const target = targetId
           ? this.host.nativeElement.querySelector<HTMLElement>(`#${targetId}`)
           : null;
-        (target ?? this.heading()?.nativeElement)?.focus();
+        if (target) {
+          target.focus();
+        } else {
+          this.header()?.focus();
+        }
       },
       { injector: this.injector },
     );

@@ -7,8 +7,8 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import { Badge } from '@shared/ui/badge/badge';
@@ -33,11 +33,11 @@ export class ProductRow {
   readonly product = input.required<Product>();
   readonly working = input<ProductTask | null>(null);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly availabilityChange = output<boolean>();
   readonly edit = output();
   readonly deleteConfirmed = output();
 
-  protected readonly confirming = signal(false);
   protected readonly unavailable = computed(() => this.working() !== null || this.locked());
   protected readonly price = computed(() => formatPrice(this.product().price));
   protected readonly idPrefix = computed(() => `product-${this.product().id}`);

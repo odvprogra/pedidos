@@ -65,10 +65,6 @@ export function estimatedSubtotal(cart: Cart | null): number {
   return (cents ?? 0) / 100;
 }
 
-export function describeUnits(units: number): string {
-  return units === 1 ? '1 producto' : `${units} productos`;
-}
-
 export function parseCart(value: unknown): Cart | null {
   if (!isRecord(value) || !isRestaurant(value['restaurant']) || !Array.isArray(value['items'])) {
     return null;

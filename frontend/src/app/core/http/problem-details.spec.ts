@@ -10,15 +10,32 @@ describe('toProblemDetails', () => {
     expect(problem).toEqual(body);
   });
 
-  it('explains that the server is unreachable when there is no response', () => {
+  it('explains in plain words that there is no connection when there is no response', () => {
     const problem = toProblemDetails(new HttpErrorResponse({ status: 0 }));
 
-    expect(problem.detail).toContain('No hay conexión');
+    expect(problem).toEqual({
+      status: 0,
+      detail: 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+    });
   });
 
-  it('falls back to a generic message for unexpected errors', () => {
+  it('falls back to a plain message when the answer is not a problem', () => {
+    const problem = toProblemDetails(
+      new HttpErrorResponse({ status: 502, error: '<html>Bad Gateway</html>' }),
+    );
+
+    expect(problem).toEqual({
+      status: 502,
+      detail: 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.',
+    });
+  });
+
+  it('falls back to the same message for errors that are not from HTTP', () => {
     const problem = toProblemDetails(new Error('boom'));
 
-    expect(problem).toEqual({ status: 0, detail: expect.stringContaining('No pudimos') });
+    expect(problem).toEqual({
+      status: 0,
+      detail: 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.',
+    });
   });
 });

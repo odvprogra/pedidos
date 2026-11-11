@@ -6,6 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Page } from '@core/http/page';
 import { OrderStatus } from '@shared/utils/order-status';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrdersPage } from './orders-page';
 
@@ -64,6 +65,12 @@ describe('OrdersPage', () => {
 
   afterEach(() => httpTesting.verify());
 
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
+
   function page(): HTMLElement {
     return harness.routeNativeElement as HTMLElement;
   }
@@ -101,7 +108,7 @@ describe('OrdersPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] [role]');
+    return page().querySelector('app-sticky-notice');
   }
 
   function expectList(statuses: string[], pageNumber = 0) {
@@ -128,13 +135,13 @@ describe('OrdersPage', () => {
 
   describe('the list', () => {
     it('loads the orders in progress first while it shows a placeholder', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando los pedidos',
-      );
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando los pedidos…']);
 
       await respond(pageOf([order(43, 'PLACED'), order(42, 'ACCEPTED')]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
       expect(titles()).toEqual(['Pedido #43', 'Pedido #42']);
       expect(button('En curso').getAttribute('aria-pressed')).toBe('true');
       expect(button('Terminados').getAttribute('aria-pressed')).toBe('false');
@@ -216,6 +223,54 @@ describe('OrdersPage', () => {
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      fail(`${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`, 500);
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await stable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar los pedidos',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43']);
+    });
+
+    it('keeps retrying in view when the page it retries is empty now', async () => {
+      const first = Array.from({ length: 20 }, (_, index) => order(100 + index, 'PLACED'));
+      await respond(pageOf(first, 0, 25));
+      button('Siguiente').click();
+      await stable();
+      expectList(IN_PROGRESS, 1).flush(
+        { status: 500, detail: 'Detalle del servidor' },
+        { status: 500, statusText: 'Error' },
+      );
+      await stable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await stable();
+      expectList(IN_PROGRESS, 1).flush(pageOf([], 1, 5, 1));
+      await stable();
+
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43']);
+    });
+
     it('sends an owner without a restaurant to register it', async () => {
       fail(
         `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`,
@@ -257,8 +312,9 @@ describe('OrdersPage', () => {
       await stable();
 
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('En preparación');
-      expect(notice()?.getAttribute('role')).toBe('status');
+      expect(notice()?.querySelector('[role]')).toBeNull();
       expect(notice()?.textContent).toContain('Aceptaste el pedido #43.');
+      expect(announced()).toEqual(['Aceptaste el pedido #43.']);
       expect(document.activeElement).toBe(button('Marcar listo', card(43)));
     });
 
@@ -295,6 +351,33 @@ describe('OrdersPage', () => {
       },
     );
 
+    it('keeps a single question open across the orders', async () => {
+      await respond(pageOf([order(43, 'PLACED'), order(44, 'PLACED')]));
+
+      button('Rechazar', card(43)).click();
+      await stable();
+      button('Rechazar', card(44)).click();
+      await stable();
+
+      expect(page().querySelectorAll('app-confirm-panel')).toHaveLength(1);
+      expect(card(44).querySelector('app-confirm-panel')).toBeTruthy();
+      expect(button('Rechazar', card(43)).getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(button('Mantener pedido', card(44)));
+    });
+
+    it('closes the question when the list loads again', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      button('Rechazar', card(43)).click();
+      await stable();
+
+      button('Actualizar').click();
+      await stable();
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(button('Rechazar', card(43)).getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('warns that the order changed and loads the list again', async () => {
       await respond(pageOf([order(43, 'PLACED')]));
 
@@ -320,7 +403,7 @@ describe('OrdersPage', () => {
       fail(`${ORDERS_URL}/43/accept`, 500);
       await stable();
 
-      expect(notice()?.getAttribute('role')).toBe('alert');
+      expect(notice()?.querySelector('[role="alert"]')).toBeTruthy();
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('Pendiente');
       expect(document.activeElement).toBe(button('Aceptar', card(43)));

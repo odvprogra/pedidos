@@ -23,4 +23,14 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('header')?.textContent).toContain('Pedidos');
   });
+
+  it('keeps an empty status region after the main content for the announcements', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const region = compiled.querySelector('main + app-live-region [role="status"]');
+    expect(region).toBeTruthy();
+    expect(region?.textContent?.trim()).toBe('');
+  });
 });

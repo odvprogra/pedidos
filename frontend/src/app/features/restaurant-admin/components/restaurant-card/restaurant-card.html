@@ -28,7 +28,7 @@
       >
         {{ initial() }}
       </span>
-      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
+      <app-restaurant-status-badge class="mb-1" data-status [restaurant]="restaurant()" />
     </div>
 
     <h2
@@ -79,7 +79,8 @@
         <div>
           <p class="font-bold">Tu restaurante está suspendido</p>
           <p class="mt-0.5 text-sm">
-            Los clientes no lo ven y no puedes abrirlo. Habla con el administrador para reactivarlo.
+            Los clientes no lo ven y no puedes abrirlo, pero sí terminar los pedidos en curso. Habla
+            con el administrador para reactivarlo.
           </p>
         </div>
       </div>

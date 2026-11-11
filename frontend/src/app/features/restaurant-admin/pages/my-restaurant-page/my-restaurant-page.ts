@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   OnInit,
@@ -10,15 +11,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
 import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
@@ -46,12 +52,6 @@ type PageState =
 
 type RegistrationField = 'name' | 'description' | 'address';
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 const DESCRIPTION_LIMIT = 300;
 
 const MESSAGES: Record<RegistrationField, ValidationMessages> = {
@@ -75,12 +75,16 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
   imports: [
     ReactiveFormsModule,
     Alert,
+    Announce,
     Button,
     FormField,
     LoadError,
+    PageHeader,
     RegistrationSteps,
     RestaurantCard,
+    Skeleton,
     Spinner,
+    StickyNotice,
     TextInput,
   ],
   templateUrl: './my-restaurant-page.html',
@@ -92,24 +96,21 @@ export class MyRestaurantPage implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly menu = signal<Catalog | null>(null);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
-  private noticeCount = 0;
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly state = signal<PageState>({ status: 'loading' });
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly notice = new NoticeSlot();
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly menuSummary = computed(() => {
     const menu = this.menu();
     return menu ? summarize(menu) : null;
@@ -147,7 +148,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
-    this.load(true);
+    this.load(true, true);
   }
 
   protected register(): void {
@@ -162,30 +163,36 @@ export class MyRestaurantPage implements OnInit {
 
     this.submitting.set(true);
     this.formAlert.set(null);
-    this.restaurantApi.register(this.form.getRawValue()).subscribe({
-      next: (restaurant) => {
-        this.submitting.set(false);
-        this.state.set({ status: 'ready', restaurant });
-        this.menu.set({ categories: [] });
-        this.notify(
-          'success',
-          `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
-        );
-        this.focusHeading();
-      },
-      error: (error: unknown) => {
-        this.submitting.set(false);
-        const problem = toProblemDetails(error);
-        if (isAlreadyRegistered(problem)) {
-          this.notify('warning', 'Ya tenías un restaurante registrado. Te mostramos sus datos.');
-          this.load(true);
-          return;
-        }
-        applyFieldErrors(this.form, problem.errors ?? []);
-        this.formAlert.set(describeRestaurantError(problem));
-        focusFirstInvalid(this.host.nativeElement, this.injector);
-      },
-    });
+    this.restaurantApi
+      .register(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.submitting.set(false);
+          this.state.set({ status: 'ready', restaurant });
+          this.menu.set({ categories: [] });
+          this.notice.show(
+            'success',
+            `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
+          );
+          this.focusHeading();
+        },
+        error: (error: unknown) => {
+          this.submitting.set(false);
+          const problem = toProblemDetails(error);
+          if (isAlreadyRegistered(problem)) {
+            this.notice.show(
+              'warning',
+              'Ya tenías un restaurante registrado. Te mostramos sus datos.',
+            );
+            this.load(true);
+            return;
+          }
+          applyFieldErrors(this.form, problem.errors ?? []);
+          this.formAlert.set(describeRestaurantError(problem));
+          focusFirstInvalid(this.host.nativeElement, this.injector);
+        },
+      });
   }
 
   protected changeOpening(open: boolean): void {
@@ -196,17 +203,17 @@ export class MyRestaurantPage implements OnInit {
     const restaurant = current.restaurant;
     this.toggling.set(true);
     const request = open ? this.restaurantApi.open() : this.restaurantApi.close();
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.toggling.set(false);
         this.state.set({ status: 'ready', restaurant: { ...restaurant, open } });
-        this.notify('success', openingDone(open, restaurant.name));
+        this.notice.show('success', openingDone(open, restaurant.name));
       },
       error: (error: unknown) => {
         this.toggling.set(false);
         const problem = toProblemDetails(error);
         const outdated = isSuspended(problem) || isNotRegistered(problem);
-        this.notify(outdated ? 'warning' : 'danger', describeRestaurantError(problem));
+        this.notice.show(outdated ? 'warning' : 'danger', describeRestaurantError(problem));
         if (outdated) {
           this.load(true);
         }
@@ -214,42 +221,47 @@ export class MyRestaurantPage implements OnInit {
     });
   }
 
-  private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
-    this.restaurantApi.mine().subscribe({
-      next: (restaurant) => {
-        this.show({ status: 'ready', restaurant }, moveFocus);
-        this.loadMenu();
-      },
-      error: (error: unknown) => {
-        const problem = toProblemDetails(error);
-        this.show(
-          isNotRegistered(problem)
-            ? { status: 'missing' }
-            : { status: 'failed', message: describeRestaurantError(problem) },
-          moveFocus,
-        );
-      },
-    });
-  }
-
-  private notify(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
+    this.restaurantApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.show({ status: 'ready', restaurant }, moveFocus);
+          this.loadMenu();
+        },
+        error: (error: unknown) => {
+          const problem = toProblemDetails(error);
+          this.show(
+            isNotRegistered(problem)
+              ? { status: 'missing' }
+              : { status: 'failed', message: describeRestaurantError(problem) },
+            moveFocus,
+          );
+        },
+      });
   }
 
   private loadMenu(): void {
     this.menu.set(null);
-    this.catalogApi.mine().subscribe({
-      next: (menu) => this.menu.set(menu),
-      error: () => this.menu.set(null),
-    });
+    this.catalogApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (menu) => this.menu.set(menu),
+        error: () => this.menu.set(null),
+      });
   }
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     if (state.status !== 'ready') {
-      this.notice.set(null);
+      this.notice.clear();
     }
     if (!moveFocus) {
       return;
@@ -262,7 +274,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   private focusHeading(): void {
-    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
 
   private focusRetry(): void {

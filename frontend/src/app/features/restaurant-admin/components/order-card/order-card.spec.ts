@@ -25,6 +25,7 @@ const PENDING: Order = {
     [order]="order()"
     [working]="working()"
     [locked]="locked()"
+    [(confirming)]="confirming"
     (acted)="acted.push($event)"
   />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +35,7 @@ class Host {
   readonly order = signal<Order>(PENDING);
   readonly working = signal<OrderAction | null>(null);
   readonly locked = signal(false);
+  readonly confirming = signal(false);
   readonly acted: OrderAction[] = [];
 }
 
@@ -181,6 +183,29 @@ describe('OrderCard', () => {
 
     expect(text()).not.toContain('¿Rechazar el pedido #42?');
     expect(card().querySelector('app-confirm-panel')).toBeNull();
+  });
+
+  it('tells the page whether its question is open', async () => {
+    button('Rechazar').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(true);
+
+    button('Mantener pedido').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(false);
+  });
+
+  it('closes its question when the page opens another one', async () => {
+    button('Rechazar').click();
+    await fixture.whenStable();
+
+    host.confirming.set(false);
+    await fixture.whenStable();
+
+    expect(card().querySelector('app-confirm-panel')).toBeNull();
+    expect(button('Rechazar').getAttribute('aria-expanded')).toBe('false');
   });
 
   it('says what it is doing while a step runs and ignores more taps', async () => {

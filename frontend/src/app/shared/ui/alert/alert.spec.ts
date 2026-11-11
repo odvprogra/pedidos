@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Announcer } from '../live-region/announcer';
 import { Alert, AlertTone } from './alert';
 
 @Component({
@@ -53,15 +54,31 @@ describe('Alert', () => {
     expect(alert().classList).toContain('bg-warning-soft');
   });
 
-  it('reports a success politely instead of interrupting', async () => {
+  it('shows a success without interrupting and leaves its announcement to the live region', async () => {
     host.tone.set('success');
     host.message.set('Suspendiste la cuenta de Ana Rojas.');
     await fixture.whenStable();
 
-    const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
+    const box = fixture.nativeElement.querySelector('.bg-success-soft') as HTMLElement;
     expect(alert()).toBeNull();
-    expect(status.textContent).toContain('Suspendiste la cuenta de Ana Rojas.');
-    expect(status.classList).toContain('bg-success-soft');
+    expect(fixture.nativeElement.querySelector('[role]')).toBeNull();
+    expect(box.textContent).toContain('Suspendiste la cuenta de Ana Rojas.');
+  });
+
+  it('announces a success in the live region and a problem only as an alert', async () => {
+    expect(TestBed.inject(Announcer).shown()).toEqual([]);
+
+    fixture.destroy();
+    fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.tone.set('success');
+    fixture.componentInstance.message.set('Suspendiste la cuenta de Ana Rojas.');
+    await fixture.whenStable();
+
+    expect(
+      TestBed.inject(Announcer)
+        .shown()
+        .map(({ message }) => message),
+    ).toEqual(['Suspendiste la cuenta de Ana Rojas.']);
   });
 
   it('has no close button unless it can be dismissed', () => {

@@ -19,6 +19,7 @@ Complementa a [arquitectura.md](../arquitectura.md). El ejemplo completo de cada
 | Tarea al arrancar       | `infrastructure.startup`     | `FirstAdminRunner`                                |
 | Adaptador a otro módulo | `infrastructure.<modulo>`    | `RestaurantDirectoryAdapter`                      |
 | Controller              | `infrastructure.web`         | `RestaurantController`                            |
+| Controller del admin    | `infrastructure.web`         | `AdminRestaurantController`                       |
 | Request / Response      | `infrastructure.web`         | `RegisterRestaurantRequest`, `RestaurantResponse` |
 
 Los casos de uso se nombran con verbo + sustantivo del negocio: `PlaceOrder`, `PublishProduct`,

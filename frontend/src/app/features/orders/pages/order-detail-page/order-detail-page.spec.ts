@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { formatDateTime } from '@shared/utils/format-date-time';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrderDetailPage } from './order-detail-page';
 
@@ -38,6 +39,12 @@ describe('OrderDetailPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   async function open(id: string): Promise<void> {
     fixture.componentRef.setInput('id', id);
@@ -77,7 +84,7 @@ describe('OrderDetailPage', () => {
   }
 
   function notice(): HTMLElement | null {
-    return page().querySelector('[data-sticky-notice] [role]');
+    return page().querySelector('app-sticky-notice');
   }
 
   async function confirmCancellation(): Promise<void> {
@@ -91,12 +98,14 @@ describe('OrderDetailPage', () => {
     it('shows a placeholder while the order loads', async () => {
       await open('42');
 
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando tu pedido');
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando tu pedido…']);
 
       httpTesting.expectOne(ORDER_URL).flush(PENDING);
       await fixture.whenStable();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the number, the status and what happens next', async () => {
@@ -188,6 +197,35 @@ describe('OrderDetailPage', () => {
       expect(link.textContent?.trim()).toBe('Ver mis pedidos');
       expect(link.getAttribute('href')).toBe('/pedidos');
       expect(TestBed.inject(Title).getTitle()).toBe('Pedido no encontrado | Pedidos');
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await open('42');
+      httpTesting
+        .expectOne(ORDER_URL)
+        .flush(
+          { status: 500, detail: 'Detalle del servidor' },
+          { status: 500, statusText: 'Error' },
+        );
+      await fixture.whenStable();
+      const retry = requireButton('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu pedido',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      httpTesting.expectOne(ORDER_URL).flush(PENDING);
+      await fixture.whenStable();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(status()).toBe('Pendiente');
     });
 
     it('explains that the order could not load and loads it again', async () => {
@@ -286,8 +324,9 @@ describe('OrderDetailPage', () => {
 
       expect(status()).toBe('Cancelado');
       expect(button('Cancelar pedido')).toBeUndefined();
-      expect(notice()?.getAttribute('role')).toBe('status');
+      expect(notice()?.querySelector('[role]')).toBeNull();
       expect(notice()?.textContent).toContain('Cancelaste el pedido #42.');
+      expect(announced()).toEqual(['Cancelaste el pedido #42.']);
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
@@ -373,7 +412,7 @@ describe('OrderDetailPage', () => {
         );
       await fixture.whenStable();
 
-      expect(notice()?.getAttribute('role')).toBe('alert');
+      expect(notice()?.querySelector('[role="alert"]')).toBeTruthy();
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(status()).toBe('Pendiente');
       expect(requireButton('Cancelar pedido').getAttribute('aria-disabled')).toBe('false');

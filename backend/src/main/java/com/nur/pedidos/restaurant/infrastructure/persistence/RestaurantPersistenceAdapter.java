@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 class RestaurantPersistenceAdapter implements RestaurantRepository {
 
     private static final Sort OPEN_FIRST = Sort.by(Sort.Order.desc("open"), Sort.Order.asc("id"));
+    private static final Sort REGISTRATION_ORDER = Sort.by("id");
 
     private final RestaurantJpaRepository jpaRepository;
 
@@ -29,8 +30,18 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByIdForUpdate(Long id) {
+        return jpaRepository.findForUpdateById(id).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
     public Optional<Restaurant> findByOwnerId(Long ownerId) {
         return jpaRepository.findByOwnerId(ownerId).map(RestaurantEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId) {
+        return jpaRepository.findForUpdateByOwnerId(ownerId).map(RestaurantEntity::toDomain);
     }
 
     @Override
@@ -40,7 +51,15 @@ class RestaurantPersistenceAdapter implements RestaurantRepository {
 
     @Override
     public PageResult<Restaurant> findVisibleOpenFirst(int page, int size) {
-        Page<RestaurantEntity> entities = jpaRepository.findAllBySuspendedFalse(PageRequest.of(page, size, OPEN_FIRST));
+        return toPageResult(jpaRepository.findAllBySuspendedFalse(PageRequest.of(page, size, OPEN_FIRST)), page, size);
+    }
+
+    @Override
+    public PageResult<Restaurant> findPageInRegistrationOrder(int page, int size) {
+        return toPageResult(jpaRepository.findAll(PageRequest.of(page, size, REGISTRATION_ORDER)), page, size);
+    }
+
+    private static PageResult<Restaurant> toPageResult(Page<RestaurantEntity> entities, int page, int size) {
         return new PageResult<>(
                 entities.map(RestaurantEntity::toDomain).getContent(), page, size, entities.getTotalElements());
     }

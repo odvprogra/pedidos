@@ -15,9 +15,33 @@
       <path d="M12 7.5v5.5M12 16.5h.01" />
     </svg>
   </span>
-  <div role="alert">
-    <h2 class="text-lg font-extrabold">{{ heading() }}</h2>
-    <p class="mt-1 max-w-md text-muted">{{ message() }}</p>
-  </div>
-  <button #retryButton appButton type="button" (click)="retry.emit()">Reintentar</button>
+  @if (retrying()) {
+    <div data-reason>
+      <ng-container [ngTemplateOutlet]="reason" />
+      <span class="sr-only" appAnnounce>Reintentando…</span>
+    </div>
+  } @else {
+    <div role="alert" data-reason>
+      <ng-container [ngTemplateOutlet]="reason" />
+    </div>
+  }
+  <button
+    #retryButton
+    appButton
+    type="button"
+    [attr.aria-disabled]="retrying()"
+    (click)="requestRetry()"
+  >
+    @if (retrying()) {
+      <app-spinner />
+      Reintentando…
+    } @else {
+      Reintentar
+    }
+  </button>
 </div>
+
+<ng-template #reason>
+  <h2 class="text-lg font-extrabold">{{ heading() }}</h2>
+  <p class="mt-1 max-w-md text-muted">{{ message() }}</p>
+</ng-template>

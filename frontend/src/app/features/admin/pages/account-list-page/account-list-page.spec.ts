@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { Page } from '@core/http/page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { AccountSummary } from '../../models/account-summary';
 import { AccountListPage } from './account-list-page';
 
@@ -44,7 +46,7 @@ describe('AccountListPage', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     TestBed.inject(SessionStore).signIn(ADMIN);
@@ -53,6 +55,12 @@ describe('AccountListPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -104,11 +112,13 @@ describe('AccountListPage', () => {
 
   describe('the list', () => {
     it('shows a placeholder while the first page loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando cuentas');
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando cuentas…']);
 
       await show(pageOf([ANA]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows each account with its email, role and status in Spanish', async () => {
@@ -158,6 +168,28 @@ describe('AccountListPage', () => {
       await show(pageOf([ANA]));
 
       expect(page().querySelector('[role="alert"]')).toBeNull();
+      expect(rows()).toHaveLength(1);
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(FIRST_PAGE_URL, 500);
+      await fixture.whenStable();
+      const retry = buttonIn(page(), 'Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar las cuentas',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await show(pageOf([ANA]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
       expect(rows()).toHaveLength(1);
     });
 
@@ -255,6 +287,21 @@ describe('AccountListPage', () => {
       httpTesting.expectNone('/api/v1/accounts/7/suspend');
     });
 
+    it('keeps a single question open at a time', async () => {
+      await show(pageOf([ANA, LUIS]));
+
+      buttonIn(rowOf('Ana Rojas'), 'Suspender').click();
+      await fixture.whenStable();
+      buttonIn(rowOf('Luis Pérez'), 'Reactivar').click();
+      await fixture.whenStable();
+
+      expect(page().querySelectorAll('ul [role="group"]')).toHaveLength(1);
+      expect(rowOf('Luis Pérez').textContent).toContain('¿Reactivar la cuenta de Luis Pérez?');
+      expect(rowOf('Ana Rojas').textContent).not.toContain('¿Suspender');
+      expect(buttonIn(rowOf('Ana Rojas'), 'Suspender').getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(buttonIn(rowOf('Luis Pérez'), 'Cancelar'));
+    });
+
     it('suspends the account once the admin confirms', async () => {
       await show(pageOf([ANA]));
 
@@ -273,9 +320,7 @@ describe('AccountListPage', () => {
         'Suspendida',
       );
       expect(rowOf('Ana Rojas').querySelector('button')?.textContent).toContain('Reactivar');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Suspendiste la cuenta de Ana Rojas.',
-      );
+      expect(announced()).toEqual(['Suspendiste la cuenta de Ana Rojas. Ya no puede ingresar.']);
     });
 
     it('reactivates a suspended account once the admin confirms', async () => {
@@ -289,9 +334,9 @@ describe('AccountListPage', () => {
 
       expect(rowOf('Luis Pérez').querySelector('[data-status]')?.textContent).toContain('Activa');
       expect(rowOf('Luis Pérez').querySelector('button')?.textContent).toContain('Suspender');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Reactivaste la cuenta de Luis Pérez.',
-      );
+      expect(announced()).toEqual([
+        'Reactivaste la cuenta de Luis Pérez. Ya puede volver a ingresar.',
+      ]);
     });
 
     it('sends a single request when the admin insists', async () => {
@@ -362,7 +407,24 @@ describe('AccountListPage', () => {
       (page().querySelector('button[aria-label="Cerrar aviso"]') as HTMLButtonElement).click();
       await fixture.whenStable();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('app-sticky-notice')).toBeNull();
+      expect(announced()).toEqual([]);
+    });
+
+    it('announces the same failure again as a new notice', async () => {
+      await show(pageOf([ANA]));
+      await confirm('Ana Rojas', 'Suspender', 'Sí, suspender');
+      failWith('/api/v1/accounts/7/suspend', 403, 'csrf_invalid');
+      await fixture.whenStable();
+      const first = page().querySelector('app-alert[dismissible]');
+
+      await confirm('Ana Rojas', 'Suspender', 'Sí, suspender');
+      failWith('/api/v1/accounts/7/suspend', 403, 'csrf_invalid');
+      await fixture.whenStable();
+
+      const second = page().querySelector('app-alert[dismissible]');
+      expect(second?.textContent).toContain('No pudimos validar tu solicitud.');
+      expect(second).not.toBe(first);
     });
 
     it('clears the previous message when another action starts', async () => {

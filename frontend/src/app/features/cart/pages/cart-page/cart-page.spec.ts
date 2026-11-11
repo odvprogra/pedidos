@@ -7,6 +7,7 @@ import { Account } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
 import { CartRestaurant } from '@core/cart/cart';
 import { CartStore } from '@core/cart/cart-store';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { CartPage } from './cart-page';
 
@@ -47,6 +48,12 @@ describe('CartPage', () => {
     httpTesting.verify();
     localStorage.clear();
   });
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   async function openAs(account: Account | null): Promise<void> {
     if (account) {
@@ -245,7 +252,7 @@ describe('CartPage', () => {
 
       expect(button('Confirmando pedido…').getAttribute('aria-disabled')).toBe('true');
       expect(page().querySelector('[data-increase]')?.getAttribute('aria-disabled')).toBe('true');
-      expect(textOf('[role="status"]')).toBe('Confirmando tu pedido…');
+      expect(announced()).toEqual(['Confirmando tu pedido…']);
       httpTesting.expectOne(ORDERS_URL).flush(PLACED);
     });
 

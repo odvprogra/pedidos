@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   booleanAttribute,
@@ -9,6 +10,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { REGISTER_PATH } from '@core/auth/auth-paths';
@@ -56,6 +58,7 @@ export class LogInPage {
   private readonly authApi = inject(AuthApi);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
@@ -89,21 +92,24 @@ export class LogInPage {
 
     this.submitting.set(true);
     this.alert.set(null);
-    this.authApi.logIn(this.form.getRawValue()).subscribe({
-      next: (account) => {
-        this.session.signIn(account);
-        this.router.navigateByUrl(safeReturnUrl(this.returnUrl(), homeFor(account.role))).then(
-          (navigated) => this.submitting.set(navigated),
-          () => this.submitting.set(false),
-        );
-      },
-      error: (error: unknown) => {
-        const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));
-        applyFieldErrors(this.form, fieldErrors);
-        this.alert.set(alert);
-        this.submitting.set(false);
-        focusFirstInvalid(this.host.nativeElement, this.injector);
-      },
-    });
+    this.authApi
+      .logIn(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (account) => {
+          this.session.signIn(account);
+          this.router.navigateByUrl(safeReturnUrl(this.returnUrl(), homeFor(account.role))).then(
+            (navigated) => this.submitting.set(navigated),
+            () => this.submitting.set(false),
+          );
+        },
+        error: (error: unknown) => {
+          const { fieldErrors, alert } = describeAuthError(toProblemDetails(error));
+          applyFieldErrors(this.form, fieldErrors);
+          this.alert.set(alert);
+          this.submitting.set(false);
+          focusFirstInvalid(this.host.nativeElement, this.injector);
+        },
+      });
   }
 }

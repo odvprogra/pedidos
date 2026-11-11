@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   VERSION,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Button } from '@shared/ui/button/button';
 import { ServiceStatus } from '../../components/service-status/service-status';
 import { HealthApi } from '../../data-access/health-api';
@@ -21,6 +23,7 @@ import { ServiceState } from '../../models/service-state';
 })
 export class StatusPage implements OnInit {
   private readonly healthApi = inject(HealthApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly angularVersion = VERSION.full;
   protected readonly health = signal<HealthStatus | null>(null);
@@ -58,15 +61,18 @@ export class StatusPage implements OnInit {
 
   protected check(): void {
     this.loading.set(true);
-    this.healthApi.check().subscribe({
-      next: (health) => {
-        this.health.set(health);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.health.set(null);
-        this.loading.set(false);
-      },
-    });
+    this.healthApi
+      .check()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (health) => {
+          this.health.set(health);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.health.set(null);
+          this.loading.set(false);
+        },
+      });
   }
 }

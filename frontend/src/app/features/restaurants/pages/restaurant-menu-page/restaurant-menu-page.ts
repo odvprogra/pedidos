@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   afterNextRender,
   computed,
@@ -17,13 +16,18 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { canShop } from '@core/auth/account';
 import { SessionStore } from '@core/auth/session-store';
-import { describeUnits } from '@core/cart/cart';
 import { CartStore } from '@core/cart/cart-store';
 import { toProblemDetails } from '@core/http/problem-details';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { NotFound } from '@shared/ui/not-found/not-found';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
+import { describeUnits } from '@shared/utils/describe-units';
 import { parseId } from '@shared/utils/parse-id';
 import { Subscription, forkJoin } from 'rxjs';
 import { CartSummary } from '../../components/cart-summary/cart-summary';
@@ -47,13 +51,17 @@ const MISSING_TITLE = 'Restaurante no encontrado | Pedidos';
   selector: 'app-restaurant-menu-page',
   imports: [
     RouterLink,
+    Announce,
+    BackLink,
     Button,
     CartSummary,
     EmptyState,
     LoadError,
     MenuItem,
+    NotFound,
     RestaurantProfile,
     SecondaryButton,
+    Skeleton,
   ],
   templateUrl: './restaurant-menu-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,7 +73,7 @@ export class RestaurantMenuPage {
   private readonly title = inject(Title);
   private readonly injector = inject(Injector);
   private readonly profile = viewChild(RestaurantProfile);
-  private readonly missingHeading = viewChild<ElementRef<HTMLElement>>('missingHeading');
+  private readonly notFound = viewChild(NotFound);
   private readonly loadError = viewChild(LoadError);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
@@ -78,6 +86,8 @@ export class RestaurantMenuPage {
   protected readonly placeholders = [1, 2];
   protected readonly state = signal<PageState>({ status: 'loading' });
   protected readonly announcement = signal('');
+  protected readonly retrying = signal(false);
+  protected readonly confirmation = new ConfirmationSlot();
   protected readonly canOrder = computed(() => canShop(this.session.account()));
   protected readonly otherRestaurant = computed(() => {
     const inCart = this.cart.restaurant();
@@ -106,7 +116,7 @@ export class RestaurantMenuPage {
   }
 
   protected retry(): void {
-    this.load(this.id(), true);
+    this.load(this.id(), true, true);
   }
 
   protected quantityOf(product: Product): number {
@@ -133,15 +143,19 @@ export class RestaurantMenuPage {
     );
   }
 
-  private load(idText: string, moveFocus: boolean): void {
+  private load(idText: string, moveFocus: boolean, retrying = false): void {
     this.loads += 1;
+    this.retrying.set(retrying);
     this.request?.unsubscribe();
+    this.confirmation.close();
     const id = parseId(idText);
     if (id === null) {
       this.show({ status: 'missing' }, moveFocus);
       return;
     }
-    this.state.set({ status: 'loading' });
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
     this.request = forkJoin({
       restaurant: this.restaurantApi.get(id),
       catalog: this.restaurantApi.catalog(id),
@@ -162,6 +176,7 @@ export class RestaurantMenuPage {
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     this.title.setTitle(this.titleOf(state));
     if (moveFocus) {
       afterNextRender(() => this.focus(state), { injector: this.injector });
@@ -179,7 +194,7 @@ export class RestaurantMenuPage {
     if (state.status === 'ready') {
       this.profile()?.focus();
     } else if (state.status === 'missing') {
-      this.missingHeading()?.nativeElement.focus();
+      this.notFound()?.focus();
     } else {
       this.loadError()?.focus();
     }

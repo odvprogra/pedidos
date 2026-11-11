@@ -133,6 +133,7 @@ describe('RestaurantCard', () => {
     expect(status()).toBe('Suspendido');
     expect(toggle()).toBeNull();
     expect(text()).toContain('Tu restaurante está suspendido');
+    expect(text()).toContain('pero sí terminar los pedidos en curso');
     expect(text()).toContain('Habla con el administrador para reactivarlo.');
   });
 

@@ -1,0 +1,34 @@
+<div class="grid gap-3 px-4 py-4 sm:px-6 md:grid-cols-restaurants md:items-center md:gap-x-4">
+  <div class="flex min-w-0 items-center justify-between gap-3 md:contents">
+    <div class="flex min-w-0 items-center gap-3">
+      <span
+        aria-hidden="true"
+        class="grid size-10 shrink-0 place-items-center rounded-xl text-sm font-extrabold"
+        [class]="avatarStyle()"
+      >
+        {{ initial() }}
+      </span>
+      <div class="min-w-0">
+        <p class="font-bold wrap-anywhere md:truncate" [class.text-muted]="restaurant().suspended">
+          {{ restaurant().name }}
+        </p>
+        <p class="text-sm wrap-anywhere text-muted md:truncate">
+          <span class="sr-only">Dirección: </span>{{ restaurant().address }}
+        </p>
+      </div>
+    </div>
+    <p class="shrink-0">
+      <app-restaurant-status-badge data-status size="sm" [restaurant]="restaurant()" />
+    </p>
+  </div>
+
+  <app-moderation-control
+    [action]="action()"
+    [copy]="copy()"
+    [panelId]="confirmId()"
+    [busy]="busy()"
+    [locked]="locked()"
+    [(confirming)]="confirming"
+    (confirmed)="confirmed.emit($event)"
+  />
+</div>

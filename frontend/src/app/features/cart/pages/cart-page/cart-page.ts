@@ -17,7 +17,7 @@ import { Router, RouterLink } from '@angular/router';
 import { canShop } from '@core/auth/account';
 import { LOG_IN_PATH, REGISTER_PATH } from '@core/auth/auth-paths';
 import { SessionStore } from '@core/auth/session-store';
-import { CartItem, describeUnits } from '@core/cart/cart';
+import { CartItem } from '@core/cart/cart';
 import { CART_PATH } from '@core/cart/cart-paths';
 import { CartStore } from '@core/cart/cart-store';
 import { toProblemDetails } from '@core/http/problem-details';
@@ -25,7 +25,9 @@ import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { describeUnits } from '@shared/utils/describe-units';
 import { formatPrice } from '@shared/utils/format-price';
 import { CartLine } from '../../components/cart-line/cart-line';
 import { OrderPlaced } from '../../components/order-placed/order-placed';
@@ -49,7 +51,17 @@ const PLACED_TITLE = 'Pedido confirmado | Pedidos';
 
 @Component({
   selector: 'app-cart-page',
-  imports: [RouterLink, Alert, Button, CartLine, EmptyState, OrderPlaced, SecondaryButton, Spinner],
+  imports: [
+    RouterLink,
+    Alert,
+    Announce,
+    Button,
+    CartLine,
+    EmptyState,
+    OrderPlaced,
+    SecondaryButton,
+    Spinner,
+  ],
   templateUrl: './cart-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

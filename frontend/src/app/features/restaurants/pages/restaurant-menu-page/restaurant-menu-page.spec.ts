@@ -5,6 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { SessionStore } from '@core/auth/session-store';
 import { CartStore } from '@core/cart/cart-store';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { RestaurantMenuPage } from './restaurant-menu-page';
@@ -72,6 +73,12 @@ describe('RestaurantMenuPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   async function open(id: string): Promise<void> {
     fixture.componentRef.setInput('id', id);
@@ -148,11 +155,13 @@ describe('RestaurantMenuPage', () => {
     it('shows a placeholder while the menu loads', async () => {
       await open('4');
 
-      expect(page().querySelector('[role="status"]')?.textContent).toContain('Cargando el menú');
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando el menú…']);
 
       await respond();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows the restaurant with its categories in the order of the API', async () => {
@@ -240,6 +249,48 @@ describe('RestaurantMenuPage', () => {
 
       httpTesting.expectNone((request) => request.url.startsWith('/api/v1/restaurants'));
       expect(heading()?.textContent).toContain('No encontramos este restaurante');
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await open('4');
+      await failWith(CATALOG_URL, RESTAURANT_URL, 500);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar el menú',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(categories()).toEqual(['Platos fuertes', 'Bebidas']);
+    });
+
+    it('loads the new restaurant when the address changes during a retry', async () => {
+      await open('4');
+      await failWith(CATALOG_URL, RESTAURANT_URL, 500);
+      button('Reintentar').click();
+      await fixture.whenStable();
+
+      await open('5');
+
+      expect(httpTesting.expectOne(RESTAURANT_URL).cancelled).toBe(true);
+      expect(httpTesting.expectOne(CATALOG_URL).cancelled).toBe(true);
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      await respond({ ...LA_CASONA, id: 5, name: 'El Fogón' }, MENU, {
+        restaurant: '/api/v1/restaurants/5',
+        catalog: '/api/v1/restaurants/5/catalog',
+      });
+
+      expect(heading()?.textContent).toContain('El Fogón');
     });
 
     it('explains that the menu could not load and loads both again', async () => {
@@ -417,6 +468,26 @@ describe('RestaurantMenuPage', () => {
       await respond();
 
       expect(page().querySelectorAll('article > div button')).toHaveLength(0);
+    });
+
+    it('keeps a single question about the cart open at a time', async () => {
+      TestBed.inject(CartStore).add(
+        { id: 7, name: 'El Fogón', address: 'Av. Banzer 120' },
+        { id: 20, name: 'Napolitana', price: 70 },
+      );
+      await open('4');
+      await respond();
+
+      await add('Silpancho');
+      await add('Limonada');
+
+      const questions = page().querySelectorAll('[role="group"]');
+      expect(questions).toHaveLength(1);
+      expect(questions[0].textContent).toContain('Si agregas Limonada');
+      expect(addButtonOf('Silpancho').getAttribute('aria-expanded')).toBe('false');
+      expect(addButtonOf('Limonada').getAttribute('aria-expanded')).toBe('true');
+      expect(document.activeElement?.textContent?.trim()).toBe('Mantener mi carrito');
+      expect(questions[0].contains(document.activeElement)).toBe(true);
     });
 
     it('asks before replacing a cart of another restaurant', async () => {

@@ -19,6 +19,7 @@ const SILPANCHO: Product = {
       [product]="product()"
       [working]="working()"
       [locked]="locked()"
+      [(confirming)]="confirming"
       (availabilityChange)="availability.push($event)"
       (edit)="edits = edits + 1"
       (deleteConfirmed)="deletions = deletions + 1"
@@ -30,6 +31,7 @@ class Host {
   readonly product = signal(SILPANCHO);
   readonly working = signal<ProductTask | null>(null);
   readonly locked = signal(false);
+  readonly confirming = signal(false);
   readonly availability: boolean[] = [];
   edits = 0;
   deletions = 0;
@@ -186,6 +188,29 @@ describe('ProductRow', () => {
 
     expect(row().querySelector('[role="group"]')).toBeNull();
     expect(document.activeElement).toBe(button('Borrar'));
+  });
+
+  it('tells the page whether its question is open', async () => {
+    button('Borrar').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(true);
+
+    button('Cancelar').click();
+    await fixture.whenStable();
+
+    expect(host.confirming()).toBe(false);
+  });
+
+  it('closes its question when the page opens another one', async () => {
+    button('Borrar').click();
+    await fixture.whenStable();
+
+    host.confirming.set(false);
+    await fixture.whenStable();
+
+    expect(row().querySelector('[role="group"]')).toBeNull();
+    expect(button('Borrar').getAttribute('aria-expanded')).toBe('false');
   });
 
   it('keeps the question open but ignores it while another change is on its way', async () => {

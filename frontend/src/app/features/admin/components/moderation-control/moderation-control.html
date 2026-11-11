@@ -1,0 +1,35 @@
+<button
+  #actionButton
+  appSecondaryButton
+  type="button"
+  class="w-full"
+  [tone]="tones().button"
+  [working]="busy()"
+  [attr.aria-disabled]="unavailable()"
+  [attr.aria-expanded]="confirming()"
+  [attr.aria-controls]="confirming() ? panelId() : null"
+  (click)="toggle()"
+  (keydown.escape)="dismiss()"
+>
+  @if (busy()) {
+    <app-spinner />
+    {{ copy().working }}
+  } @else {
+    {{ copy().label }}
+    <span class="sr-only">{{ copy().target }}</span>
+  }
+</button>
+
+@if (confirming()) {
+  <app-confirm-panel
+    class="block md:col-span-full"
+    [panelId]="panelId()"
+    [question]="copy().question"
+    [consequence]="copy().consequence"
+    [confirmLabel]="copy().confirm"
+    [tone]="tones().panel"
+    [disabled]="unavailable()"
+    (confirmed)="confirm()"
+    (cancelled)="cancel()"
+  />
+}

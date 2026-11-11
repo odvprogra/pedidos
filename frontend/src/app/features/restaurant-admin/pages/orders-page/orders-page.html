@@ -1,40 +1,13 @@
 <section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
   <div class="max-w-3xl">
-    <a
-      routerLink=".."
-      class="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
-    >
-      <svg
-        aria-hidden="true"
-        class="size-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="m15 18-6-6 6-6" />
-      </svg>
-      Mi restaurante
-    </a>
+    <app-back-link link="..">Mi restaurante</app-back-link>
 
-    <header class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="text-sm font-extrabold tracking-wide text-brand uppercase">
-          Panel del restaurante
-        </p>
-        <h1
-          #heading
-          tabindex="-1"
-          class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
-        >
-          Pedidos
-        </h1>
-        <p class="mt-2 text-muted">
-          Acepta los pedidos nuevos y márcalos listos para que los retiren.
-        </p>
-      </div>
+    <app-page-header
+      class="mt-2"
+      eyebrow="Panel del restaurante"
+      heading="Pedidos"
+      subtitle="Acepta los pedidos nuevos y márcalos listos para que los retiren."
+    >
       <button
         appSecondaryButton
         type="button"
@@ -63,7 +36,7 @@
           Actualizar
         }
       </button>
-    </header>
+    </app-page-header>
 
     <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
       <div
@@ -89,17 +62,10 @@
     </div>
     <p class="sr-only" aria-live="polite" data-refresh-announcement>{{ announcement() }}</p>
 
-    @for (shown of notices(); track shown.id) {
-      <div class="sticky top-20 z-5 mt-4" data-sticky-notice>
-        <app-alert
-          class="block rounded-xl shadow-md"
-          dismissible
-          [tone]="shown.tone"
-          (dismissed)="notice.set(null)"
-        >
-          {{ shown.message }}
-        </app-alert>
-      </div>
+    @for (shown of notice.shown(); track shown.id) {
+      <app-sticky-notice class="mt-4" [tone]="shown.tone" (dismissed)="notice.clear()">
+        {{ shown.message }}
+      </app-sticky-notice>
     }
 
     @if (problem(); as problem) {
@@ -107,6 +73,7 @@
         class="mt-6 block"
         heading="No pudimos cargar los pedidos"
         [message]="problem"
+        [retrying]="retrying()"
         (retry)="retry()"
       />
     } @else if (result(); as result) {
@@ -141,6 +108,8 @@
                 [order]="order"
                 [working]="workingOn(order)"
                 [locked]="busy()"
+                [confirming]="confirmation.isOpen(order.id)"
+                (confirmingChange)="confirmation.set(order.id, $event)"
                 (acted)="run(order, $event)"
               />
             </li>
@@ -158,21 +127,17 @@
         }
       }
     } @else {
-      <div class="mt-6 grid gap-4" role="status">
-        <span class="sr-only">Cargando los pedidos…</span>
+      <div class="mt-6 grid gap-4">
+        <span class="sr-only" appAnnounce>Cargando los pedidos…</span>
         @for (placeholder of placeholders; track placeholder) {
           <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             <div class="flex items-center justify-between border-b border-line bg-canvas px-5 py-4">
-              <div class="h-5 w-28 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
-              <div
-                class="h-5 w-20 animate-pulse rounded-full bg-line motion-reduce:animate-none"
-              ></div>
+              <div appSkeleton class="h-5 w-28 rounded"></div>
+              <div appSkeleton class="h-5 w-20 rounded-full"></div>
             </div>
             <div class="grid gap-3 px-5 py-4">
-              <div
-                class="h-4 w-48 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-              ></div>
-              <div class="h-4 w-36 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+              <div appSkeleton class="h-4 w-48 max-w-full rounded"></div>
+              <div appSkeleton class="h-4 w-36 rounded"></div>
             </div>
           </div>
         }

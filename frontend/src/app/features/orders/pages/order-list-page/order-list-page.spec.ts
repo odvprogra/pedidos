@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrderListPage } from './order-list-page';
 
@@ -47,6 +48,12 @@ describe('OrderListPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -99,13 +106,13 @@ describe('OrderListPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the orders load', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tus pedidos',
-      );
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando tus pedidos…']);
 
       await respond(pageOf([NEWEST]));
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('shows each order in the order of the API with its status', async () => {
@@ -143,6 +150,48 @@ describe('OrderListPage', () => {
       expect(page().querySelector('[role="alert"]')).toBeNull();
       expect(titles()).toEqual(['Pedido #43 · El Fogón']);
       expect(document.activeElement).toBe(page().querySelector('h1'));
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      await fail(0);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tus pedidos',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([NEWEST]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43 · El Fogón']);
+    });
+
+    it('keeps retrying in view when the page it retries is empty now', async () => {
+      await respond(pageOf([NEWEST], 0, 15));
+      button('Siguiente').click();
+      await fixture.whenStable();
+      await fail(1);
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      expectPage(1).flush(pageOf([], 1, 5, 1));
+      await fixture.whenStable();
+
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await respond(pageOf([NEWEST]));
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(titles()).toEqual(['Pedido #43 · El Fogón']);
     });
 
     it('cancels the request when the customer leaves before it answers', () => {

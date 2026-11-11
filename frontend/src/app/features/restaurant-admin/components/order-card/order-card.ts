@@ -7,7 +7,7 @@ import {
   computed,
   inject,
   input,
-  linkedSignal,
+  model,
   output,
   viewChild,
   viewChildren,
@@ -36,14 +36,14 @@ export class OrderCard {
   readonly order = input.required<Order>();
   readonly working = input<OrderAction | null>(null);
   readonly locked = input(false);
+  readonly confirming = model(false);
   readonly acted = output<OrderAction>();
 
-  protected readonly confirmingReject = linkedSignal({
-    source: () => this.order().status,
-    computation: () => false,
-  });
   protected readonly actions = computed(() =>
     actionsFor(this.order()).map((action) => ({ action, copy: copyFor(action) })),
+  );
+  protected readonly confirmingReject = computed(
+    () => this.confirming() && this.actions().some(({ action }) => action === 'reject'),
   );
   protected readonly unavailable = computed(() => this.working() !== null || this.locked());
   protected readonly placedAt = computed(() => formatDateTime(this.order().placedAt));
@@ -65,10 +65,10 @@ export class OrderCard {
       return;
     }
     if (action === 'reject') {
-      this.confirmingReject.update((open) => !open);
+      this.confirming.set(!this.confirmingReject());
       return;
     }
-    this.confirmingReject.set(false);
+    this.confirming.set(false);
     this.acted.emit(action);
   }
 
@@ -79,7 +79,7 @@ export class OrderCard {
   }
 
   protected keep(): void {
-    this.confirmingReject.set(false);
+    this.confirming.set(false);
     afterNextRender(() => this.rejectButton()?.nativeElement.focus(), { injector: this.injector });
   }
 
@@ -87,7 +87,7 @@ export class OrderCard {
     if (this.unavailable()) {
       return;
     }
-    this.confirmingReject.set(false);
+    this.confirming.set(false);
     this.acted.emit('reject');
     afterNextRender(() => this.rejectButton()?.nativeElement.focus(), { injector: this.injector });
   }

@@ -23,7 +23,8 @@ hacer a continuación. El error muestra un mensaje entendible y permite reintent
 
 - Cada campo tiene un `label` asociado; cada imagen tiene `alt`.
 - Botones con `type` y con texto o `aria-label`.
-- Mensajes de carga con `role="status"` y de error con `role="alert"`.
+- La carga y los avisos de éxito se anuncian en la región fija (`app-live-region`) con `appAnnounce`,
+  sin un `role="status"` propio; los errores llevan `role="alert"` (ADR-0012).
 - Se puede completar el flujo solo con teclado y el foco es visible.
 - Contraste suficiente: texto sobre `bg-brand` siempre blanco y en negrita si es pequeño.
 

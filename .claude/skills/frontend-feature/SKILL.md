@@ -23,7 +23,7 @@ src/app/features/<feature>/
 ├── <feature>.routes.ts      export const <FEATURE>_ROUTES: Routes
 ├── pages/<nombre>-page/     componentes enrutados
 ├── components/<nombre>/     componentes de presentación
-├── data-access/             <recurso>-api.ts, <nombre>-store.ts
+├── data-access/             <recurso>-api.ts, <nombre>-store.ts, <nombre>-list.ts
 └── models/                  interfaces
 ```
 
@@ -38,16 +38,17 @@ src/app/features/<feature>/
 ## 2. Páginas
 
 1. `XxxPage` en `pages/xxx-page/`: inyecta el cliente, maneja el estado con `signal` y `computed`.
-2. Cubre siempre los cuatro estados: cargando (skeleton con `role="status"`), error
-   (`app-load-error` con el mensaje de `toProblemDetails` y "Reintentar"), vacío (explica qué hacer)
-   y éxito.
+2. Cubre siempre los cuatro estados: cargando (skeleton con su texto `sr-only` y `appAnnounce`),
+   error (`app-load-error` con el mensaje de `toProblemDetails`, "Reintentar" y `[retrying]`), vacío
+   (explica qué hacer) y éxito.
 3. Formularios: `NonNullableFormBuilder`, `markAllAsTouched()` al enviar, `aria-disabled` (no
    `disabled`) mientras se guarda, el foco al primer campo inválido (`focusFirstInvalid`) y los
    `errors[]` del backend asignados con `applyFieldErrors`.
 
 ## 3. Componentes de presentación
 
-1. En `components/`: solo `input()` y `output()`, sin servicios de datos.
+1. En `components/`: solo `input()`, `output()` y `model()` (para un estado que la página también
+   controla, como la pregunta abierta de una fila), sin servicios de datos.
 2. Si sirve en más de una feature, va a `shared/ui/`.
 
 ## 4. Rutas
@@ -81,7 +82,7 @@ npm run build
 
 ## Checklist
 
-- [ ] `OnPush`, `input()`/`output()`, `inject()`, control flow nuevo
+- [ ] `OnPush`, `input()`/`output()`/`model()`, `inject()`, control flow nuevo
 - [ ] Cuatro estados en cada vista con datos
 - [ ] Sin imports a otras features (lo verifica ESLint)
 - [ ] Textos en español, código en inglés

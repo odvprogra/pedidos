@@ -40,29 +40,38 @@ frontend/src/app/features/restaurant-admin/
 
 Lo que ya existe y no se vuelve a escribir en una feature:
 
-| Pieza                                       | Para qué                                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `toProblemDetails` (`@core/http`)           | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
-| `Page<T>` (`@core/http/page`)               | La forma de una página de la API                                                           |
-| `app-load-error` (`@shared/ui`)             | El error de carga con "Reintentar" y su método `focus()`                                   |
-| `app-empty-state` (`@shared/ui`)            | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
-| `app-alert` (`@shared/ui`)                  | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
-| `appButton`, `appSecondaryButton`           | Botón principal y secundarios (`tone="danger"`, `working`)                                 |
-| `app-form-field`, `appTextInput`            | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
-| `app-confirm-panel` (`@shared/ui`)          | La confirmación dentro de la fila, sin modal                                               |
-| `app-pagination` (`@shared/ui`)             | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
-| `app-badge` (`@shared/ui`)                  | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
-| `app-order-status-badge` (`@shared/ui`)     | La insignia de un pedido según su `status`, con su nombre y su tono                        |
-| `app-spinner` (`@shared/ui`)                | El indicador dentro de un botón que trabaja                                                |
-| `validationMessage` (`@shared/utils`)       | El mensaje de un campo, con prioridad para el error del backend                            |
-| `applyFieldErrors` (`@shared/utils`)        | Asigna los `errors[]` del backend a los campos del formulario                              |
-| `focusFirstInvalid` (`@shared/utils`)       | Lleva el foco al primer campo inválido después de renderizar                               |
-| `formatPrice` (`@shared/utils`)             | `Bs 45,00`                                                                                 |
-| `formatDateTime` (`@shared/utils`)          | `8 nov 2026, 11:00` en la hora local                                                       |
-| `parseId` (`@shared/utils`)                 | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
-| `orderPath`, `ORDERS_PATH` (`@core/orders`) | Las rutas de los pedidos del cliente                                                       |
-| `CartStore` (`@core/cart`)                  | El carrito de un restaurante, guardado en `localStorage`                                   |
-| `describeUnits` (`@core/cart/cart`)         | `1 producto`, `3 productos`                                                                |
+| Pieza                                                  | Para qué                                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `toProblemDetails` (`@core/http`)                      | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
+| `Page<T>` (`@core/http/page`)                          | La forma de una página de la API                                                           |
+| `app-page-header` (`@shared/ui`)                       | Etiqueta, `h1` con `focus()` y subtítulo; lo de al lado va como contenido                  |
+| `appCountPill` (`@shared/ui`)                          | La píldora del contador ("12 pedidos") junto al título, en una sola línea                  |
+| `app-back-link` (`@shared/ui`)                         | "‹ Mi restaurante": vuelve a `link`, relativo a la ruta de la página                       |
+| `app-not-found` (`@shared/ui`)                         | "No encontramos…" como `h1` de la página, con la salida como contenido y `focus()`         |
+| `app-load-error` (`@shared/ui`)                        | El error de carga con "Reintentar", `retrying` ("Reintentando…") y su método `focus()`     |
+| `app-empty-state` (`@shared/ui`)                       | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
+| `appSkeleton` (`@shared/ui`)                           | Una barra del esqueleto de carga: pulso y color; la página pone tamaño y forma             |
+| `app-sticky-notice`, `NoticeSlot` (`@shared/ui`)       | El aviso fijo bajo el header con el resultado de una acción, uno a la vez y con su id      |
+| `app-alert` (`@shared/ui`)                             | Avisos: `danger` y `warning` con `role="alert"`, `success` anunciado con `appAnnounce`     |
+| `app-live-region`, `appAnnounce`, `Announcer`          | La región `role="status"` fija de la app y la directiva que escribe en ella                |
+| `appButton`, `appSecondaryButton` (`@shared/ui`)       | Botón principal y secundarios (`tone="danger"`, `size="lg"`, `working`)                    |
+| `app-form-field`, `appTextInput`                       | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
+| `app-confirm-panel`, `ConfirmationSlot` (`@shared/ui`) | La confirmación dentro de la fila, sin modal, y cuál está abierta (una a la vez)           |
+| `app-pagination` (`@shared/ui`)                        | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
+| `app-badge` (`@shared/ui`)                             | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
+| `app-order-status-badge` (`@shared/ui`)                | La insignia de un pedido según su `status`, con su nombre y su tono                        |
+| `app-restaurant-status-badge` (`@shared/ui`)           | Abierto, Cerrado o Suspendido según `open` y `suspended`, con su tono                      |
+| `app-spinner` (`@shared/ui`)                           | El indicador dentro de un botón que trabaja                                                |
+| `restaurantStatusOf` (`@shared/utils`)                 | El estado de un restaurante (`open`, `closed`, `suspended`) y su nombre                    |
+| `validationMessage` (`@shared/utils`)                  | El mensaje de un campo, con prioridad para el error del backend                            |
+| `applyFieldErrors` (`@shared/utils`)                   | Asigna los `errors[]` del backend a los campos del formulario                              |
+| `focusFirstInvalid` (`@shared/utils`)                  | Lleva el foco al primer campo inválido después de renderizar                               |
+| `formatPrice` (`@shared/utils`)                        | `Bs 45,00`                                                                                 |
+| `formatDateTime` (`@shared/utils`)                     | `8 nov 2026, 11:00` en la hora local                                                       |
+| `parseId` (`@shared/utils`)                            | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
+| `describeUnits` (`@shared/utils`)                      | `1 producto`, `3 productos`                                                                |
+| `orderPath`, `ORDERS_PATH` (`@core/orders`)            | Las rutas de los pedidos del cliente                                                       |
+| `CartStore` (`@core/cart`)                             | El carrito de un restaurante, guardado en `localStorage`                                   |
 
 ## Modelo
 
@@ -89,28 +98,11 @@ export interface RestaurantRegistration {
 
 ## Modelo: estado y textos
 
-Lo que la interfaz decide a partir de los datos (qué insignia mostrar, qué texto acompaña a cada estado) son funciones puras en `models/`. Así se prueban sin `TestBed` y el componente solo las llama.
+Lo que la interfaz decide a partir de los datos (qué texto acompaña a cada estado) son funciones puras en `models/`. Así se prueban sin `TestBed` y el componente solo las llama. El estado del restaurante y su insignia los comparte con el panel del admin, así que viven en `@shared/utils/restaurant-status` y `app-restaurant-status-badge`.
 
 `frontend/src/app/features/restaurant-admin/models/restaurant-status.ts`
 
 ```ts
-import { Restaurant } from './restaurant';
-
-export type RestaurantStatus = 'open' | 'closed' | 'suspended';
-
-export const STATUS_LABELS: Record<RestaurantStatus, string> = {
-  open: 'Abierto',
-  closed: 'Cerrado',
-  suspended: 'Suspendido',
-};
-
-export function statusOf(restaurant: Restaurant): RestaurantStatus {
-  if (restaurant.suspended) {
-    return 'suspended';
-  }
-  return restaurant.open ? 'open' : 'closed';
-}
-
 export function openingHint(open: boolean): string {
   return open
     ? 'Abierto: los clientes ya pueden hacer pedidos.'
@@ -212,26 +204,14 @@ Solo recibe `input()` y emite `output()`; no inyecta servicios de datos. No camb
 ```ts
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Badge, BadgeTone } from '@shared/ui/badge/badge';
+import { RestaurantStatusBadge } from '@shared/ui/restaurant-status-badge/restaurant-status-badge';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { Restaurant } from '../../models/restaurant';
-import {
-  RestaurantStatus,
-  STATUS_LABELS,
-  openingHint,
-  openingProgress,
-  statusOf,
-} from '../../models/restaurant-status';
-
-const BADGE_TONES: Record<RestaurantStatus, BadgeTone> = {
-  open: 'success',
-  closed: 'neutral',
-  suspended: 'danger',
-};
+import { openingHint, openingProgress } from '../../models/restaurant-status';
 
 @Component({
   selector: 'app-restaurant-card',
-  imports: [RouterLink, Badge, Spinner],
+  imports: [RouterLink, RestaurantStatusBadge, Spinner],
   templateUrl: './restaurant-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -241,9 +221,6 @@ export class RestaurantCard {
   readonly menuSummary = input<string | null>(null);
   readonly openChange = output<boolean>();
 
-  protected readonly status = computed(() => statusOf(this.restaurant()));
-  protected readonly statusLabel = computed(() => STATUS_LABELS[this.status()]);
-  protected readonly badgeTone = computed(() => BADGE_TONES[this.status()]);
   protected readonly initial = computed(() =>
     this.restaurant().name.trim().charAt(0).toUpperCase(),
   );
@@ -299,7 +276,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
       >
         {{ initial() }}
       </span>
-      <app-badge class="mb-1" data-status [tone]="badgeTone()">{{ statusLabel() }}</app-badge>
+      <app-restaurant-status-badge class="mb-1" data-status [restaurant]="restaurant()" />
     </div>
 
     <h2
@@ -350,7 +327,8 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
         <div>
           <p class="font-bold">Tu restaurante está suspendido</p>
           <p class="mt-0.5 text-sm">
-            Los clientes no lo ven y no puedes abrirlo. Habla con el administrador para reactivarlo.
+            Los clientes no lo ven y no puedes abrirlo, pero sí terminar los pedidos en curso. Habla
+            con el administrador para reactivarlo.
           </p>
         </div>
       </div>
@@ -384,6 +362,48 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
       </div>
     }
   </div>
+
+  <a
+    routerLink="pedidos"
+    data-orders-link
+    class="group flex items-center justify-between gap-4 border-t border-line px-5 py-4 transition hover:bg-brand-soft/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:px-6"
+  >
+    <span class="flex min-w-0 items-center gap-3">
+      <span
+        aria-hidden="true"
+        class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"
+      >
+        <svg
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span class="block font-bold">Pedidos</span>
+        <span class="block text-sm text-muted">Acepta y prepara los pedidos de tus clientes</span>
+      </span>
+    </span>
+    <svg
+      aria-hidden="true"
+      class="size-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand motion-reduce:transition-none"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  </a>
 
   <a
     routerLink="menu"
@@ -432,7 +452,7 @@ El interruptor es un `button` con `role="switch"`, `aria-checked` y `aria-disabl
 
 ## Página
 
-La página carga los datos y maneja el estado. El estado de la vista es una unión discriminada (`loading`, `missing`, `failed`, `ready`), así el template no puede mostrar dos estados a la vez. El foco va al título cuando la página llega desde otra o cuando termina una acción, y a "Reintentar" cuando la carga falla. Cada aviso es un objeto nuevo con su id, así un mismo mensaje repetido se vuelve a anunciar.
+La página carga los datos y maneja el estado. El estado de la vista es una unión discriminada (`loading`, `missing`, `failed`, `ready`), así el template no puede mostrar dos estados a la vez. El foco va al título cuando la página llega desde otra o cuando termina una acción, y a "Reintentar" cuando la carga falla; el título lo enfoca `app-page-header` con su método `focus()`. Al reintentar, la página no vuelve a `loading`: queda en `failed` con `retrying`, así el error sigue a la vista con "Reintentando…" y el foco no se pierde. El aviso vive en un `NoticeSlot`, que le da a cada aviso un id nuevo, así un mismo mensaje repetido se vuelve a anunciar. Cada pedido HTTP pasa por `takeUntilDestroyed`, así se cancela si el dueño sale de la página antes de la respuesta.
 
 `frontend/src/app/features/restaurant-admin/pages/my-restaurant-page/my-restaurant-page.ts`
 
@@ -440,6 +460,7 @@ La página carga los datos y maneja el estado. El estado de la vista es una uni�
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   OnInit,
@@ -449,15 +470,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { Alert } from '@shared/ui/alert/alert';
 import { Button } from '@shared/ui/button/button';
 import { FormField } from '@shared/ui/form-field/form-field';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { TextInput } from '@shared/ui/text-input/text-input';
 import { applyFieldErrors } from '@shared/utils/field-errors';
 import { focusFirstInvalid } from '@shared/utils/focus-first-invalid';
@@ -485,12 +511,6 @@ type PageState =
 
 type RegistrationField = 'name' | 'description' | 'address';
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 const DESCRIPTION_LIMIT = 300;
 
 const MESSAGES: Record<RegistrationField, ValidationMessages> = {
@@ -514,12 +534,16 @@ const MESSAGES: Record<RegistrationField, ValidationMessages> = {
   imports: [
     ReactiveFormsModule,
     Alert,
+    Announce,
     Button,
     FormField,
     LoadError,
+    PageHeader,
     RegistrationSteps,
     RestaurantCard,
+    Skeleton,
     Spinner,
+    StickyNotice,
     TextInput,
   ],
   templateUrl: './my-restaurant-page.html',
@@ -531,24 +555,21 @@ export class MyRestaurantPage implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly menu = signal<Catalog | null>(null);
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
-  private noticeCount = 0;
 
   protected readonly descriptionLimit = DESCRIPTION_LIMIT;
   protected readonly state = signal<PageState>({ status: 'loading' });
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly notice = new NoticeSlot();
   protected readonly submitting = signal(false);
   protected readonly formAlert = signal<string | null>(null);
   protected readonly toggling = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly menuSummary = computed(() => {
     const menu = this.menu();
     return menu ? summarize(menu) : null;
@@ -586,7 +607,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   protected retry(): void {
-    this.load(true);
+    this.load(true, true);
   }
 
   protected register(): void {
@@ -601,30 +622,36 @@ export class MyRestaurantPage implements OnInit {
 
     this.submitting.set(true);
     this.formAlert.set(null);
-    this.restaurantApi.register(this.form.getRawValue()).subscribe({
-      next: (restaurant) => {
-        this.submitting.set(false);
-        this.state.set({ status: 'ready', restaurant });
-        this.menu.set({ categories: [] });
-        this.notify(
-          'success',
-          `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
-        );
-        this.focusHeading();
-      },
-      error: (error: unknown) => {
-        this.submitting.set(false);
-        const problem = toProblemDetails(error);
-        if (isAlreadyRegistered(problem)) {
-          this.notify('warning', 'Ya tenías un restaurante registrado. Te mostramos sus datos.');
-          this.load(true);
-          return;
-        }
-        applyFieldErrors(this.form, problem.errors ?? []);
-        this.formAlert.set(describeRestaurantError(problem));
-        focusFirstInvalid(this.host.nativeElement, this.injector);
-      },
-    });
+    this.restaurantApi
+      .register(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.submitting.set(false);
+          this.state.set({ status: 'ready', restaurant });
+          this.menu.set({ categories: [] });
+          this.notice.show(
+            'success',
+            `¡Listo! Registraste ${restaurant.name}. Está cerrado: ábrelo cuando quieras recibir pedidos.`,
+          );
+          this.focusHeading();
+        },
+        error: (error: unknown) => {
+          this.submitting.set(false);
+          const problem = toProblemDetails(error);
+          if (isAlreadyRegistered(problem)) {
+            this.notice.show(
+              'warning',
+              'Ya tenías un restaurante registrado. Te mostramos sus datos.',
+            );
+            this.load(true);
+            return;
+          }
+          applyFieldErrors(this.form, problem.errors ?? []);
+          this.formAlert.set(describeRestaurantError(problem));
+          focusFirstInvalid(this.host.nativeElement, this.injector);
+        },
+      });
   }
 
   protected changeOpening(open: boolean): void {
@@ -635,17 +662,17 @@ export class MyRestaurantPage implements OnInit {
     const restaurant = current.restaurant;
     this.toggling.set(true);
     const request = open ? this.restaurantApi.open() : this.restaurantApi.close();
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.toggling.set(false);
         this.state.set({ status: 'ready', restaurant: { ...restaurant, open } });
-        this.notify('success', openingDone(open, restaurant.name));
+        this.notice.show('success', openingDone(open, restaurant.name));
       },
       error: (error: unknown) => {
         this.toggling.set(false);
         const problem = toProblemDetails(error);
         const outdated = isSuspended(problem) || isNotRegistered(problem);
-        this.notify(outdated ? 'warning' : 'danger', describeRestaurantError(problem));
+        this.notice.show(outdated ? 'warning' : 'danger', describeRestaurantError(problem));
         if (outdated) {
           this.load(true);
         }
@@ -653,42 +680,47 @@ export class MyRestaurantPage implements OnInit {
     });
   }
 
-  private load(moveFocus: boolean): void {
-    this.state.set({ status: 'loading' });
-    this.restaurantApi.mine().subscribe({
-      next: (restaurant) => {
-        this.show({ status: 'ready', restaurant }, moveFocus);
-        this.loadMenu();
-      },
-      error: (error: unknown) => {
-        const problem = toProblemDetails(error);
-        this.show(
-          isNotRegistered(problem)
-            ? { status: 'missing' }
-            : { status: 'failed', message: describeRestaurantError(problem) },
-          moveFocus,
-        );
-      },
-    });
-  }
-
-  private notify(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
+  private load(moveFocus: boolean, retrying = false): void {
+    this.retrying.set(retrying);
+    if (!retrying) {
+      this.state.set({ status: 'loading' });
+    }
+    this.restaurantApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (restaurant) => {
+          this.show({ status: 'ready', restaurant }, moveFocus);
+          this.loadMenu();
+        },
+        error: (error: unknown) => {
+          const problem = toProblemDetails(error);
+          this.show(
+            isNotRegistered(problem)
+              ? { status: 'missing' }
+              : { status: 'failed', message: describeRestaurantError(problem) },
+            moveFocus,
+          );
+        },
+      });
   }
 
   private loadMenu(): void {
     this.menu.set(null);
-    this.catalogApi.mine().subscribe({
-      next: (menu) => this.menu.set(menu),
-      error: () => this.menu.set(null),
-    });
+    this.catalogApi
+      .mine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (menu) => this.menu.set(menu),
+        error: () => this.menu.set(null),
+      });
   }
 
   private show(state: PageState, moveFocus: boolean): void {
     this.state.set(state);
+    this.retrying.set(false);
     if (state.status !== 'ready') {
-      this.notice.set(null);
+      this.notice.clear();
     }
     if (!moveFocus) {
       return;
@@ -701,7 +733,7 @@ export class MyRestaurantPage implements OnInit {
   }
 
   private focusHeading(): void {
-    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+    afterNextRender(() => this.header()?.focus(), { injector: this.injector });
   }
 
   private focusRetry(): void {
@@ -712,35 +744,18 @@ export class MyRestaurantPage implements OnInit {
 
 ## Página: template con los cuatro estados
 
-Éxito (la ficha), vacío (el registro, porque el dueño todavía no tiene restaurante), error (`app-load-error`) y cargando (un esqueleto con la forma de la ficha y `role="status"`). El aviso va fijo bajo el header con `data-sticky-notice`. El formulario usa `app-form-field` y `appTextInput`, y el botón trabaja con `aria-disabled` en lugar de `disabled`.
+Éxito (la ficha), vacío (el registro, porque el dueño todavía no tiene restaurante), error (`app-load-error`) y cargando (un esqueleto con la forma de la ficha, hecho con barras `appSkeleton`, y su texto `sr-only` con `appAnnounce`, que lo anuncia en la región fija). La cabecera es `app-page-header` y el aviso va fijo bajo el header con `app-sticky-notice`. El formulario usa `app-form-field` y `appTextInput`, y el botón trabaja con `aria-disabled` en lugar de `disabled`.
 
 `frontend/src/app/features/restaurant-admin/pages/my-restaurant-page/my-restaurant-page.html`
 
 ```html
 <section class="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-  <header>
-    <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Panel del restaurante</p>
-    <h1
-      #heading
-      tabindex="-1"
-      class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
-    >
-      {{ title() }}
-    </h1>
-    <p class="mt-2 text-muted">{{ subtitle() }}</p>
-  </header>
+  <app-page-header eyebrow="Panel del restaurante" [heading]="title()" [subtitle]="subtitle()" />
 
-  @for (shown of notices(); track shown.id) {
-    <div class="sticky top-20 z-5 mt-6 max-w-2xl" data-sticky-notice>
-      <app-alert
-        class="block rounded-xl shadow-md"
-        dismissible
-        [tone]="shown.tone"
-        (dismissed)="notice.set(null)"
-      >
-        {{ shown.message }}
-      </app-alert>
-    </div>
+  @for (shown of notice.shown(); track shown.id) {
+    <app-sticky-notice class="mt-6 max-w-2xl" [tone]="shown.tone" (dismissed)="notice.clear()">
+      {{ shown.message }}
+    </app-sticky-notice>
   }
 
   @let current = state();
@@ -840,39 +855,25 @@ export class MyRestaurantPage implements OnInit {
       class="mt-6 block max-w-2xl"
       heading="No pudimos cargar tu restaurante"
       [message]="current.message"
+      [retrying]="retrying()"
       (retry)="retry()"
     />
   } @else {
-    <div
-      class="mt-6 max-w-2xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
-      role="status"
-    >
-      <span class="sr-only">Cargando tu restaurante…</span>
-      <div class="h-24 animate-pulse bg-line motion-reduce:animate-none sm:h-28"></div>
+    <div class="mt-6 max-w-2xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+      <span class="sr-only" appAnnounce>Cargando tu restaurante…</span>
+      <div appSkeleton class="h-24 sm:h-28"></div>
       <div class="grid gap-3 px-5 pb-6 sm:px-6">
-        <div
-          class="-mt-9 size-18 animate-pulse rounded-2xl border-4 border-surface bg-line motion-reduce:animate-none"
-        ></div>
-        <div
-          class="mt-1 h-6 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-        ></div>
-        <div
-          class="h-4 w-72 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-        ></div>
-        <div
-          class="h-4 w-44 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-        ></div>
+        <div appSkeleton class="-mt-9 size-18 rounded-2xl border-4 border-surface"></div>
+        <div appSkeleton class="mt-1 h-6 w-56 max-w-full rounded"></div>
+        <div appSkeleton class="h-4 w-72 max-w-full rounded"></div>
+        <div appSkeleton class="h-4 w-44 max-w-full rounded"></div>
       </div>
       <div class="flex items-center justify-between gap-4 border-t border-line px-5 py-5 sm:px-6">
         <div class="grid min-w-0 flex-1 grid-cols-1 gap-2">
-          <div class="h-4 w-32 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
-          <div
-            class="h-3.5 w-64 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
-          ></div>
+          <div appSkeleton class="h-4 w-32 rounded"></div>
+          <div appSkeleton class="h-3.5 w-64 max-w-full rounded"></div>
         </div>
-        <div
-          class="h-11 w-18 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none"
-        ></div>
+        <div appSkeleton class="h-11 w-18 shrink-0 rounded-full"></div>
       </div>
     </div>
   }
@@ -889,10 +890,12 @@ Cada ruta lleva su `title`.
 import { Routes } from '@angular/router';
 import { CatalogPage } from './pages/catalog-page/catalog-page';
 import { MyRestaurantPage } from './pages/my-restaurant-page/my-restaurant-page';
+import { OrdersPage } from './pages/orders-page/orders-page';
 
 export const RESTAURANT_ADMIN_ROUTES: Routes = [
   { path: '', component: MyRestaurantPage, title: 'Mi restaurante | Pedidos' },
   { path: 'menu', component: CatalogPage, title: 'Tu menú | Pedidos' },
+  { path: 'pedidos', component: OrdersPage, title: 'Pedidos del restaurante | Pedidos' },
 ];
 ```
 
@@ -915,48 +918,12 @@ La feature se carga con `loadChildren` bajo una ruta en español. Los segmentos 
 
 ## Test de funciones puras
 
-Sin `TestBed`. `it.each` recorre los casos de una misma regla.
+Sin `TestBed`: se llama a la función y se revisa el texto. Cuando varios casos siguen la misma regla, `it.each` los recorre (`shared/utils/restaurant-status.spec.ts`).
 
 `frontend/src/app/features/restaurant-admin/models/restaurant-status.spec.ts`
 
 ```ts
-import { Restaurant } from './restaurant';
-import {
-  STATUS_LABELS,
-  openingDone,
-  openingHint,
-  openingProgress,
-  statusOf,
-} from './restaurant-status';
-
-function restaurant(overrides: Partial<Restaurant>): Restaurant {
-  return {
-    id: 4,
-    name: 'La Casona',
-    description: null,
-    address: 'Calle Sucre 245',
-    open: false,
-    suspended: false,
-    ...overrides,
-  };
-}
-
-describe('statusOf', () => {
-  it.each([
-    ['a closed restaurant', restaurant({}), 'closed', 'Cerrado'],
-    ['an open restaurant', restaurant({ open: true }), 'open', 'Abierto'],
-    ['a suspended restaurant', restaurant({ suspended: true }), 'suspended', 'Suspendido'],
-    [
-      'a suspended restaurant still marked open',
-      restaurant({ open: true, suspended: true }),
-      'suspended',
-      'Suspendido',
-    ],
-  ])('names the status of %s', (_case, current, status, label) => {
-    expect(statusOf(current)).toBe(status);
-    expect(STATUS_LABELS[statusOf(current)]).toBe(label);
-  });
-});
+import { openingDone, openingHint, openingProgress } from './restaurant-status';
 
 describe('the opening copy', () => {
   it('explains what each state means for the customers', () => {
@@ -1097,6 +1064,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Announcer } from '@shared/ui/live-region/announcer';
 import { Catalog } from '../../models/catalog';
 import { Restaurant } from '../../models/restaurant';
 import { MyRestaurantPage } from './my-restaurant-page';
@@ -1146,6 +1114,12 @@ describe('MyRestaurantPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  function announced(): string[] {
+    return TestBed.inject(Announcer)
+      .shown()
+      .map(({ message }) => message);
+  }
 
   function page(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -1226,13 +1200,13 @@ describe('MyRestaurantPage', () => {
 
   describe('the first load', () => {
     it('shows a placeholder while the restaurant loads', async () => {
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tu restaurante',
-      );
+      expect(page().querySelector('[appskeleton]')).toBeTruthy();
+      expect(announced()).toEqual(['Cargando tu restaurante…']);
 
       await showRestaurant();
 
-      expect(page().querySelector('[role="status"]')).toBeNull();
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(announced()).toEqual([]);
     });
 
     it('offers the registration form when the owner has no restaurant yet', async () => {
@@ -1261,6 +1235,28 @@ describe('MyRestaurantPage', () => {
 
       expect(page().querySelector('[role="alert"]')).toBeNull();
       expect(page().querySelector('h2')?.textContent).toContain('La Casona');
+    });
+
+    it('keeps the error in view while it loads again and asks only once', async () => {
+      failWith(MINE_URL, 500);
+      await fixture.whenStable();
+      const retry = button('Reintentar');
+      retry.focus();
+
+      retry.click();
+      await fixture.whenStable();
+      retry.click();
+
+      expect(page().querySelector('app-load-error')?.textContent).toContain(
+        'No pudimos cargar tu restaurante',
+      );
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(retry.textContent).toContain('Reintentando…');
+      expect(document.activeElement).toBe(retry);
+      await showRestaurant();
+
+      expect(page().querySelector('app-load-error')).toBeNull();
+      expect(document.activeElement).toBe(heading());
     });
 
     it('takes the focus to retry when loading again fails', async () => {
@@ -1338,9 +1334,7 @@ describe('MyRestaurantPage', () => {
       expect(status()).toBe('Abierto');
       expect(toggle().getAttribute('aria-checked')).toBe('true');
       expect(toggle().getAttribute('aria-disabled')).toBe('false');
-      expect(page().querySelector('[role="status"]')?.textContent).toContain(
-        'Abriste La Casona. Ya recibe pedidos.',
-      );
+      expect(announced()).toEqual(['Abriste La Casona. Ya recibe pedidos.']);
     });
 
     it('keeps the restaurant as it was when the change fails', async () => {
@@ -1361,13 +1355,14 @@ describe('MyRestaurantPage', () => {
 
 ## Otros patrones de la feature
 
-| Patrón                                              | Dónde verlo                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------- |
-| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                      |
-| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`               |
-| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                               |
-| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec           |
-| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)                |
-| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`   |
-| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination`           |
-| Lista pública en grilla y página de detalle         | `RestaurantListPage` y `RestaurantMenuPage` en `features/restaurants` |
+| Patrón                                              | Dónde verlo                                                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Formulario en el lugar y foco de vuelta al cerrarlo | `CatalogPage` con `CategoryForm` y `ProductForm`                                                                           |
+| Confirmar una acción dentro de la fila              | `ProductRow` y `CategoryHeader` con `app-confirm-panel`                                                                    |
+| Una sola pregunta abierta a la vez                  | `ConfirmationSlot` en `CatalogPage` (productos y categorías) y `OrdersPage`, en `ModerationList` y en `RestaurantMenuPage` |
+| Interruptor que dice qué está haciendo              | `ProductRow` ("Marcando como agotado…")                                                                                    |
+| Cambios de una lista en funciones puras             | `models/catalog.ts` (`addCategory`, `putProduct`) y su spec                                                                |
+| Un dato secundario que no muestra error propio      | El resumen del menú en `MyRestaurantPage` (`loadMenu`)                                                                     |
+| Precio escrito con coma o punto                     | `models/price.ts` (`parsePrice`, `priceValidator`) en `ProductForm`                                                        |
+| Lista paginada                                      | `AccountListPage` en `features/admin`, con `app-pagination` y `ModerationList`                                             |
+| Lista pública en grilla y página de detalle         | `RestaurantListPage` y `RestaurantMenuPage` en `features/restaurants`                                                      |

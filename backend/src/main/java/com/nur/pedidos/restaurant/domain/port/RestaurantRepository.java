@@ -10,9 +10,15 @@ public interface RestaurantRepository {
 
     Optional<Restaurant> findById(Long id);
 
+    Optional<Restaurant> findByIdForUpdate(Long id);
+
     Optional<Restaurant> findByOwnerId(Long ownerId);
+
+    Optional<Restaurant> findByOwnerIdForUpdate(Long ownerId);
 
     boolean existsByOwnerId(Long ownerId);
 
     PageResult<Restaurant> findVisibleOpenFirst(int page, int size);
+
+    PageResult<Restaurant> findPageInRegistrationOrder(int page, int size);
 }

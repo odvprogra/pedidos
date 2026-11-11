@@ -1,0 +1,126 @@
+<app-page-header
+  class="mt-6"
+  eyebrow="Panel de administración"
+  heading="Restaurantes"
+  subtitle="Suspende un restaurante para ocultarlo a los clientes, o reactívalo."
+>
+  @if (list.result()) {
+    <p appCountPill>
+      <svg
+        aria-hidden="true"
+        class="size-4 text-brand"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 9l1.5-5h15L21 9" />
+        <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+        <path d="M5 12v8h14v-8" />
+        <path d="M10 20v-5h4v5" />
+      </svg>
+      {{ totalLabel() }}
+    </p>
+  }
+</app-page-header>
+
+@for (shown of list.notice.shown(); track shown.id) {
+  <app-sticky-notice class="mt-6" [tone]="shown.tone" (dismissed)="list.notice.clear()">
+    {{ shown.message }}
+  </app-sticky-notice>
+}
+
+@if (list.problem(); as problem) {
+  <app-load-error
+    class="mt-6 block"
+    heading="No pudimos cargar los restaurantes"
+    [message]="problem"
+    [retrying]="list.retrying()"
+    (retry)="list.retry()"
+  />
+} @else if (list.result(); as result) {
+  @if (result.items.length === 0) {
+    <app-empty-state
+      class="mt-6 block"
+      heading="Todavía no hay restaurantes"
+      message="Cuando un dueño registre su restaurante, va a aparecer aquí."
+    >
+      <svg
+        emptyStateIcon
+        aria-hidden="true"
+        class="size-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 9l1.5-5h15L21 9" />
+        <path d="M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0" />
+        <path d="M5 12v8h14v-8" />
+        <path d="M10 20v-5h4v5" />
+      </svg>
+    </app-empty-state>
+  } @else {
+    <div
+      class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-opacity"
+      [class.opacity-60]="list.loading()"
+      [attr.aria-busy]="list.loading()"
+    >
+      <div
+        aria-hidden="true"
+        class="hidden border-b border-line bg-canvas px-6 py-3 text-xs font-extrabold tracking-wide text-muted uppercase md:grid md:grid-cols-restaurants md:gap-x-4"
+      >
+        <span>Restaurante</span>
+        <span>Estado</span>
+        <span>Acción</span>
+      </div>
+      <ul class="divide-y divide-line">
+        @for (restaurant of result.items; track restaurant.id) {
+          <li>
+            <app-restaurant-row
+              [restaurant]="restaurant"
+              [busy]="list.pendingId() === restaurant.id"
+              [locked]="list.busy() && list.pendingId() !== restaurant.id"
+              [confirming]="list.confirmation.isOpen(restaurant.id)"
+              (confirmingChange)="list.confirmation.set(restaurant.id, $event)"
+              (confirmed)="list.run($event, restaurant)"
+            />
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (result.totalPages > 1) {
+      <app-pagination
+        class="mt-6 block"
+        [page]="result.page"
+        [totalPages]="result.totalPages"
+        [disabled]="list.busy()"
+        (pageChange)="list.goTo($event)"
+      />
+    }
+  }
+} @else {
+  <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+    <span class="sr-only" appAnnounce>Cargando restaurantes…</span>
+    @for (placeholder of placeholders; track placeholder) {
+      <div
+        class="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 sm:px-6 md:flex md:items-center md:py-5"
+      >
+        <div class="flex min-w-0 items-center gap-3 md:flex-1">
+          <div appSkeleton class="size-10 shrink-0 rounded-xl"></div>
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
+            <div appSkeleton class="h-3.5 w-40 max-w-full rounded"></div>
+            <div appSkeleton class="h-3 w-56 max-w-full rounded"></div>
+          </div>
+          <div appSkeleton class="h-6 w-20 shrink-0 rounded-full md:hidden"></div>
+        </div>
+        <div appSkeleton class="h-11 w-full rounded-xl md:w-40"></div>
+      </div>
+    }
+  </div>
+}

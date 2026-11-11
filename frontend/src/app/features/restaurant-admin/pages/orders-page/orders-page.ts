@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -12,15 +11,21 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
-import { Alert, AlertTone } from '@shared/ui/alert/alert';
+import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
+import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
 import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { Announce } from '@shared/ui/live-region/announce';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { PageHeader } from '@shared/ui/page-header/page-header';
 import { Pagination } from '@shared/ui/pagination/pagination';
+import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
+import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
+import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
 import { Subscription } from 'rxjs';
 import { OrderCard } from '../../components/order-card/order-card';
 import { OrderApi } from '../../data-access/order-api';
@@ -38,12 +43,6 @@ import { isNotRegistered } from '../../models/restaurant-error';
 
 const PAGE_SIZE = 20;
 
-interface Notice {
-  id: number;
-  tone: AlertTone;
-  message: string;
-}
-
 interface PendingAction {
   orderId: number;
   action: OrderAction;
@@ -52,14 +51,17 @@ interface PendingAction {
 @Component({
   selector: 'app-orders-page',
   imports: [
-    RouterLink,
-    Alert,
+    Announce,
+    BackLink,
     EmptyState,
     LoadError,
     OrderCard,
+    PageHeader,
     Pagination,
     SecondaryButton,
+    Skeleton,
     Spinner,
+    StickyNotice,
   ],
   templateUrl: './orders-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,7 +71,7 @@ export class OrdersPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly injector = inject(Injector);
-  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
   private readonly cards = viewChildren(OrderCard);
   private readonly arrivedFromAnotherPage = Boolean(
@@ -77,7 +79,6 @@ export class OrdersPage implements OnInit {
   );
   private request: Subscription | null = null;
   private requestedPage = 0;
-  private noticeCount = 0;
   private readonly shownFilter = signal<OrderFilter>('active');
 
   protected readonly filters = (Object.keys(ORDER_FILTERS) as OrderFilter[]).map((filter) => ({
@@ -90,14 +91,12 @@ export class OrdersPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly problem = signal<string | null>(null);
   protected readonly pending = signal<PendingAction | null>(null);
-  protected readonly notice = signal<Notice | null>(null);
-  protected readonly notices = computed(() => {
-    const current = this.notice();
-    return current ? [current] : [];
-  });
+  protected readonly notice = new NoticeSlot();
+  protected readonly confirmation = new ConfirmationSlot();
   protected readonly busy = computed(() => this.loading() || this.pending() !== null);
   protected readonly empty = computed(() => emptyCopyFor(this.shownFilter()));
   protected readonly refreshing = signal(false);
+  protected readonly retrying = signal(false);
   protected readonly announcement = signal('');
   protected readonly countLabel = computed(() => {
     const result = this.result();
@@ -119,7 +118,7 @@ export class OrdersPage implements OnInit {
       return;
     }
     this.filter.set(filter);
-    this.notice.set(null);
+    this.notice.clear();
     this.load(0, true);
   }
 
@@ -127,7 +126,7 @@ export class OrdersPage implements OnInit {
     if (this.busy()) {
       return;
     }
-    this.notice.set(null);
+    this.notice.clear();
     this.announcement.set('');
     this.refreshing.set(true);
     this.load(this.requestedPage, false);
@@ -137,12 +136,12 @@ export class OrdersPage implements OnInit {
     if (this.busy()) {
       return;
     }
-    this.notice.set(null);
+    this.notice.clear();
     this.load(page, true);
   }
 
   protected retry(): void {
-    this.load(this.requestedPage, true);
+    this.load(this.requestedPage, true, true);
   }
 
   protected workingOn(order: Order): OrderAction | null {
@@ -155,12 +154,12 @@ export class OrdersPage implements OnInit {
       return;
     }
     this.pending.set({ orderId: order.id, action });
-    this.notice.set(null);
+    this.notice.clear();
     this.request = this.orderApi.apply(action, order.id).subscribe({
       next: (changed) => {
         this.pending.set(null);
         this.replace(changed);
-        this.notify('success', copyFor(action).done(changed.id));
+        this.notice.show('success', copyFor(action).done(changed.id));
         this.focusCard(changed.id);
       },
       error: (error: unknown) => {
@@ -169,33 +168,42 @@ export class OrdersPage implements OnInit {
         if (isNotRegistered(problem)) {
           this.leave();
         } else if (isOrderChanged(problem)) {
-          this.notify('warning', `El pedido #${order.id} cambió de estado. Actualizamos la lista.`);
+          this.notice.show(
+            'warning',
+            `El pedido #${order.id} cambió de estado. Actualizamos la lista.`,
+          );
           this.load(this.requestedPage, true);
         } else {
-          this.notify('danger', describeOrderError(problem));
+          this.notice.show('danger', describeOrderError(problem));
         }
       },
     });
   }
 
-  private load(page: number, moveFocus: boolean): void {
+  private load(page: number, moveFocus: boolean, retrying = false): void {
     this.request?.unsubscribe();
     this.requestedPage = page;
+    this.retrying.set(retrying);
     this.loading.set(true);
-    this.problem.set(null);
+    this.confirmation.close();
+    if (!retrying) {
+      this.problem.set(null);
+    }
     const filter = this.filter();
     this.request = this.orderApi.list(ORDER_FILTERS[filter].statuses, page, PAGE_SIZE).subscribe({
       next: (result) => {
         if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
-          this.load(result.totalPages - 1, moveFocus);
+          this.load(result.totalPages - 1, moveFocus, retrying);
           return;
         }
         this.shownFilter.set(filter);
         this.result.set(result);
+        this.problem.set(null);
         this.loading.set(false);
+        this.retrying.set(false);
         this.finishRefresh(`Lista actualizada: ${countOrdersIn(filter, result.totalItems)}.`);
         if (moveFocus) {
-          this.focusAfterRender(() => this.heading()?.nativeElement.focus());
+          this.focusAfterRender(() => this.header()?.focus());
         }
       },
       error: (error: unknown) => {
@@ -206,6 +214,7 @@ export class OrdersPage implements OnInit {
         }
         this.problem.set(describeOrderError(problem));
         this.loading.set(false);
+        this.retrying.set(false);
         this.finishRefresh('');
         if (moveFocus) {
           this.focusAfterRender(() => this.loadError()?.focus());
@@ -229,11 +238,6 @@ export class OrdersPage implements OnInit {
           items: result.items.map((item) => (item.id === changed.id ? changed : item)),
         },
     );
-  }
-
-  private notify(tone: AlertTone, message: string): void {
-    this.noticeCount += 1;
-    this.notice.set({ id: this.noticeCount, tone, message });
   }
 
   private focusCard(orderId: number): void {

@@ -27,8 +27,11 @@ describe('the order errors', () => {
   });
 
   it('shows the detail of the backend for the errors it does not know', () => {
-    expect(describeOrderError({ status: 500, detail: 'No pudimos completar la operación.' })).toBe(
-      'No pudimos completar la operación.',
-    );
+    expect(
+      describeOrderError({
+        status: 500,
+        detail: 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.',
+      }),
+    ).toBe('Algo salió mal de nuestro lado. Intenta de nuevo en un momento.');
   });
 });

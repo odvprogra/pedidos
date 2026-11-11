@@ -20,7 +20,7 @@ son una guía, no una lista cerrada; un módulo se crea cuando la primera histor
 | Módulo       | Responsabilidad                                         |
 | ------------ | ------------------------------------------------------- |
 | `identity`   | Cuentas, registro, inicio de sesión, roles y suspensión |
-| `restaurant` | Registro y datos de los restaurantes                    |
+| `restaurant` | Registro, datos y suspensión de los restaurantes        |
 | `catalog`    | Productos y categorías del menú de cada local           |
 | `order`      | Carrito confirmado, pedidos y su ciclo de estado        |
 
@@ -172,7 +172,8 @@ predecible.
 src/app/
 ├── core/          Servicios únicos de toda la app: autenticación, carrito, interceptores, errores
 ├── shared/
-│   ├── ui/        Componentes visuales reutilizables sin lógica de negocio
+│   ├── ui/        Componentes visuales reutilizables sin lógica de negocio, y lo que los
+│   │              acompaña: ConfirmationSlot, NoticeSlot y el Announcer (ADR-0012)
 │   └── utils/     Funciones puras y pipes
 ├── layout/        Estructura de la app: header, navegación, footer
 └── features/
@@ -180,7 +181,8 @@ src/app/
         ├── <feature>.routes.ts
         ├── pages/        Componentes enrutados: cargan datos y manejan estado
         ├── components/   Componentes de presentación: reciben inputs y emiten outputs
-        ├── data-access/  Clientes HTTP (XxxApi) y estado compartido (XxxStore)
+        ├── data-access/  Clientes HTTP (XxxApi), estado compartido (XxxStore) y la lógica que
+        │                 repiten varias páginas de la feature (ModerationList en admin)
         └── models/       Interfaces y tipos
 ```
 

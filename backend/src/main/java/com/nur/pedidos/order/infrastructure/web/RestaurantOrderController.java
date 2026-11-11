@@ -5,6 +5,7 @@ import com.nur.pedidos.order.application.ListRestaurantOrdersUseCase;
 import com.nur.pedidos.order.application.MarkOrderPickedUpUseCase;
 import com.nur.pedidos.order.application.MarkOrderReadyUseCase;
 import com.nur.pedidos.order.application.RejectOrderUseCase;
+import com.nur.pedidos.order.application.StartPreparingOrderUseCase;
 import com.nur.pedidos.order.domain.model.OrderStatus;
 import com.nur.pedidos.shared.infrastructure.security.CurrentUser;
 import com.nur.pedidos.shared.infrastructure.web.PageResponse;
@@ -29,6 +30,7 @@ class RestaurantOrderController {
     private final ListRestaurantOrdersUseCase listRestaurantOrders;
     private final AcceptOrderUseCase acceptOrder;
     private final RejectOrderUseCase rejectOrder;
+    private final StartPreparingOrderUseCase startPreparingOrder;
     private final MarkOrderReadyUseCase markOrderReady;
     private final MarkOrderPickedUpUseCase markOrderPickedUp;
 
@@ -52,6 +54,12 @@ class RestaurantOrderController {
     @PreAuthorize("hasRole('OWNER')")
     OrderResponse reject(@AuthenticationPrincipal CurrentUser owner, @PathVariable Long id) {
         return OrderResponse.from(rejectOrder.execute(owner.id(), id));
+    }
+
+    @PostMapping("/{id}/start-preparing")
+    @PreAuthorize("hasRole('OWNER')")
+    OrderResponse startPreparing(@AuthenticationPrincipal CurrentUser owner, @PathVariable Long id) {
+        return OrderResponse.from(startPreparingOrder.execute(owner.id(), id));
     }
 
     @PostMapping("/{id}/mark-ready")

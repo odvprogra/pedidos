@@ -139,7 +139,7 @@ describe('OrderDetailPage', () => {
       expect(link.textContent).toContain('La Casona');
     });
 
-    it.each(['PLACED', 'ACCEPTED'] as const)(
+    it.each(['PLACED', 'ACCEPTED', 'IN_PREPARATION'] as const)(
       'reminds that an order in %s is picked up and paid at the restaurant',
       async (orderStatus) => {
         await openWith({ ...PENDING, status: orderStatus });
@@ -252,7 +252,7 @@ describe('OrderDetailPage', () => {
   });
 
   describe('the cancellation', () => {
-    it.each(['ACCEPTED', 'READY', 'PICKED_UP', 'REJECTED', 'CANCELLED'] as const)(
+    it.each(['ACCEPTED', 'IN_PREPARATION', 'READY', 'PICKED_UP', 'REJECTED', 'CANCELLED'] as const)(
       'is not offered for an order in %s',
       async (orderStatus) => {
         await openWith({ ...PENDING, status: orderStatus });
@@ -347,7 +347,7 @@ describe('OrderDetailPage', () => {
       expect(notice()?.textContent).toContain(
         'Tu pedido ya cambió de estado y no se puede cancelar',
       );
-      expect(status()).toBe('En preparación');
+      expect(status()).toBe('Aceptado');
       expect(button('Cancelar pedido')).toBeUndefined();
       expect(document.activeElement).toBe(page().querySelector('h1'));
     });

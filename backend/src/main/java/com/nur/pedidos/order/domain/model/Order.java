@@ -71,6 +71,10 @@ public class Order {
         moveTo(OrderStatus.REJECTED, now);
     }
 
+    public void startPreparing(Instant now) {
+        moveTo(OrderStatus.IN_PREPARATION, now);
+    }
+
     public void markReady(Instant now) {
         moveTo(OrderStatus.READY, now);
     }

@@ -18,7 +18,7 @@ describe('the orders of the restaurant', () => {
   it('splits the statuses between the orders in progress and the finished ones', () => {
     expect(ORDER_FILTERS.active).toEqual({
       label: 'En curso',
-      statuses: ['PLACED', 'ACCEPTED', 'READY'],
+      statuses: ['PLACED', 'ACCEPTED', 'IN_PREPARATION', 'READY'],
     });
     expect(ORDER_FILTERS.finished).toEqual({
       label: 'Terminados',
@@ -28,7 +28,8 @@ describe('the orders of the restaurant', () => {
 
   it.each([
     ['PLACED', ['reject', 'accept']],
-    ['ACCEPTED', ['mark-ready']],
+    ['ACCEPTED', ['start-preparing']],
+    ['IN_PREPARATION', ['mark-ready']],
     ['READY', ['mark-picked-up']],
     ['PICKED_UP', []],
     ['REJECTED', []],
@@ -40,6 +41,7 @@ describe('the orders of the restaurant', () => {
   it.each([
     ['accept', 'Aceptar', 'Aceptando…', 'Aceptaste el pedido #42.'],
     ['reject', 'Rechazar', 'Rechazando…', 'Rechazaste el pedido #42.'],
+    ['start-preparing', 'Empezar a preparar', 'Empezando…', 'Empezaste a preparar el pedido #42.'],
     ['mark-ready', 'Marcar listo', 'Marcando listo…', 'El pedido #42 está listo para retirar.'],
     ['mark-picked-up', 'Entregar', 'Entregando…', 'Entregaste el pedido #42.'],
   ] as const)('names the action %s and what it did', (action, label, working, done) => {

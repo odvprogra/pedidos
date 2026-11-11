@@ -32,6 +32,7 @@ describe('the order of a customer', () => {
     const statuses: OrderStatus[] = [
       'PLACED',
       'ACCEPTED',
+      'IN_PREPARATION',
       'READY',
       'PICKED_UP',
       'REJECTED',
@@ -41,10 +42,11 @@ describe('the order of a customer', () => {
     expect(statuses.filter((status) => canCancel(orderIn(status)))).toEqual(['PLACED']);
   });
 
-  it('is in progress while it is pending or being prepared', () => {
+  it('is in progress while it is pending, accepted or being prepared', () => {
     const statuses: OrderStatus[] = [
       'PLACED',
       'ACCEPTED',
+      'IN_PREPARATION',
       'READY',
       'PICKED_UP',
       'REJECTED',
@@ -54,12 +56,17 @@ describe('the order of a customer', () => {
     expect(statuses.filter((status) => isInProgress(orderIn(status)))).toEqual([
       'PLACED',
       'ACCEPTED',
+      'IN_PREPARATION',
     ]);
   });
 
   it.each([
     ['PLACED', 'Esperando que La Casona lo acepte. Puedes cancelarlo mientras tanto.'],
-    ['ACCEPTED', 'La Casona lo está preparando. Ya no se puede cancelar.'],
+    [
+      'ACCEPTED',
+      'La Casona aceptó tu pedido y pronto empieza a prepararlo. Ya no se puede cancelar.',
+    ],
+    ['IN_PREPARATION', 'La Casona lo está preparando. Ya no se puede cancelar.'],
     ['READY', '¡Ya está listo! Retíralo en La Casona y págalo en el local.'],
     ['PICKED_UP', 'Ya lo retiraste. ¡Buen provecho!'],
     ['REJECTED', 'La Casona no pudo tomar tu pedido. Puedes pedir en otro restaurante.'],

@@ -40,7 +40,7 @@ describe('OrderRow', () => {
     const link = row().querySelector('a') as HTMLAnchorElement;
     const details = row().querySelector(`#${link.getAttribute('aria-describedby')}`);
 
-    expect(link.getAttribute('aria-label')).toBe('Pedido #42 de La Casona, Listo para retirar');
+    expect(link.getAttribute('aria-label')).toBe('Pedido #42 de La Casona, Listo');
     expect(details?.textContent?.replace(/\s+/g, ' ')).toContain('3 productos');
     expect(details?.textContent?.replace(/\s+/g, ' ')).toContain('Total: Bs 100,50');
   });
@@ -52,7 +52,7 @@ describe('OrderRow', () => {
   });
 
   it('shows the status of the order', () => {
-    expect(row().querySelector('[data-status]')?.textContent?.trim()).toBe('Listo para retirar');
+    expect(row().querySelector('[data-status]')?.textContent?.trim()).toBe('Listo');
   });
 
   it('shows when it was placed in local time, how many units it has and its total', () => {

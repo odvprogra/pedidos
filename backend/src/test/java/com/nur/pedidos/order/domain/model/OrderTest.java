@@ -148,7 +148,8 @@ class OrderTest {
                 Arguments.of(OrderStatus.PLACED, Action.ACCEPT, OrderStatus.ACCEPTED),
                 Arguments.of(OrderStatus.PLACED, Action.REJECT, OrderStatus.REJECTED),
                 Arguments.of(OrderStatus.PLACED, Action.CANCEL, OrderStatus.CANCELLED),
-                Arguments.of(OrderStatus.ACCEPTED, Action.MARK_READY, OrderStatus.READY),
+                Arguments.of(OrderStatus.ACCEPTED, Action.START_PREPARING, OrderStatus.IN_PREPARATION),
+                Arguments.of(OrderStatus.IN_PREPARATION, Action.MARK_READY, OrderStatus.READY),
                 Arguments.of(OrderStatus.READY, Action.MARK_PICKED_UP, OrderStatus.PICKED_UP));
     }
 
@@ -179,6 +180,7 @@ class OrderTest {
         ACCEPT(Order::accept),
         REJECT(Order::reject),
         CANCEL(Order::cancel),
+        START_PREPARING(Order::startPreparing),
         MARK_READY(Order::markReady),
         MARK_PICKED_UP(Order::markPickedUp);
 

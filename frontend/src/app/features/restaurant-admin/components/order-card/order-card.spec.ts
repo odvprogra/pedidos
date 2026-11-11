@@ -95,7 +95,8 @@ describe('OrderCard', () => {
 
   it.each([
     ['PLACED', ['Rechazar el pedido #42', 'Aceptar el pedido #42']],
-    ['ACCEPTED', ['Marcar listo el pedido #42']],
+    ['ACCEPTED', ['Empezar a preparar el pedido #42']],
+    ['IN_PREPARATION', ['Marcar listo el pedido #42']],
     ['READY', ['Entregar el pedido #42']],
     ['PICKED_UP', []],
     ['REJECTED', []],
@@ -107,7 +108,8 @@ describe('OrderCard', () => {
   });
 
   it.each([
-    ['ACCEPTED', 'Marcar listo', 'mark-ready'],
+    ['ACCEPTED', 'Empezar a preparar', 'start-preparing'],
+    ['IN_PREPARATION', 'Marcar listo', 'mark-ready'],
     ['READY', 'Entregar', 'mark-picked-up'],
     ['PLACED', 'Aceptar', 'accept'],
   ] as const)('runs a step of an order in %s without asking', async (status, label, action) => {
@@ -120,7 +122,7 @@ describe('OrderCard', () => {
   });
 
   it('ignores the second click of a double click, so it never runs two steps', async () => {
-    await showIn('ACCEPTED');
+    await showIn('IN_PREPARATION');
 
     button('Marcar listo').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
     button('Marcar listo').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));

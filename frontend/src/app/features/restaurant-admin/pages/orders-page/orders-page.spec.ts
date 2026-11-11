@@ -14,7 +14,7 @@ import { OrdersPage } from './orders-page';
 class RestaurantStub {}
 
 const ORDERS_URL = '/api/v1/restaurants/mine/orders';
-const IN_PROGRESS = ['PLACED', 'ACCEPTED', 'READY'];
+const IN_PROGRESS = ['PLACED', 'ACCEPTED', 'IN_PREPARATION', 'READY'];
 const FINISHED = ['PICKED_UP', 'REJECTED', 'CANCELLED'];
 
 function order(id: number, status: OrderStatus): Order {
@@ -208,7 +208,10 @@ describe('OrdersPage', () => {
     });
 
     it('explains that the orders could not load and loads them again', async () => {
-      fail(`${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`, 500);
+      fail(
+        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
+        500,
+      );
       await stable();
 
       expect(page().querySelector('[role="alert"]')?.textContent).toContain(
@@ -224,7 +227,10 @@ describe('OrdersPage', () => {
     });
 
     it('keeps the error in view while it loads again and asks only once', async () => {
-      fail(`${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`, 500);
+      fail(
+        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
+        500,
+      );
       await stable();
       const retry = button('Reintentar');
       retry.focus();
@@ -273,7 +279,7 @@ describe('OrdersPage', () => {
 
     it('sends an owner without a restaurant to register it', async () => {
       fail(
-        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=READY&page=0&size=20`,
+        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
         404,
         'restaurant.not_found',
       );
@@ -311,11 +317,11 @@ describe('OrdersPage', () => {
       request.flush(order(43, 'ACCEPTED'));
       await stable();
 
-      expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('En preparación');
+      expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('Aceptado');
       expect(notice()?.querySelector('[role]')).toBeNull();
       expect(notice()?.textContent).toContain('Aceptaste el pedido #43.');
       expect(announced()).toEqual(['Aceptaste el pedido #43.']);
-      expect(document.activeElement).toBe(button('Marcar listo', card(43)));
+      expect(document.activeElement).toBe(button('Empezar a preparar', card(43)));
     });
 
     it('rejects an order after the owner confirms it', async () => {
@@ -335,7 +341,20 @@ describe('OrdersPage', () => {
     });
 
     it.each([
-      ['ACCEPTED', 'Marcar listo', 'mark-ready', 'READY', 'El pedido #43 está listo para retirar.'],
+      [
+        'ACCEPTED',
+        'Empezar a preparar',
+        'start-preparing',
+        'IN_PREPARATION',
+        'Empezaste a preparar el pedido #43.',
+      ],
+      [
+        'IN_PREPARATION',
+        'Marcar listo',
+        'mark-ready',
+        'READY',
+        'El pedido #43 está listo para retirar.',
+      ],
       ['READY', 'Entregar', 'mark-picked-up', 'PICKED_UP', 'Entregaste el pedido #43.'],
     ] as const)(
       'moves an order in %s with "%s"',
@@ -410,7 +429,7 @@ describe('OrdersPage', () => {
     });
 
     it('sends an owner whose restaurant disappeared to register it', async () => {
-      await respond(pageOf([order(43, 'ACCEPTED')]));
+      await respond(pageOf([order(43, 'IN_PREPARATION')]));
 
       button('Marcar listo', card(43)).click();
       await stable();

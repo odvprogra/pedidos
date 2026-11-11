@@ -122,7 +122,7 @@ describe('OrderListPage', () => {
       const statuses = Array.from(page().querySelectorAll('li [data-status]'), (status) =>
         status.textContent?.trim(),
       );
-      expect(statuses).toEqual(['Pendiente', 'Retirado']);
+      expect(statuses).toEqual(['Pendiente', 'Completado']);
       expect(page().querySelector('[data-total-orders]')?.textContent).toContain('2 pedidos');
     });
 

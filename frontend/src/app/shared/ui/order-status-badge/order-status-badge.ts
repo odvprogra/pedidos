@@ -5,6 +5,7 @@ import { Badge, BadgeSize, BadgeTone } from '../badge/badge';
 const TONES: Record<OrderStatus, BadgeTone> = {
   PLACED: 'warning',
   ACCEPTED: 'info',
+  IN_PREPARATION: 'info',
   READY: 'success',
   PICKED_UP: 'neutral',
   REJECTED: 'danger',

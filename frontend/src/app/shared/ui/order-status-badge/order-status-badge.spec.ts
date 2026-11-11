@@ -28,9 +28,10 @@ describe('OrderStatusBadge', () => {
 
   it.each([
     ['PLACED', 'Pendiente', 'bg-warning-soft'],
-    ['ACCEPTED', 'En preparación', 'bg-info-soft'],
-    ['READY', 'Listo para retirar', 'bg-success-soft'],
-    ['PICKED_UP', 'Retirado', 'bg-line'],
+    ['ACCEPTED', 'Aceptado', 'bg-info-soft'],
+    ['IN_PREPARATION', 'En preparación', 'bg-info-soft'],
+    ['READY', 'Listo', 'bg-success-soft'],
+    ['PICKED_UP', 'Completado', 'bg-line'],
     ['REJECTED', 'Rechazado', 'bg-danger-soft'],
     ['CANCELLED', 'Cancelado', 'bg-line'],
   ] as const)('shows %s as "%s" with the %s tone', async (status, label, tone) => {

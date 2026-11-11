@@ -74,7 +74,7 @@ cd frontend && npm run lint && npm test -- --watch=false && npm run build
 ```
 
 `./mvnw verify` revisa formato, reglas de arquitectura y tests (necesita Docker encendido). La CI
-corre lo mismo en cada pull request.
+corre lo mismo en cada pull request, más los E2E.
 
 ## Correr todas las pruebas
 

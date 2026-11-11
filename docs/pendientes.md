@@ -45,6 +45,8 @@ migración nueva y reemplaza al de una columna.
 - **No se recupera una contraseña olvidada** ni se edita el perfil de una cuenta.
 - **Los E2E corren solo en Chrome**, de a uno, y cada corrida tarda unos minutos porque levanta el
   backend y el frontend.
+- **El job `E2E` de la CI todavía no corrió en GitHub.** Se escribió con las ramas sin publicar: el
+  mismo `npm test` pasa en local, pero la primera corrida en un pull request es la que lo confirma.
 - **`npm install` en `frontend/` se corre con Node 24 y npm 11.19.1**, las versiones de la CI. Con
   otra versión, npm puede reescribir el `package-lock.json` y dejarlo distinto del que la CI espera.
 

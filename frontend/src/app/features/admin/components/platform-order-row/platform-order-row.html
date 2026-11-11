@@ -1,0 +1,28 @@
+<article
+  class="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:gap-4 sm:p-5"
+  [attr.aria-labelledby]="headingId()"
+>
+  <span
+    aria-hidden="true"
+    class="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-xl font-extrabold text-ink"
+  >
+    {{ initial() }}
+  </span>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+      <h2 class="leading-snug font-extrabold wrap-anywhere" [id]="headingId()">
+        Pedido #{{ order().id }} · {{ order().restaurantName }}
+      </h2>
+      <app-order-status-badge size="sm" data-status [status]="order().status" />
+    </div>
+    <p class="mt-1 text-sm text-muted">
+      <time class="whitespace-nowrap" [attr.datetime]="order().placedAt">{{ placedAt() }}</time>
+      <span aria-hidden="true"> · </span>
+      <span class="sr-only">, </span>
+      <span class="whitespace-nowrap" data-units>{{ units() }}</span>
+    </p>
+    <p class="mt-1 text-sm wrap-anywhere" data-items>{{ items() }}</p>
+    <p class="mt-1 font-extrabold" data-total><span class="sr-only">Total: </span>{{ total() }}</p>
+  </div>
+</article>

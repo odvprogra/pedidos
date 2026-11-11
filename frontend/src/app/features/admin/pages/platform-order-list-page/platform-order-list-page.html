@@ -1,0 +1,102 @@
+<app-page-header
+  class="mt-6"
+  eyebrow="Panel de administración"
+  heading="Pedidos"
+  subtitle="Todos los pedidos de la plataforma, con su estado. Los más nuevos van primero."
+>
+  @if (result(); as current) {
+    @if (current.totalItems > 0) {
+      <p appCountPill data-total-orders>
+        <svg
+          aria-hidden="true"
+          class="size-4 text-brand"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+          <path d="M9 8h6" />
+          <path d="M9 12h6" />
+        </svg>
+        {{ totalLabel() }}
+      </p>
+    }
+  }
+</app-page-header>
+
+@if (problem(); as problem) {
+  <app-load-error
+    class="mt-6 block"
+    heading="No pudimos cargar los pedidos"
+    [message]="problem"
+    [retrying]="retrying()"
+    (retry)="retry()"
+  />
+} @else if (result(); as result) {
+  @if (result.items.length === 0) {
+    <app-empty-state
+      class="mt-6 block"
+      heading="Todavía no hay pedidos"
+      message="Cuando un cliente confirme su primer pedido, aparece aquí con su estado."
+    >
+      <svg
+        emptyStateIcon
+        aria-hidden="true"
+        class="size-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+        <path d="M9 8h6" />
+        <path d="M9 12h6" />
+      </svg>
+    </app-empty-state>
+  } @else {
+    <ul
+      role="list"
+      class="mt-6 grid gap-3 transition-opacity lg:grid-cols-2"
+      [class.opacity-60]="loading()"
+      [attr.aria-busy]="loading()"
+    >
+      @for (order of result.items; track order.id) {
+        <li>
+          <app-platform-order-row class="block h-full" [order]="order" />
+        </li>
+      }
+    </ul>
+
+    @if (result.totalPages > 1) {
+      <app-pagination
+        class="mt-8 block"
+        [page]="result.page"
+        [totalPages]="result.totalPages"
+        [disabled]="loading()"
+        (pageChange)="goTo($event)"
+      />
+    }
+  }
+} @else {
+  <div class="mt-6 grid gap-3 lg:grid-cols-2">
+    <span class="sr-only" appAnnounce>Cargando los pedidos…</span>
+    @for (placeholder of placeholders; track placeholder) {
+      <div
+        class="flex items-start gap-4 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5"
+      >
+        <div appSkeleton class="size-12 shrink-0 rounded-xl"></div>
+        <div class="grid flex-1 gap-2.5">
+          <div appSkeleton class="h-4 w-48 max-w-full rounded"></div>
+          <div appSkeleton class="h-3.5 w-36 max-w-full rounded"></div>
+          <div appSkeleton class="h-3.5 w-56 max-w-full rounded"></div>
+          <div appSkeleton class="h-4 w-20 rounded"></div>
+        </div>
+      </div>
+    }
+  </div>
+}

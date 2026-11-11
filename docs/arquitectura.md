@@ -186,14 +186,14 @@ src/app/
         └── models/       Interfaces y tipos
 ```
 
-| Feature prevista   | Contenido                                                 |
-| ------------------ | --------------------------------------------------------- |
-| `auth`             | Registro e inicio de sesión                               |
-| `restaurants`      | Explorar restaurantes y ver su menú                       |
-| `cart`             | Carrito y confirmación del pedido                         |
-| `orders`           | Historial y estado de los pedidos del cliente             |
-| `restaurant-admin` | Panel del restaurante: datos, catálogo, pedidos           |
-| `admin`            | Panel del administrador: suspender cuentas y restaurantes |
+| Feature prevista   | Contenido                                                |
+| ------------------ | -------------------------------------------------------- |
+| `auth`             | Registro e inicio de sesión                              |
+| `restaurants`      | Explorar restaurantes y ver su menú                      |
+| `cart`             | Carrito y confirmación del pedido                        |
+| `orders`           | Historial y estado de los pedidos del cliente            |
+| `restaurant-admin` | Panel del restaurante: datos, catálogo, pedidos          |
+| `admin`            | Panel del administrador: cuentas, restaurantes y pedidos |
 
 ### Sesión
 
@@ -210,10 +210,10 @@ src/app/
   `roleGuard('CUSTOMER')`. Sus rutas están en `core/orders` (`ORDERS_PATH`, `orderPath(id)`) porque
   también las usan el header y la confirmación del carrito, que enlaza al pedido recién creado. El
   tipo `OrderStatus` y el nombre de cada estado están en `@shared/utils/order-status`, y la insignia
-  en `app-order-status-badge`, para que `cart`, `orders` y `restaurant-admin` los muestren igual sin
-  importarse entre sí. La interfaz `Order`, en cambio, está en cada feature que la usa: es la forma
-  del JSON que esa feature lee, como `Restaurant` en `restaurants` y en `restaurant-admin`, y un
-  campo nuevo de la API se agrega en cada una.
+  en `app-order-status-badge`, para que `cart`, `orders`, `restaurant-admin` y `admin` los muestren
+  igual sin importarse entre sí. La interfaz `Order`, en cambio, está en cada feature que la usa: es
+  la forma del JSON que esa feature lee, como `Restaurant` en `restaurants` y en `restaurant-admin`,
+  o `PlatformOrder` en `admin`, y un campo nuevo de la API se agrega en cada una.
 - La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
   sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
   quedó en `/estado`, sin enlace en la interfaz.

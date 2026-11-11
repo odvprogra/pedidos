@@ -52,6 +52,26 @@ test('E2E 05 · the admin opens the panel that the others cannot', async ({ page
   await expect(page.getByRole('heading', { level: 1, name: 'Restaurantes' })).toBeVisible();
 });
 
+test('E2E 05 · the admin sees the orders of every restaurant of the platform', async ({ page }) => {
+  const casona = await openRestaurant('Casa Grande', [{ name: 'Sopa de maní', price: 22 }]);
+  const kiosko = await openRestaurant('Kiosko Azul', [{ name: 'Empanada', price: 6 }]);
+  const customer = await registerAccount('Elena Ruiz', 'CUSTOMER');
+  const first = await placeOrder(customer, casona, { 'Sopa de maní': 2 });
+  const second = await placeOrder(customer, kiosko, { Empanada: 5 });
+
+  await logIn(page, ADMIN);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/admin\/pedidos$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Pedidos' })).toBeVisible();
+  const newest = page.getByRole('article', { name: `Pedido #${second} · Kiosko Azul` });
+  await expect(newest).toContainText('5 × Empanada');
+  await expect(newest.locator('[data-status]')).toHaveText('Pendiente');
+  await expect(page.getByRole('article', { name: `Pedido #${first} · Casa Grande` })).toContainText(
+    '2 × Sopa de maní',
+  );
+});
+
 test('E2E 05 · a customer cannot change the status of an order, even through the API', async ({
   page,
 }) => {

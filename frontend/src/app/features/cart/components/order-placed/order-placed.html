@@ -32,7 +32,7 @@
   >
     <div class="flex items-center justify-between gap-3 border-b border-line bg-canvas px-5 py-4">
       <h2 id="placed-order-number" class="text-lg font-extrabold">Pedido #{{ order().id }}</h2>
-      <app-badge data-status>{{ statusLabel() }}</app-badge>
+      <app-order-status-badge data-status [status]="order().status" />
     </div>
     <ul role="list" class="divide-y divide-line">
       @for (item of items(); track item.productId) {
@@ -71,7 +71,8 @@
     </div>
   </section>
 
-  <div class="mt-6 flex justify-center">
-    <a appButton routerLink="/restaurantes">Seguir explorando</a>
+  <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+    <a appButton data-order-link [routerLink]="orderPath()">Ver mi pedido</a>
+    <a appSecondaryButton class="min-h-12" routerLink="/restaurantes">Seguir explorando</a>
   </div>
 </div>

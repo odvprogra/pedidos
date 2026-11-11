@@ -1,5 +1,6 @@
 package com.nur.pedidos.order.domain.model;
 
+import com.nur.pedidos.order.domain.exception.InvalidOrderTransitionException;
 import com.nur.pedidos.shared.domain.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,10 +17,10 @@ public class Order {
     private final Long customerId;
     private final Long restaurantId;
     private final String restaurantName;
-    private final OrderStatus status;
+    private OrderStatus status;
     private final BigDecimal total;
     private final Instant placedAt;
-    private final Instant updatedAt;
+    private Instant updatedAt;
     private final List<OrderItem> items;
 
     public Order(
@@ -60,6 +61,42 @@ public class Order {
                 now,
                 now,
                 items);
+    }
+
+    public void accept(Instant now) {
+        moveTo(OrderStatus.ACCEPTED, now);
+    }
+
+    public void reject(Instant now) {
+        moveTo(OrderStatus.REJECTED, now);
+    }
+
+    public void markReady(Instant now) {
+        moveTo(OrderStatus.READY, now);
+    }
+
+    public void markPickedUp(Instant now) {
+        moveTo(OrderStatus.PICKED_UP, now);
+    }
+
+    public void cancel(Instant now) {
+        moveTo(OrderStatus.CANCELLED, now);
+    }
+
+    public boolean isPlacedBy(Long customerId) {
+        return this.customerId.equals(customerId);
+    }
+
+    public boolean belongsTo(Long restaurantId) {
+        return this.restaurantId.equals(restaurantId);
+    }
+
+    private void moveTo(OrderStatus next, Instant now) {
+        if (!status.canBecome(next)) {
+            throw new InvalidOrderTransitionException();
+        }
+        this.status = next;
+        this.updatedAt = now;
     }
 
     private static ProductSnapshot orderable(ProductSnapshot product) {

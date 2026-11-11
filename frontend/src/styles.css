@@ -20,6 +20,8 @@
   --color-danger-soft: #fee2e2;
   --color-warning: #854d0e;
   --color-warning-soft: #fef3c7;
+  --color-info: #1e40af;
+  --color-info-soft: #dbeafe;
 
   --grid-template-columns-accounts: minmax(0, 2.2fr) minmax(0, 1.3fr) minmax(0, 1fr) 10rem;
 }

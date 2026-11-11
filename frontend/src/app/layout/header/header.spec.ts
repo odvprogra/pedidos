@@ -149,6 +149,44 @@ describe('Header', () => {
     expect(fixture.nativeElement.querySelector('a[href="/mi-restaurante"]')).toBeNull();
   });
 
+  it('gives a customer a link to their orders', async () => {
+    session.signIn(ANA);
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('a[href="/pedidos"]') as HTMLAnchorElement;
+    expect(link.textContent?.trim()).toBe('Mis pedidos');
+    expect(link.getAttribute('aria-current')).toBeNull();
+  });
+
+  it.each(['/pedidos', '/pedidos/42'])(
+    'marks the orders link while the customer is in %s',
+    async (url) => {
+      session.signIn(ANA);
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
+
+      const link = fixture.nativeElement.querySelector('a[href="/pedidos"]') as HTMLAnchorElement;
+      expect(link.getAttribute('aria-current')).toBe('true');
+    },
+  );
+
+  it.each([
+    ['an owner', OWNER],
+    ['an admin', ADMIN],
+  ])('does not show the orders link to %s', async (_case, account) => {
+    session.signIn(account);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('a[href="/pedidos"]')).toBeNull();
+  });
+
+  it('does not show the orders link to a visitor', async () => {
+    session.clear();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('a[href="/pedidos"]')).toBeNull();
+  });
+
   describe('cart link', () => {
     afterEach(() => localStorage.clear());
 

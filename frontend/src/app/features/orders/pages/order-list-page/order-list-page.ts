@@ -1,0 +1,102 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  OnInit,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
+import { Page } from '@core/http/page';
+import { toProblemDetails } from '@core/http/problem-details';
+import { Button } from '@shared/ui/button/button';
+import { EmptyState } from '@shared/ui/empty-state/empty-state';
+import { LoadError } from '@shared/ui/load-error/load-error';
+import { Pagination } from '@shared/ui/pagination/pagination';
+import { OrderRow } from '../../components/order-row/order-row';
+import { OrderApi } from '../../data-access/order-api';
+import { Order, countOrders } from '../../models/order';
+import { describeOrderError } from '../../models/order-error';
+
+const PAGE_SIZE = 10;
+
+@Component({
+  selector: 'app-order-list-page',
+  imports: [RouterLink, Button, EmptyState, LoadError, OrderRow, Pagination],
+  templateUrl: './order-list-page.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class OrderListPage implements OnInit {
+  private readonly orderApi = inject(OrderApi);
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly loadError = viewChild(LoadError);
+  private readonly arrivedFromAnotherPage = Boolean(
+    inject(Router).currentNavigation()?.previousNavigation,
+  );
+  private requestedPage = 0;
+
+  protected readonly placeholders = [1, 2, 3];
+  protected readonly result = signal<Page<Order> | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly problem = signal<string | null>(null);
+  protected readonly totalLabel = computed(() => countOrders(this.result()?.totalItems ?? 0));
+
+  ngOnInit(): void {
+    this.load(0, this.arrivedFromAnotherPage);
+  }
+
+  protected goTo(page: number): void {
+    if (!this.loading()) {
+      this.load(page, true);
+    }
+  }
+
+  protected retry(): void {
+    this.load(this.requestedPage, true);
+  }
+
+  private load(page: number, moveFocus: boolean): void {
+    this.requestedPage = page;
+    this.loading.set(true);
+    this.problem.set(null);
+    this.orderApi
+      .list(page, PAGE_SIZE)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          if (result.items.length === 0 && result.page > 0 && result.totalPages > 0) {
+            this.load(result.totalPages - 1, moveFocus);
+            return;
+          }
+          this.result.set(result);
+          this.loading.set(false);
+          if (moveFocus) {
+            this.focusHeading();
+          }
+        },
+        error: (error: unknown) => {
+          this.problem.set(describeOrderError(toProblemDetails(error)));
+          this.loading.set(false);
+          if (moveFocus) {
+            this.focusRetry();
+          }
+        },
+      });
+  }
+
+  private focusHeading(): void {
+    afterNextRender(() => this.heading()?.nativeElement.focus(), { injector: this.injector });
+  }
+
+  private focusRetry(): void {
+    afterNextRender(() => this.loadError()?.focus(), { injector: this.injector });
+  }
+}

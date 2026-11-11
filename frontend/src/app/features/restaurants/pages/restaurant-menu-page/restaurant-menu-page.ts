@@ -24,13 +24,14 @@ import { EmptyState } from '@shared/ui/empty-state/empty-state';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { LoadError } from '@shared/ui/load-error/load-error';
+import { parseId } from '@shared/utils/parse-id';
 import { Subscription, forkJoin } from 'rxjs';
 import { CartSummary } from '../../components/cart-summary/cart-summary';
 import { MenuItem } from '../../components/menu-item/menu-item';
 import { RestaurantProfile } from '../../components/restaurant-profile/restaurant-profile';
 import { RestaurantApi } from '../../data-access/restaurant-api';
 import { Catalog, Product } from '../../models/catalog';
-import { Restaurant, parseRestaurantId } from '../../models/restaurant';
+import { Restaurant } from '../../models/restaurant';
 import { isRestaurantMissing } from '../../models/restaurant-error';
 
 type PageState =
@@ -135,7 +136,7 @@ export class RestaurantMenuPage {
   private load(idText: string, moveFocus: boolean): void {
     this.loads += 1;
     this.request?.unsubscribe();
-    const id = parseRestaurantId(idText);
+    const id = parseId(idText);
     if (id === null) {
       this.show({ status: 'missing' }, moveFocus);
       return;

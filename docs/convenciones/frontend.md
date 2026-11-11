@@ -53,10 +53,30 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   borrar un producto del menú, se confirma dentro de la misma fila o tarjeta con `app-confirm-panel`
   (`@shared/ui`), sin modal: el foco va a "Cancelar" al abrir la pregunta, Escape la cierra y el
   foco vuelve al botón. Si la acción no se puede hacer, como borrar una categoría con productos, el
-  mismo panel lo explica en tono de aviso y solo ofrece "Entendido".
+  mismo panel lo explica en tono de aviso y solo ofrece "Entendido". El botón "Cancelar" del panel
+  puede decir lo que se mantiene ("Mantener pedido") cuando la acción misma se llama cancelar.
+- Los pasos que hacen avanzar un pedido por su camino normal (Aceptar, Marcar listo, Entregar) no
+  se confirman, aunque no se deshagan: son lo que el dueño hace decenas de veces al día. Sí se
+  confirman los que lo cortan: Rechazar, para el dueño, y Cancelar pedido, para el cliente.
+- Al confirmar, el panel se cierra y el botón que lo abrió dice qué está haciendo ("Cancelando…")
+  con `aria-disabled` y el foco, hasta que llega la respuesta. Si el backend responde que el recurso
+  ya cambió (`409`), se avisa en tono `warning` y se vuelve a pedir, para mostrar cómo está ahora.
 - Un estado propio que se deshace con otro toque, como abrir o cerrar el restaurante o agotar un
   producto, es un interruptor (`role="switch"` con `aria-checked`) sin confirmación; mientras
   trabaja queda con `aria-disabled` y dice qué está haciendo.
+- Elegir qué parte de una lista ver, como "En curso" o "Terminados" en los pedidos del dueño, son
+  botones con `aria-pressed` dentro de un `role="group"` con nombre: un riel `bg-surface` con borde
+  y el elegido en `bg-brand` con texto blanco. Cambiar de filtro vuelve a la primera página y lleva
+  el foco al título, como cambiar de página.
+- Una lista que otros cambian mientras se mira, como los pedidos del dueño, tiene un botón
+  "Actualizar" que la vuelve a pedir en la misma página y con el mismo filtro. No se consulta sola.
+  Mientras trabaja dice "Actualizando…", el foco se queda en el botón y el resultado se anuncia en
+  una región `aria-live="polite"` ("Lista actualizada: 4 pedidos en curso.").
+- Un botón que hace un paso y deja en su lugar el botón del paso siguiente, como "Aceptar" y
+  "Marcar listo", ignora el segundo clic de un doble clic (`MouseEvent.detail > 1`). Así un doble
+  toque no hace dos pasos. Si el paso falla, el foco se queda en el botón que se tocó.
+  Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
+  al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
 - El resultado de una acción se anuncia en un `app-alert dismissible` fijo bajo el header, con
   `data-sticky-notice`: `tone="success"` (que usa `role="status"`) o el tono de error. Ese atributo
   agranda el margen de scroll de la página para que el aviso no tape el elemento con el foco. Cada
@@ -71,6 +91,12 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   (`--grid-template-columns-accounts`), no como valor arbitrario repetido.
 - Los precios se muestran con `formatPrice` (`@shared/utils`), en bolivianos con el formato de
   Bolivia: `Bs 45,00`.
+- Las fechas de la API llegan en UTC y se muestran en la hora local del navegador con
+  `formatDateTime` (`@shared/utils`): `8 nov 2026, 11:00`, con reloj de 24 horas. Van en un
+  `<time datetime="...">` con el instante original. Los tests le pasan la zona
+  (`America/La_Paz`) para no depender de la máquina.
+- El id de una ruta (`/pedidos/:id`, `/restaurantes/:id`) se lee con `parseId` (`@shared/utils`).
+  Si no es un número válido, la página muestra "No encontramos…" sin llamar al backend.
 - El carrito sale solo de `CartStore` (`@core/cart`). Las sumas del carrito se hacen en centavos
   (`estimatedSubtotal`) y se rotulan como "estimado": el total que vale es el que devuelve la API al
   confirmar. Como `/carrito` lee el carrito sin pedirlo, su "cargando" es la confirmación en curso, y
@@ -89,6 +115,11 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   `tone`: `success` para lo que funciona, `neutral` para lo que está en pausa y `danger` para lo que
   bloqueó un admin. `size="sm"` va dentro de una fila y `md` en una ficha. El texto siempre dice el
   estado; el color solo lo acompaña.
+- El estado de un pedido es un `app-order-status-badge` (`@shared/ui`), la única fuente para todas
+  las features: toma el nombre de `ORDER_STATUS_LABELS` (`@shared/utils/order-status`) y elige el
+  tono. Los tonos siguen el camino del pedido: Pendiente en `warning` (espera que alguien actúe), En preparación en `info`,
+  Listo para retirar en `success`, Retirado y Cancelado en `neutral` (terminados) y Rechazado en
+  `danger`.
 
 ## Sesión
 

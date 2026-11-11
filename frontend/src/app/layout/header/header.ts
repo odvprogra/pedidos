@@ -6,17 +6,19 @@ import { SessionStore } from '@core/auth/session-store';
 import { describeUnits } from '@core/cart/cart';
 import { CART_PATH } from '@core/cart/cart-paths';
 import { CartStore } from '@core/cart/cart-store';
+import { ORDERS_PATH } from '@core/orders/order-paths';
 
 interface RoleLink {
   path: string;
   label: string;
   hiddenDetail: string | null;
-  icon: 'panel' | 'store';
+  icon: 'panel' | 'store' | 'receipt';
 }
 
-const ROLE_LINKS: Partial<Record<Role, RoleLink>> = {
+const ROLE_LINKS: Record<Role, RoleLink> = {
   ADMIN: { path: ADMIN_PATH, label: 'Panel', hiddenDetail: 'de administración', icon: 'panel' },
   OWNER: { path: MY_RESTAURANT_PATH, label: 'Mi restaurante', hiddenDetail: null, icon: 'store' },
+  CUSTOMER: { path: ORDERS_PATH, label: 'Mis pedidos', hiddenDetail: null, icon: 'receipt' },
 };
 
 @Component({
@@ -47,7 +49,7 @@ export class Header {
   );
   protected readonly roleLink = computed(() => {
     const account = this.account();
-    return account ? (ROLE_LINKS[account.role] ?? null) : null;
+    return account ? ROLE_LINKS[account.role] : null;
   });
   protected readonly firstName = computed(() => this.account()?.name.trim().split(/\s+/)[0] ?? '');
   protected readonly initial = computed(() => this.firstName().charAt(0).toUpperCase());

@@ -1,0 +1,241 @@
+<section class="mx-auto max-w-2xl px-4 py-8 sm:py-12">
+  <a
+    class="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-bold text-muted transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
+    [routerLink]="ordersPath"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+    Mis pedidos
+  </a>
+
+  @for (shown of notices(); track shown.id) {
+    <div class="sticky top-20 z-5 mt-4" data-sticky-notice>
+      <app-alert
+        class="block rounded-xl shadow-md"
+        dismissible
+        [tone]="shown.tone"
+        (dismissed)="notice.set(null)"
+      >
+        {{ shown.message }}
+      </app-alert>
+    </div>
+  }
+
+  @let page = state();
+  @if (details(); as details) {
+    <header class="mt-4">
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Tu pedido</p>
+      <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1
+          #heading
+          tabindex="-1"
+          class="scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+        >
+          Pedido #{{ details.order.id }}
+        </h1>
+        <app-order-status-badge data-status [status]="details.order.status" />
+      </div>
+      <p class="mt-3 text-lg font-semibold wrap-anywhere" data-hint>{{ details.hint }}</p>
+      <p class="mt-1 text-sm text-muted">
+        Confirmado el
+        <time class="whitespace-nowrap" [attr.datetime]="details.order.placedAt">{{
+          details.placedAt
+        }}</time>
+        @if (details.updatedAt; as updatedAt) {
+          <span aria-hidden="true"> · </span>
+          <span class="sr-only">. </span>
+          Último cambio el
+          <time class="whitespace-nowrap" [attr.datetime]="details.order.updatedAt">{{
+            updatedAt
+          }}</time>
+        }
+      </p>
+    </header>
+
+    <section
+      class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+      aria-labelledby="order-items-title"
+    >
+      <h2 id="order-items-title" class="sr-only">Detalle del pedido</h2>
+      <a
+        class="group flex min-h-11 items-center gap-3 border-b border-line bg-canvas px-5 py-4 transition hover:bg-line/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        data-restaurant-link
+        [routerLink]="details.restaurantPath"
+      >
+        <span
+          aria-hidden="true"
+          class="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-lg font-extrabold text-ink"
+        >
+          {{ details.initial }}
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-extrabold wrap-anywhere transition group-hover:text-brand">
+            {{ details.order.restaurantName }}
+          </span>
+          <span class="block text-sm text-muted">Ver su menú</span>
+        </span>
+        <svg
+          aria-hidden="true"
+          class="size-5 shrink-0 text-muted transition group-hover:text-brand"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </a>
+      <ul role="list" class="divide-y divide-line">
+        @for (item of details.items; track item.productId) {
+          <li class="flex items-start justify-between gap-4 px-5 py-3" data-item>
+            <span class="min-w-0 wrap-anywhere">
+              <span class="font-bold">{{ item.quantity }} ×</span> {{ item.productName }}
+            </span>
+            <span class="shrink-0 font-semibold whitespace-nowrap">{{ item.subtotalLabel }}</span>
+          </li>
+        }
+      </ul>
+      <dl
+        class="flex items-center justify-between gap-4 border-t border-line px-5 py-4 text-lg font-extrabold"
+      >
+        <dt>Total</dt>
+        <dd class="whitespace-nowrap" data-total>{{ details.total }}</dd>
+      </dl>
+      @if (details.inProgress) {
+        <p
+          class="flex items-start gap-2 border-t border-line bg-canvas px-5 py-4 text-sm text-muted"
+          data-pickup-note
+        >
+          <svg
+            aria-hidden="true"
+            class="mt-px size-5 shrink-0 text-brand"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+            <circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          Lo retiras en el local y lo pagas ahí.
+        </p>
+      }
+    </section>
+
+    @if (details.cancellable) {
+      <div class="mt-6 grid gap-3 sm:justify-items-end">
+        <button
+          #cancelButton
+          appSecondaryButton
+          type="button"
+          tone="danger"
+          class="w-full sm:w-auto"
+          [working]="cancelling()"
+          [attr.aria-disabled]="cancelling()"
+          [attr.aria-expanded]="confirming()"
+          [attr.aria-controls]="confirming() ? 'cancel-order-confirm' : null"
+          (click)="toggleConfirm()"
+          (keydown.escape)="dismiss()"
+        >
+          @if (cancelling()) {
+            <app-spinner />
+            Cancelando…
+          } @else {
+            Cancelar pedido
+          }
+        </button>
+        @if (confirming()) {
+          <app-confirm-panel
+            class="block w-full"
+            panelId="cancel-order-confirm"
+            cancelLabel="Mantener pedido"
+            confirmLabel="Sí, cancelar"
+            [question]="details.question"
+            [consequence]="details.consequence"
+            [disabled]="cancelling()"
+            (confirmed)="cancel(details.order)"
+            (cancelled)="keep()"
+          />
+        }
+      </div>
+    }
+  } @else if (page.status === 'missing') {
+    <div
+      class="mt-4 grid justify-items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-sm"
+    >
+      <span class="grid size-12 place-items-center rounded-full bg-brand-soft text-brand">
+        <svg
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      </span>
+      <h1 #missingHeading tabindex="-1" class="text-2xl font-extrabold outline-none">
+        No encontramos este pedido
+      </h1>
+      <p class="max-w-md text-muted">
+        Puede que el enlace esté incompleto o que el pedido sea de otra cuenta.
+      </p>
+      <a appButton class="mt-2" [routerLink]="ordersPath">Ver mis pedidos</a>
+    </div>
+  } @else if (page.status === 'failed') {
+    <h1 class="sr-only">Pedido</h1>
+    <app-load-error
+      class="mt-4 block"
+      heading="No pudimos cargar tu pedido"
+      [message]="page.message"
+      (retry)="retry()"
+    />
+  } @else {
+    <div class="mt-4 grid gap-6" role="status">
+      <span class="sr-only">Cargando tu pedido…</span>
+      <div class="grid gap-3">
+        <div class="h-4 w-24 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+        <div
+          class="h-9 w-56 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+        ></div>
+        <div
+          class="h-5 w-80 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+        ></div>
+      </div>
+      <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+        <div class="flex items-center gap-3 border-b border-line bg-canvas px-5 py-4">
+          <div class="size-11 animate-pulse rounded-xl bg-line motion-reduce:animate-none"></div>
+          <div class="h-5 w-40 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+        </div>
+        @for (row of placeholders; track row) {
+          <div class="flex justify-between gap-4 border-b border-line px-5 py-4">
+            <div class="h-4 w-40 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+            <div class="h-4 w-16 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+          </div>
+        }
+        <div class="flex justify-between gap-4 px-5 py-4">
+          <div class="h-5 w-16 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+          <div class="h-5 w-20 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+        </div>
+      </div>
+    </div>
+  }
+</section>

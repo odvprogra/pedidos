@@ -17,6 +17,7 @@ const MY_RESTAURANT_URL = '/api/v1/restaurants/mine';
 const MY_MENU_URL = '/api/v1/restaurants/mine/catalog';
 const EMPTY_MENU = { categories: [] };
 const RESTAURANTS_URL = '/api/v1/restaurants?page=0&size=12';
+const ORDERS_URL = '/api/v1/orders?page=0&size=10';
 const NO_RESTAURANTS = { items: [], page: 0, size: 12, totalItems: 0, totalPages: 0 };
 const LA_CASONA = {
   id: 4,
@@ -212,6 +213,60 @@ describe('appConfig', () => {
 
       expect(TestBed.inject(Router).url).toBe('/restaurantes');
       httpTesting.expectNone(MY_MENU_URL);
+    });
+  });
+
+  describe('the orders of the customer', () => {
+    it.each(['/pedidos', '/pedidos/42'])(
+      'sends a visitor without a session to log in before %s',
+      async (url) => {
+        await startWith(null);
+
+        await RouterTestingHarness.create(url);
+
+        expect(TestBed.inject(Router).url).toBe(`/ingresar?returnUrl=${encodeURIComponent(url)}`);
+      },
+    );
+
+    it('sends an owner to its restaurant', async () => {
+      await startWith(LUIS);
+
+      const harness = await RouterTestingHarness.create('/pedidos');
+      httpTesting.expectOne(MY_RESTAURANT_URL).flush(LA_CASONA);
+      await harness.fixture.whenStable();
+      httpTesting.expectOne(MY_MENU_URL).flush(EMPTY_MENU);
+
+      expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
+      httpTesting.expectNone(ORDERS_URL);
+    });
+
+    it('sends an admin to its panel', async () => {
+      await startWith(ADMIN);
+
+      await RouterTestingHarness.create('/pedidos');
+      httpTesting.expectOne(ACCOUNTS_URL).flush({
+        items: [],
+        page: 0,
+        size: 20,
+        totalItems: 0,
+        totalPages: 0,
+      });
+
+      expect(TestBed.inject(Router).url).toBe('/admin');
+      httpTesting.expectNone(ORDERS_URL);
+    });
+
+    it('shows a customer their orders', async () => {
+      await startWith(ANA);
+
+      const harness = await RouterTestingHarness.create('/pedidos');
+      httpTesting
+        .expectOne(ORDERS_URL)
+        .flush({ items: [], page: 0, size: 10, totalItems: 0, totalPages: 0 });
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/pedidos');
+      expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Mis pedidos');
     });
   });
 

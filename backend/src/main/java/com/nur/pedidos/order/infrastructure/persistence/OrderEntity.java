@@ -23,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "orders")
@@ -60,6 +61,7 @@ class OrderEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id", nullable = false)
     @OrderBy("id")
+    @BatchSize(size = 100)
     private List<OrderItemEntity> items = new ArrayList<>();
 
     static OrderEntity fromDomain(Order order) {

@@ -39,6 +39,8 @@ describe('Badge', () => {
     ['success', 'bg-success-soft', 'text-success'],
     ['neutral', 'bg-line', 'text-ink'],
     ['danger', 'bg-danger-soft', 'text-danger'],
+    ['warning', 'bg-warning-soft', 'text-warning'],
+    ['info', 'bg-info-soft', 'text-info'],
   ] as const)('paints the %s tone with its tokens', async (tone, background, text) => {
     await show(tone);
 

@@ -11,49 +11,58 @@ frontend/src/app/features/restaurant-admin/
 ├── restaurant-admin.routes.ts
 ├── pages/
 │   ├── my-restaurant-page/     La ficha del restaurante, o el registro si todavía no tiene
-│   └── catalog-page/           El menú: categorías y productos editados en el lugar
+│   ├── catalog-page/           El menú: categorías y productos editados en el lugar
+│   └── orders-page/            Los pedidos del restaurante: "En curso" y "Terminados"
 ├── components/
-│   ├── restaurant-card/        La ficha con su insignia, el interruptor y el enlace al menú
+│   ├── restaurant-card/        La ficha con su insignia, el interruptor y los enlaces al menú y a los pedidos
 │   ├── registration-steps/     La guía de tres pasos al lado del registro
 │   ├── category-header/        Nombre de la categoría, renombrar y borrar con confirmación
 │   ├── category-form/          Formulario de una categoría
 │   ├── product-row/            Un producto con su interruptor, Editar y Borrar
-│   └── product-form/           Formulario de un producto
+│   ├── product-form/           Formulario de un producto
+│   └── order-card/             Un pedido con sus ítems y el paso siguiente según el estado
 ├── data-access/
 │   ├── restaurant-api.ts
-│   └── catalog-api.ts
+│   ├── catalog-api.ts
+│   └── order-api.ts
 └── models/
     ├── restaurant.ts           La forma del JSON
     ├── restaurant-status.ts    Estado y textos, en funciones puras
     ├── restaurant-error.ts     Qué hacer y qué decir con cada `code` del backend
     ├── catalog.ts              El menú y sus cambios, en funciones puras
     ├── catalog-error.ts
-    └── price.ts                Leer y validar un precio escrito con coma o punto
+    ├── price.ts                Leer y validar un precio escrito con coma o punto
+    ├── order.ts                El pedido, los filtros y los pasos de cada estado
+    └── order-error.ts
 ```
 
 ## Piezas compartidas
 
 Lo que ya existe y no se vuelve a escribir en una feature:
 
-| Pieza                                 | Para qué                                                                  |
-| ------------------------------------- | ------------------------------------------------------------------------- |
-| `toProblemDetails` (`@core/http`)     | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión  |
-| `Page<T>` (`@core/http/page`)         | La forma de una página de la API                                          |
-| `app-load-error` (`@shared/ui`)       | El error de carga con "Reintentar" y su método `focus()`                  |
-| `app-empty-state` (`@shared/ui`)      | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional |
-| `app-alert` (`@shared/ui`)            | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`  |
-| `appButton`, `appSecondaryButton`     | Botón principal y secundarios (`tone="danger"`, `working`)                |
-| `app-form-field`, `appTextInput`      | Etiqueta, campo y mensaje enlazados por `aria-describedby`                |
-| `app-confirm-panel` (`@shared/ui`)    | La confirmación dentro de la fila, sin modal                              |
-| `app-pagination` (`@shared/ui`)       | "‹ Anterior · Página X de Y · Siguiente ›"                                |
-| `app-badge` (`@shared/ui`)            | Insignia de estado con `tone` (`success`, `neutral`, `danger`) y `size`   |
-| `app-spinner` (`@shared/ui`)          | El indicador dentro de un botón que trabaja                               |
-| `validationMessage` (`@shared/utils`) | El mensaje de un campo, con prioridad para el error del backend           |
-| `applyFieldErrors` (`@shared/utils`)  | Asigna los `errors[]` del backend a los campos del formulario             |
-| `focusFirstInvalid` (`@shared/utils`) | Lleva el foco al primer campo inválido después de renderizar              |
-| `formatPrice` (`@shared/utils`)       | `Bs 45,00`                                                                |
-| `CartStore` (`@core/cart`)            | El carrito de un restaurante, guardado en `localStorage`                  |
-| `describeUnits` (`@core/cart/cart`)   | `1 producto`, `3 productos`                                               |
+| Pieza                                       | Para qué                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `toProblemDetails` (`@core/http`)           | Convierte cualquier error HTTP en `ProblemDetails`, también sin conexión                   |
+| `Page<T>` (`@core/http/page`)               | La forma de una página de la API                                                           |
+| `app-load-error` (`@shared/ui`)             | El error de carga con "Reintentar" y su método `focus()`                                   |
+| `app-empty-state` (`@shared/ui`)            | El vacío: título, mensaje, ícono (`emptyStateIcon`) y una acción opcional                  |
+| `app-alert` (`@shared/ui`)                  | Avisos: `danger`, `warning` o `success` (`role="status"`), `dismissible`                   |
+| `appButton`, `appSecondaryButton`           | Botón principal y secundarios (`tone="danger"`, `working`)                                 |
+| `app-form-field`, `appTextInput`            | Etiqueta, campo y mensaje enlazados por `aria-describedby`                                 |
+| `app-confirm-panel` (`@shared/ui`)          | La confirmación dentro de la fila, sin modal                                               |
+| `app-pagination` (`@shared/ui`)             | "‹ Anterior · Página X de Y · Siguiente ›"                                                 |
+| `app-badge` (`@shared/ui`)                  | Insignia de estado con `tone` (`success`, `neutral`, `danger`, `warning`, `info`) y `size` |
+| `app-order-status-badge` (`@shared/ui`)     | La insignia de un pedido según su `status`, con su nombre y su tono                        |
+| `app-spinner` (`@shared/ui`)                | El indicador dentro de un botón que trabaja                                                |
+| `validationMessage` (`@shared/utils`)       | El mensaje de un campo, con prioridad para el error del backend                            |
+| `applyFieldErrors` (`@shared/utils`)        | Asigna los `errors[]` del backend a los campos del formulario                              |
+| `focusFirstInvalid` (`@shared/utils`)       | Lleva el foco al primer campo inválido después de renderizar                               |
+| `formatPrice` (`@shared/utils`)             | `Bs 45,00`                                                                                 |
+| `formatDateTime` (`@shared/utils`)          | `8 nov 2026, 11:00` en la hora local                                                       |
+| `parseId` (`@shared/utils`)                 | El id de una ruta (`/pedidos/:id`) o `null` si no es un número válido                      |
+| `orderPath`, `ORDERS_PATH` (`@core/orders`) | Las rutas de los pedidos del cliente                                                       |
+| `CartStore` (`@core/cart`)                  | El carrito de un restaurante, guardado en `localStorage`                                   |
+| `describeUnits` (`@core/cart/cart`)         | `1 producto`, `3 productos`                                                                |
 
 ## Modelo
 

@@ -10,6 +10,7 @@ const ORDER: Order = {
   status: 'PLACED',
   total: 100.5,
   placedAt: '2026-11-08T15:00:00Z',
+  updatedAt: '2026-11-08T15:00:00Z',
   items: [
     { productId: 10, productName: 'Silpancho', unitPrice: 45, quantity: 2, subtotal: 90 },
     { productId: 12, productName: 'Limonada', unitPrice: 10.5, quantity: 1, subtotal: 10.5 },
@@ -57,11 +58,16 @@ describe('OrderPlaced', () => {
     expect(text()).toContain('Retíralo en Calle Sucre 245');
   });
 
-  it('offers to keep exploring restaurants', () => {
-    const link = page().querySelector('a') as HTMLAnchorElement;
+  it('links first to the order it just placed and then to the restaurants', () => {
+    const links = Array.from(page().querySelectorAll('a'), (link) => [
+      link.textContent?.trim(),
+      link.getAttribute('href'),
+    ]);
 
-    expect(link.textContent?.trim()).toBe('Seguir explorando');
-    expect(link.getAttribute('href')).toBe('/restaurantes');
+    expect(links).toEqual([
+      ['Ver mi pedido', '/pedidos/42'],
+      ['Seguir explorando', '/restaurantes'],
+    ]);
   });
 
   it('takes the focus to its title', () => {

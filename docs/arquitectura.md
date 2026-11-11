@@ -115,8 +115,16 @@ commit. Lo que no se hace es atraparla y seguir. `ProductCatalog.productsOf(rest
 implementa `ProductCatalogAdapter`, en `order/infrastructure/catalog`, con los productos de
 `GetVisibleCatalogUseCase`: un producto de otro restaurante no está en ese menú, así que no se puede
 pedir. Si el restaurante se suspende entre las dos lecturas, traduce la `RestaurantNotFoundException`
-de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de `order.domain.model` (`RestaurantSnapshot`,
-`ProductSnapshot`), y el dominio de `order` no conoce los modelos de los otros módulos.
+de la misma forma, y el pedido nunca responde `404`. Los dos adaptadores devuelven copias de
+`order.domain.model` (`RestaurantSnapshot`, `ProductSnapshot`), y el dominio de `order` no conoce
+los modelos de los otros módulos.
+
+Los pedidos del dueño usan el mismo puerto: `RestaurantDirectory.restaurantIdOf(ownerId)` llama a
+`GetOwnRestaurantUseCase`, igual que en `catalog`, y deja pasar su `RestaurantNotFoundException`. Acá
+no se traduce, porque para el dueño "todavía no registraste tu restaurante" es el mismo `404` que en
+`/mine`. El caso de uso compara ese id con el del pedido (`Order.belongsTo`) y, si no coincide,
+responde `order.not_owner`. No mira si el restaurante está abierto: los pedidos en curso se terminan
+igual.
 
 Los adaptadores son beans de Spring, y el nombre del bean sale del de la clase. Por eso el de `order`
 se llama `OrderRestaurantDirectoryAdapter` y no `RestaurantDirectoryAdapter`, que ya usa `catalog`.
@@ -194,7 +202,16 @@ src/app/
   respuesta antes de la primera navegación, así los guards nunca ven el estado cargando. Si `/me`
   falla por cualquier motivo, la app arranca sin sesión.
 - Cada rol tiene su inicio, que da `homeFor(role)`: `/` para el cliente, `/mi-restaurante` para el
-  dueño y `/admin` para el admin. El header le da al dueño y al admin un enlace a su inicio.
+  dueño y `/admin` para el admin. El header le da a cada rol un enlace propio: "Mis pedidos"
+  (`/pedidos`) al cliente, "Mi restaurante" al dueño y "Panel" al admin.
+- Los pedidos del cliente (`/pedidos` y `/pedidos/:id`, de la feature `orders`) llevan
+  `roleGuard('CUSTOMER')`. Sus rutas están en `core/orders` (`ORDERS_PATH`, `orderPath(id)`) porque
+  también las usan el header y la confirmación del carrito, que enlaza al pedido recién creado. El
+  tipo `OrderStatus` y el nombre de cada estado están en `@shared/utils/order-status`, y la insignia
+  en `app-order-status-badge`, para que `cart`, `orders` y `restaurant-admin` los muestren igual sin
+  importarse entre sí. La interfaz `Order`, en cambio, está en cada feature que la usa: es la forma
+  del JSON que esa feature lee, como `Restaurant` en `restaurants` y en `restaurant-admin`, y un
+  campo nuevo de la API se agrega en cada una.
 - La portada `/` lleva a `/restaurantes`, la lista de la feature `restaurants`, que se ve con o sin
   sesión, igual que el menú de cada restaurante (`/restaurantes/:id`). El estado de los servicios
   quedó en `/estado`, sin enlace en la interfaz.

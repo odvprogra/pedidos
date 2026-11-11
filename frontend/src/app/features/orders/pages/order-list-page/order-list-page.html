@@ -1,0 +1,118 @@
+<section class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-extrabold tracking-wide text-brand uppercase">Historial</p>
+      <h1
+        #heading
+        tabindex="-1"
+        class="mt-1 scroll-mt-24 text-3xl font-extrabold tracking-tight outline-none sm:text-4xl"
+      >
+        Mis pedidos
+      </h1>
+      <p class="mt-2 text-muted">Sigue cada pedido y retíralo en el local cuando esté listo.</p>
+    </div>
+    @if (result(); as current) {
+      @if (current.totalItems > 0) {
+        <p
+          class="inline-flex items-center gap-2 self-start rounded-full bg-surface px-4 py-2 text-sm font-bold shadow-sm sm:self-auto"
+          data-total-orders
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 text-brand"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+            <path d="M9 8h6" />
+            <path d="M9 12h6" />
+          </svg>
+          {{ totalLabel() }}
+        </p>
+      }
+    }
+  </header>
+
+  @if (problem(); as problem) {
+    <app-load-error
+      class="mt-6 block"
+      heading="No pudimos cargar tus pedidos"
+      [message]="problem"
+      (retry)="retry()"
+    />
+  } @else if (result(); as result) {
+    @if (result.items.length === 0) {
+      <app-empty-state
+        class="mt-6 block"
+        heading="Todavía no hiciste pedidos"
+        message="Elige un restaurante, arma tu carrito y confirma. Tus pedidos van a aparecer aquí con su estado."
+      >
+        <svg
+          emptyStateIcon
+          aria-hidden="true"
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+          <path d="M9 8h6" />
+          <path d="M9 12h6" />
+        </svg>
+        <a appButton routerLink="/restaurantes">Ver restaurantes</a>
+      </app-empty-state>
+    } @else {
+      <ul
+        role="list"
+        class="mt-6 grid gap-3 transition-opacity"
+        [class.opacity-60]="loading()"
+        [attr.aria-busy]="loading()"
+      >
+        @for (order of result.items; track order.id) {
+          <li>
+            <app-order-row [order]="order" />
+          </li>
+        }
+      </ul>
+
+      @if (result.totalPages > 1) {
+        <app-pagination
+          class="mt-8 block"
+          [page]="result.page"
+          [totalPages]="result.totalPages"
+          [disabled]="loading()"
+          (pageChange)="goTo($event)"
+        />
+      }
+    }
+  } @else {
+    <div class="mt-6 grid gap-3" role="status">
+      <span class="sr-only">Cargando tus pedidos…</span>
+      @for (placeholder of placeholders; track placeholder) {
+        <div
+          class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5"
+        >
+          <div
+            class="size-12 shrink-0 animate-pulse rounded-xl bg-line motion-reduce:animate-none"
+          ></div>
+          <div class="grid flex-1 gap-2.5">
+            <div
+              class="h-4 w-48 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div
+              class="h-3.5 w-36 max-w-full animate-pulse rounded bg-line motion-reduce:animate-none"
+            ></div>
+            <div class="h-4 w-20 animate-pulse rounded bg-line motion-reduce:animate-none"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

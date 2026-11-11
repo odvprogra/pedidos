@@ -1,15 +1,5 @@
 import { CartItem } from '@core/cart/cart';
-
-export type OrderStatus = 'PLACED' | 'ACCEPTED' | 'READY' | 'PICKED_UP' | 'REJECTED' | 'CANCELLED';
-
-export const STATUS_LABELS: Record<OrderStatus, string> = {
-  PLACED: 'Pendiente',
-  ACCEPTED: 'En preparación',
-  READY: 'Listo para retirar',
-  PICKED_UP: 'Retirado',
-  REJECTED: 'Rechazado',
-  CANCELLED: 'Cancelado',
-};
+import { OrderStatus } from '@shared/utils/order-status';
 
 export interface OrderRequest {
   restaurantId: number;
@@ -31,6 +21,7 @@ export interface Order {
   status: OrderStatus;
   total: number;
   placedAt: string;
+  updatedAt: string;
   items: OrderItem[];
 }
 

@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 @Import(TestcontainersConfiguration.class)
 class OrderFlowTest {
 
+    private static final String MINE = "/api/v1/restaurants/mine/orders";
+
     @Autowired
     private RestTestClient client;
 
@@ -43,7 +45,7 @@ class OrderFlowTest {
         assertThat(order)
                 .extracting(OrderView::restaurantId, OrderView::restaurantName, OrderView::status, OrderView::total)
                 .containsExactly(menu.restaurantId(), "La Casona", "PLACED", new BigDecimal("121.50"));
-        assertThat(order.placedAt()).isNotNull();
+        assertThat(order.placedAt()).isNotNull().isEqualTo(order.updatedAt());
         assertThat(order.items())
                 .containsExactly(
                         new ItemView(
@@ -92,6 +94,166 @@ class OrderFlowTest {
                 .expectBody()
                 .jsonPath("$.code")
                 .isEqualTo("order.restaurant_unavailable");
+    }
+
+    @Test
+    void aCustomerFollowsTheirPendingOrderAndCancelsIt() {
+        Menu menu = openRestaurantWithMenu("marta@pedido.com");
+        Account customer = register("sofia@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+
+        customer.get("/api/v1/orders")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(1)
+                .jsonPath("$.items[0].id")
+                .isEqualTo(orderId)
+                .jsonPath("$.items[0].status")
+                .isEqualTo("PLACED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.status")
+                .isEqualTo("CANCELLED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+
+        customer.get("/api/v1/orders/" + orderId)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.status")
+                .isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void aCustomerCannotSeeNorCancelTheOrderOfAnotherCustomer() {
+        Menu menu = openRestaurantWithMenu("hugo@pedido.com");
+        Long orderId = place(register("vale@pedido.com", "CUSTOMER"), menu);
+        Account intruder = register("tomas@pedido.com", "CUSTOMER");
+
+        intruder.get("/api/v1/orders/" + orderId)
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        intruder.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        intruder.get("/api/v1/orders")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+    }
+
+    @Test
+    void anOrderGoesFromPlacedToPickedUpEvenAfterTheRestaurantCloses() {
+        Menu menu = openRestaurantWithMenu("nora@pedido.com");
+        Account customer = register("leo@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+
+        menu.owner()
+                .get(MINE + "?status=PLACED")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(1)
+                .jsonPath("$.items[0].id")
+                .isEqualTo(orderId);
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/accept"), "ACCEPTED");
+        customer.act("/api/v1/orders/" + orderId + "/cancel")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+        menu.owner().act("/api/v1/restaurants/mine/close").expectStatus().isNoContent();
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-ready"), "READY");
+        expectStatus(menu.owner().act(MINE + "/" + orderId + "/mark-picked-up"), "PICKED_UP");
+
+        expectStatus(customer.get("/api/v1/orders/" + orderId), "PICKED_UP");
+        menu.owner()
+                .get(MINE + "?status=PLACED&status=ACCEPTED&status=READY")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+    }
+
+    @Test
+    void theOwnerCannotAcceptAnOrderTheCustomerAlreadyCancelled() {
+        Menu menu = openRestaurantWithMenu("olga@pedido.com");
+        Account customer = register("mateo@pedido.com", "CUSTOMER");
+        Long orderId = place(customer, menu);
+        expectStatus(customer.act("/api/v1/orders/" + orderId + "/cancel"), "CANCELLED");
+
+        menu.owner()
+                .act(MINE + "/" + orderId + "/accept")
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.invalid_transition");
+
+        expectStatus(customer.get("/api/v1/orders/" + orderId), "CANCELLED");
+    }
+
+    @Test
+    void anOwnerCannotSeeNorChangeTheOrdersOfAnotherRestaurant() {
+        Menu menu = openRestaurantWithMenu("gina@pedido.com");
+        Long orderId = place(register("raul@pedido.com", "CUSTOMER"), menu);
+        Menu other = openRestaurantWithMenu("ivan@pedido.com");
+
+        other.owner()
+                .act(MINE + "/" + orderId + "/reject")
+                .expectStatus()
+                .isForbidden()
+                .expectBody()
+                .jsonPath("$.code")
+                .isEqualTo("order.not_owner");
+        other.owner()
+                .get(MINE)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.totalItems")
+                .isEqualTo(0);
+        menu.owner()
+                .get(MINE)
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.items[0].status")
+                .isEqualTo("PLACED");
+    }
+
+    private static void expectStatus(RestTestClient.ResponseSpec response, String status) {
+        response.expectStatus().isOk().expectBody().jsonPath("$.status").isEqualTo(status);
+    }
+
+    private Long place(Account customer, Menu menu) {
+        return customer.post("/api/v1/orders", silpanchoFrom(menu))
+                .expectStatus()
+                .isCreated()
+                .expectBody(IdView.class)
+                .returnResult()
+                .getResponseBody()
+                .id();
     }
 
     private static OrderBody silpanchoFrom(Menu menu) {
@@ -212,5 +374,6 @@ class OrderFlowTest {
             String status,
             BigDecimal total,
             Instant placedAt,
+            Instant updatedAt,
             List<ItemView> items) {}
 }

@@ -7,6 +7,7 @@ La razón de la elección está en [ADR-0002](adr/0002-arquitectura-hexagonal-po
 flowchart LR
     cliente[Cliente] --> web[Frontend Angular]
     restaurante[Restaurante] --> web
+    admin[Administrador] --> web
     web -- "/api" --> api[Backend Spring Boot]
     api --> db[(PostgreSQL)]
 ```
@@ -16,12 +17,12 @@ flowchart LR
 Cada módulo representa una parte del negocio y tiene la misma forma por dentro. Los módulos previstos
 son una guía, no una lista cerrada; un módulo se crea cuando la primera historia lo necesita.
 
-| Módulo       | Responsabilidad                                  |
-| ------------ | ------------------------------------------------ |
-| `identity`   | Usuarios, registro, inicio de sesión y roles     |
-| `restaurant` | Registro y datos de los restaurantes             |
-| `catalog`    | Productos y categorías del menú de cada local    |
-| `order`      | Carrito confirmado, pedidos y su ciclo de estado |
+| Módulo       | Responsabilidad                                         |
+| ------------ | ------------------------------------------------------- |
+| `identity`   | Cuentas, registro, inicio de sesión, roles y suspensión |
+| `restaurant` | Registro y datos de los restaurantes                    |
+| `catalog`    | Productos y categorías del menú de cada local           |
+| `order`      | Carrito confirmado, pedidos y su ciclo de estado        |
 
 ```text
 com.nur.pedidos
@@ -36,7 +37,9 @@ com.nur.pedidos
 │       └── web/            Controllers, requests y responses
 └── shared/
     ├── domain/exception/   DomainException, NotFoundException
-    └── infrastructure/web/ GlobalExceptionHandler, HealthController
+    └── infrastructure/
+        ├── web/            GlobalExceptionHandler, HealthController
+        └── security/       SecurityConfig, CurrentUser, respuestas 401 y 403
 ```
 
 ### Recorrido de una petición
@@ -68,12 +71,43 @@ Están verificadas por `ArchitectureTest` (ArchUnit). Si una falla, `./mvnw veri
 8. Los `@RestController` viven en `infrastructure.web` y terminan en `Controller`.
 9. Los `@Service` de `application` terminan en `UseCase`.
 
+Con la autenticación ([ADR-0008](adr/0008-autenticacion-con-sesion-y-roles.md)) se suman tres
+reglas. Entran en `ArchitectureTest` junto con Spring Security, en la primera feature de
+`identity`:
+
+10. `application` no depende de Spring Security.
+11. `@PreAuthorize` solo se usa en `infrastructure.web`.
+12. Solo `shared.infrastructure.security` toca el contexto de seguridad y las sesiones.
+
 ### Comunicación entre módulos
 
 Un módulo no toca la base de datos ni las clases de infraestructura de otro. Si `order` necesita
 datos de `catalog`, define un puerto propio (`order/domain/port/ProductCatalog`) y un adaptador en
 `order/infrastructure` que llama a los casos de uso de `catalog`. Así cada módulo puede cambiar por
 dentro sin romper a los demás.
+
+En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
+guarda el id, sin clave foránea. Las tablas y las referencias están en
+[modelo-de-datos.md](modelo-de-datos.md).
+
+### Autenticación y permisos
+
+La sesión vive en PostgreSQL (Spring Session) y el navegador solo guarda la cookie `SESSION`. Cada
+petición pasa por cuatro controles:
+
+1. `SecurityConfig` deja pasar las rutas públicas y exige sesión en el resto. Si no hay sesión,
+   responde 401.
+2. `@PreAuthorize` en el método del controller exige el rol. Si el rol es otro, responde 403.
+3. El controller recibe `@AuthenticationPrincipal CurrentUser user` y pasa `user.id()` en el
+   command.
+4. El caso de uso valida la pertenencia (el restaurante es de ese dueño, el pedido es de ese
+   cliente) y, si no se cumple, lanza una `ForbiddenException` del módulo.
+
+Los casos de uso y el dominio nunca leen el contexto de seguridad: reciben ids. Por eso la regla de
+pertenencia se prueba con fakes. `CurrentUser` está en `shared`, así que ningún módulo depende de
+`identity` para saber quién hace la petición. Si un módulo necesita datos de la cuenta, define un
+puerto propio hacia los casos de uso de `identity`, como en cualquier otra comunicación entre
+módulos.
 
 ### Cuándo el dominio tiene lógica
 
@@ -86,7 +120,7 @@ predecible.
 
 ```text
 src/app/
-├── core/          Servicios únicos de toda la app: autenticación, interceptores, errores
+├── core/          Servicios únicos de toda la app: autenticación, carrito, interceptores, errores
 ├── shared/
 │   ├── ui/        Componentes visuales reutilizables sin lógica de negocio
 │   └── utils/     Funciones puras y pipes
@@ -100,13 +134,26 @@ src/app/
         └── models/       Interfaces y tipos
 ```
 
-| Feature prevista   | Contenido                                       |
-| ------------------ | ----------------------------------------------- |
-| `auth`             | Registro e inicio de sesión                     |
-| `restaurants`      | Explorar restaurantes y ver su menú             |
-| `cart`             | Carrito y confirmación del pedido               |
-| `orders`           | Historial y estado de los pedidos del cliente   |
-| `restaurant-admin` | Panel del restaurante: datos, catálogo, pedidos |
+| Feature prevista   | Contenido                                                 |
+| ------------------ | --------------------------------------------------------- |
+| `auth`             | Registro e inicio de sesión                               |
+| `restaurants`      | Explorar restaurantes y ver su menú                       |
+| `cart`             | Carrito y confirmación del pedido                         |
+| `orders`           | Historial y estado de los pedidos del cliente             |
+| `restaurant-admin` | Panel del restaurante: datos, catálogo, pedidos           |
+| `admin`            | Panel del administrador: suspender cuentas y restaurantes |
+
+### Sesión
+
+`core/auth` concentra la sesión del lado del frontend:
+
+- `SessionStore` pide `GET /api/v1/auth/me` al arrancar la app y expone el usuario actual como
+  señal.
+- `authGuard` y `roleGuard(...)` protegen las rutas por sesión y por rol.
+- `unauthorizedInterceptor` limpia la sesión ante un 401 y lleva al ingreso, recordando a dónde
+  volver.
+- El CSRF lo resuelve el `HttpClient` de Angular por defecto: lee la cookie `XSRF-TOKEN` y manda el
+  header `X-XSRF-TOKEN`.
 
 ### Reglas de importación
 

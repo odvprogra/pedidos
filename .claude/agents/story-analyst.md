@@ -13,7 +13,8 @@ construya.
 
 ## Cómo trabajas
 
-1. Lee `AGENTS.md`, `docs/arquitectura.md` y `docs/convenciones/api.md`.
+1. Lee `AGENTS.md`, `docs/arquitectura.md`, `docs/modelo-de-datos.md` y
+   `docs/convenciones/api.md`.
 2. Busca en `backend/src` y `frontend/src` qué existe ya y se puede reutilizar.
 3. Analiza la historia desde los tres roles del sistema: cliente, dueño de restaurante y
    administrador.
@@ -34,8 +35,9 @@ feliz.
 - Endpoints nuevos o modificados con método, ruta, request y response resumidos.
 - Features del frontend afectadas y pantallas nuevas.
 
-**Datos**: entidades, campos y relaciones que la historia necesita y todavía no existen. El modelo
-de datos se está diseñando, así que marca cada cambio como propuesta para confirmar.
+**Datos**: las tablas de `docs/modelo-de-datos.md` que la historia usa y la migración que tiene
+que crearlas, si todavía no existen. Si la historia necesita una tabla, campo o relación que no
+está en el modelo, márcalo como propuesta para confirmar.
 
 **Tareas**: lista ordenada por capa (dominio, caso de uso, persistencia, web, frontend, tests), cada
 una lo bastante pequeña para un commit.

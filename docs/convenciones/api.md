@@ -441,6 +441,18 @@ El dueño recibe los pedidos de su restaurante y los lleva hasta que el cliente 
 - Si el cliente cancela mientras el dueño acepta, uno de los dos recibe `409`
   ([ADR-0010](../adr/0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)).
 
+## Pedidos de la plataforma
+
+El admin consulta todos los pedidos, de cualquier cliente y restaurante, sin cambiarlos.
+
+| Operación          | Ruta                                      | Acceso | Respuesta                     |
+| ------------------ | ----------------------------------------- | ------ | ----------------------------- |
+| Listar los pedidos | `GET /api/v1/admin/orders?page=0&size=20` | Admin  | `200` + una página de pedidos |
+
+- Cada pedido tiene la forma del pedido del cliente, ítems incluidos, y van los más nuevos primero
+  (`placed_at desc, id desc`). La paginación es la de siempre.
+- Un cliente o un dueño reciben `403` con `access_denied`; sin sesión, `401`.
+
 ## Paginación
 
 Las listas que pueden crecer se paginan con `?page=0&size=20` y responden:

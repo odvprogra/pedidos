@@ -14,6 +14,8 @@ public interface OrderRepository {
 
     Optional<Order> findByIdForUpdate(Long id);
 
+    PageResult<Order> findPage(int page, int size);
+
     PageResult<Order> findPageOfCustomer(Long customerId, int page, int size);
 
     PageResult<Order> findPageOfRestaurant(Long restaurantId, Set<OrderStatus> statuses, int page, int size);

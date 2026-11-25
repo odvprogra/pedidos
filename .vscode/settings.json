@@ -7,5 +7,6 @@
   "eslint.workingDirectories": ["frontend"],
   "tailwindCSS.experimental.configFile": "frontend/src/styles.css",
   "files.eol": "\n",
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic"
 }

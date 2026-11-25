@@ -34,6 +34,10 @@ test('E2E 02 · the restaurant takes an order from pending to completed', async 
   await expect(status).toHaveText('Listo');
 
   await order.getByRole('button', { name: `Entregar el pedido #${orderId}` }).click();
+  await expect(page.getByRole('main').getByText(`Entregaste el pedido #${orderId}.`)).toBeVisible();
+  await expect(order).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Terminados' }).click();
   await expect(status).toHaveText('Completado');
   await expect(order.getByRole('button')).toHaveCount(0);
 

@@ -146,7 +146,7 @@ Un enlace sin número de línea abre la clase o el archivo entero: el punto lo p
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cart-store.spec.ts "does not mix products of another restaurant"`                  | [frontend/…/core/cart/cart-store.spec.ts:72](../frontend/src/app/core/cart/cart-store.spec.ts#L72)                                                                                                   |
 | `restaurant-menu-page.spec.ts "asks before replacing a cart of another restaurant"` | [frontend/…/features/restaurants/pages/restaurant-menu-page/restaurant-menu-page.spec.ts:498](../frontend/src/app/features/restaurants/pages/restaurant-menu-page/restaurant-menu-page.spec.ts#L498) |
-| `PlaceOrderUseCaseTest#refusesAProductFromTheMenuOfAnotherRestaurant`               | [backend/…/order/application/PlaceOrderUseCaseTest.java:82](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L82)                                               |
+| `PlaceOrderUseCaseTest#refusesAProductFromTheMenuOfAnotherRestaurant`               | [backend/…/order/application/PlaceOrderUseCaseTest.java:83](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L83)                                               |
 | `04-cart-rules.spec.ts`                                                             | [e2e/tests/04-cart-rules.spec.ts](../e2e/tests/04-cart-rules.spec.ts)                                                                                                                                |
 
 ### 17. Creación de pedidos
@@ -163,8 +163,8 @@ Un enlace sin número de línea abre la clase o el archivo entero: el punto lo p
 | Test                                                                             | Dónde está                                                                                                                                                                     |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `GetCustomerOrderUseCaseTest`                                                    | [backend/…/order/application/GetCustomerOrderUseCaseTest.java](../backend/src/test/java/com/nur/pedidos/order/application/GetCustomerOrderUseCaseTest.java)                    |
-| `OrderControllerTest#givesTheCustomerOneOfTheirOrders`                           | [backend/…/order/infrastructure/web/OrderControllerTest.java:278](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderControllerTest.java#L278)             |
-| `order-detail-page.spec.ts "lists the items with their subtotals and the total"` | [frontend/…/features/orders/pages/order-detail-page/order-detail-page.spec.ts:122](../frontend/src/app/features/orders/pages/order-detail-page/order-detail-page.spec.ts#L122) |
+| `OrderControllerTest#givesTheCustomerOneOfTheirOrders`                           | [backend/…/order/infrastructure/web/OrderControllerTest.java:281](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderControllerTest.java#L281)             |
+| `order-detail-page.spec.ts "lists the items with their subtotals and the total"` | [frontend/…/features/orders/pages/order-detail-page/order-detail-page.spec.ts:131](../frontend/src/app/features/orders/pages/order-detail-page/order-detail-page.spec.ts#L131) |
 | `03-order-history.spec.ts`                                                       | [e2e/tests/03-order-history.spec.ts](../e2e/tests/03-order-history.spec.ts)                                                                                                    |
 
 ### 19. Historial de pedidos
@@ -195,7 +195,7 @@ Un enlace sin número de línea abre la clase o el archivo entero: el punto lo p
 | `OrderTest#movesToTheNextStatusAndRecordsTheTimeOfTheChange`           | [backend/…/order/domain/model/OrderTest.java:98](../backend/src/test/java/com/nur/pedidos/order/domain/model/OrderTest.java#L98)   |
 | `OrderTest#refusesAnyOtherTransitionWithoutChangingTheOrder`           | [backend/…/order/domain/model/OrderTest.java:110](../backend/src/test/java/com/nur/pedidos/order/domain/model/OrderTest.java#L110) |
 | `OrderFlowTest#theOwnerCannotAcceptAnOrderTheCustomerAlreadyCancelled` | [backend/…/order/OrderFlowTest.java:243](../backend/src/test/java/com/nur/pedidos/order/OrderFlowTest.java#L243)                   |
-| `02-manage-order.spec.ts "cannot skip a step"`                         | [e2e/tests/02-manage-order.spec.ts:44](../e2e/tests/02-manage-order.spec.ts#L44)                                                   |
+| `02-manage-order.spec.ts "cannot skip a step"`                         | [e2e/tests/02-manage-order.spec.ts:48](../e2e/tests/02-manage-order.spec.ts#L48)                                                   |
 
 ### 22. Control de acceso por roles
 
@@ -288,7 +288,7 @@ Un enlace sin número de línea abre la clase o el archivo entero: el punto lo p
 
 | Test                                                   | Dónde está                                                                                                                                                                |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OrderControllerTest#answersEachBrokenRuleWithItsCode` | [backend/…/order/infrastructure/web/OrderControllerTest.java:142](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderControllerTest.java#L142)        |
+| `OrderControllerTest#answersEachBrokenRuleWithItsCode` | [backend/…/order/infrastructure/web/OrderControllerTest.java:145](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderControllerTest.java#L145)        |
 | `GlobalExceptionHandlerTest`                           | [backend/…/shared/infrastructure/web/GlobalExceptionHandlerTest.java](../backend/src/test/java/com/nur/pedidos/shared/infrastructure/web/GlobalExceptionHandlerTest.java) |
 
 #### El admin consulta usuarios, restaurantes y pedidos
@@ -314,7 +314,7 @@ Un enlace sin número de línea abre la clase o el archivo entero: el punto lo p
 | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `CatalogFlowTest#anOwnerChangesTheDetailsAndImagesThatVisitorsSee`                  | [backend/…/catalog/CatalogFlowTest.java:186](../backend/src/test/java/com/nur/pedidos/catalog/CatalogFlowTest.java#L186)                                          |
 | `EditRestaurantUseCaseTest`                                                         | [backend/…/restaurant/application/EditRestaurantUseCaseTest.java](../backend/src/test/java/com/nur/pedidos/restaurant/application/EditRestaurantUseCaseTest.java) |
-| `02-manage-order.spec.ts "the restaurant edits its details and customers see them"` | [e2e/tests/02-manage-order.spec.ts:67](../e2e/tests/02-manage-order.spec.ts#L67)                                                                                  |
+| `02-manage-order.spec.ts "the restaurant edits its details and customers see them"` | [e2e/tests/02-manage-order.spec.ts:71](../e2e/tests/02-manage-order.spec.ts#L71)                                                                                  |
 
 ## Testing
 
@@ -389,8 +389,8 @@ verificación separadas
 
 | Test                                                                  | Dónde está                                                                                                                                             |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PlaceOrderUseCaseTest#savesTheOrderOfTheCustomerAtTheTimeOfTheClock` | [backend/…/order/application/PlaceOrderUseCaseTest.java:48](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L48) |
-| `PlaceOrderUseCaseTest#refusesTheWholeOrderWhenOneProductIsSoldOut`   | [backend/…/order/application/PlaceOrderUseCaseTest.java:94](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L94) |
+| `PlaceOrderUseCaseTest#savesTheOrderOfTheCustomerAtTheTimeOfTheClock` | [backend/…/order/application/PlaceOrderUseCaseTest.java:49](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L49) |
+| `PlaceOrderUseCaseTest#refusesTheWholeOrderWhenOneProductIsSoldOut`   | [backend/…/order/application/PlaceOrderUseCaseTest.java:95](../backend/src/test/java/com/nur/pedidos/order/application/PlaceOrderUseCaseTest.java#L95) |
 | `OrderTest`                                                           | [backend/…/order/domain/model/OrderTest.java](../backend/src/test/java/com/nur/pedidos/order/domain/model/OrderTest.java)                              |
 | `OrderTest#validTransitions`                                          | [backend/…/order/domain/model/OrderTest.java:146](../backend/src/test/java/com/nur/pedidos/order/domain/model/OrderTest.java#L146)                     |
 | `OrderTest#invalidTransitions`                                        | [backend/…/order/domain/model/OrderTest.java:156](../backend/src/test/java/com/nur/pedidos/order/domain/model/OrderTest.java#L156)                     |
@@ -627,8 +627,8 @@ puertos se reemplazan por fakes en memoria
 | Test                                                               | Dónde está                                                                       |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
 | `E2E 02 · the restaurant takes an order from pending to completed` | [e2e/tests/02-manage-order.spec.ts:5](../e2e/tests/02-manage-order.spec.ts#L5)   |
-| `E2E 02 · the restaurant cannot skip a step of the order`          | [e2e/tests/02-manage-order.spec.ts:44](../e2e/tests/02-manage-order.spec.ts#L44) |
-| `E2E 02 · the restaurant edits its details and customers see them` | [e2e/tests/02-manage-order.spec.ts:67](../e2e/tests/02-manage-order.spec.ts#L67) |
+| `E2E 02 · the restaurant cannot skip a step of the order`          | [e2e/tests/02-manage-order.spec.ts:48](../e2e/tests/02-manage-order.spec.ts#L48) |
+| `E2E 02 · the restaurant edits its details and customers see them` | [e2e/tests/02-manage-order.spec.ts:71](../e2e/tests/02-manage-order.spec.ts#L71) |
 
 ### E2E 03 · Historial
 
@@ -656,3 +656,26 @@ puertos se reemplazan por fakes en memoria
 | `E2E 05 · the admin opens the panel that the others cannot`                      | [e2e/tests/05-access-control.spec.ts:46](../e2e/tests/05-access-control.spec.ts#L46) |
 | `E2E 05 · the admin sees the orders of every restaurant of the platform`         | [e2e/tests/05-access-control.spec.ts:55](../e2e/tests/05-access-control.spec.ts#L55) |
 | `E2E 05 · a customer cannot change the status of an order, even through the API` | [e2e/tests/05-access-control.spec.ts:75](../e2e/tests/05-access-control.spec.ts#L75) |
+
+## Además de la rúbrica
+
+### Pedidos en vivo
+
+Los cambios de los pedidos llegan sin recargar
+([ADR-0015](adr/0015-pedidos-en-vivo-con-server-sent-events.md)).
+
+| Test                                                                                                  | Dónde está                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `OrderChangePublicationTest#announcesEveryChangeOfStatusOnce`                                         | [backend/…/order/application/OrderChangePublicationTest.java:77](../backend/src/test/java/com/nur/pedidos/order/application/OrderChangePublicationTest.java#L77)               |
+| `OrderChangePublicationTest#announcesNothingWhenTheChangeIsNotAllowed`                                | [backend/…/order/application/OrderChangePublicationTest.java:86](../backend/src/test/java/com/nur/pedidos/order/application/OrderChangePublicationTest.java#L86)               |
+| `OrderEventsControllerTest#theOwnerHearsOnlyAboutTheOrdersOfTheirRestaurant`                          | [backend/…/order/infrastructure/web/OrderEventsControllerTest.java:99](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderEventsControllerTest.java#L99)   |
+| `OrderEventsControllerTest#theCustomerHearsOnlyAboutTheirOwnOrders`                                   | [backend/…/order/infrastructure/web/OrderEventsControllerTest.java:118](../backend/src/test/java/com/nur/pedidos/order/infrastructure/web/OrderEventsControllerTest.java#L118) |
+| `OrderLiveUpdatesTest#theOwnerAndTheCustomerHearAChangeOnlyOnceItIsCommitted`                         | [backend/…/order/OrderLiveUpdatesTest.java:61](../backend/src/test/java/com/nur/pedidos/order/OrderLiveUpdatesTest.java#L61)                                                   |
+| `OrderLiveUpdatesTest#nobodyHearsAChangeThatWasRolledBack`                                            | [backend/…/order/OrderLiveUpdatesTest.java:77](../backend/src/test/java/com/nur/pedidos/order/OrderLiveUpdatesTest.java#L77)                                                   |
+| `server-events.spec.ts`                                                                               | [frontend/…/core/live/server-events.spec.ts](../frontend/src/app/core/live/server-events.spec.ts)                                                                              |
+| `orders-page.spec.ts "shows a new order as it arrives, rings, announces it and counts it in the tab"` | [frontend/…/features/restaurant-admin/pages/orders-page/orders-page.spec.ts:521](../frontend/src/app/features/restaurant-admin/pages/orders-page/orders-page.spec.ts#L521)     |
+| `orders-page.spec.ts "warns when the customer cancels a pending order"`                               | [frontend/…/features/restaurant-admin/pages/orders-page/orders-page.spec.ts:581](../frontend/src/app/features/restaurant-admin/pages/orders-page/orders-page.spec.ts#L581)     |
+| `order-detail-page.spec.ts "shows the order as soon as the restaurant changes it and announces it"`   | [frontend/…/features/orders/pages/order-detail-page/order-detail-page.spec.ts:464](../frontend/src/app/features/orders/pages/order-detail-page/order-detail-page.spec.ts#L464) |
+| `order-detail-page.spec.ts "closes the question to cancel when the restaurant accepts meanwhile"`     | [frontend/…/features/orders/pages/order-detail-page/order-detail-page.spec.ts:505](../frontend/src/app/features/orders/pages/order-detail-page/order-detail-page.spec.ts#L505) |
+| `E2E 06 · the restaurant and the customer see each step without reloading`                            | [e2e/tests/06-live-orders.spec.ts:29](../e2e/tests/06-live-orders.spec.ts#L29)                                                                                                 |
+| `E2E 06 · the restaurant sees a cancellation without reloading`                                       | [e2e/tests/06-live-orders.spec.ts:62](../e2e/tests/06-live-orders.spec.ts#L62)                                                                                                 |

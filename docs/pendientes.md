@@ -85,6 +85,7 @@ bloqueado (`opacity-70`, `cursor-not-allowed`).
 
 ### Otras
 
-- Subir las imágenes desde el formulario en lugar de pegar un enlace.
-- Avisar al dueño cuando entra un pedido sin que recargue la lista.
 - Correr los E2E también en Firefox y WebKit.
+
+Lo que hace falta para salir al mercado (subir imágenes, pedidos en vivo, búsqueda, SEO, seguridad
+de las cuentas y despliegue) está analizado y ordenado en [hacia-produccion.md](hacia-produccion.md).

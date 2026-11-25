@@ -87,6 +87,7 @@ Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 | Rúbrica y sus tests           | [docs/rubrica.md](docs/rubrica.md)                             |
 | Enlace a cada test            | [docs/mapa-de-tests.md](docs/mapa-de-tests.md)                 |
 | Limitaciones y mejoras        | [docs/pendientes.md](docs/pendientes.md)                       |
+| Plan para salir al mercado    | [docs/hacia-produccion.md](docs/hacia-produccion.md)           |
 
 ## Flujo de trabajo
 

@@ -26,6 +26,11 @@
       }
     }
   </app-page-header>
+  <app-live-status
+    class="mt-4"
+    backMessage="De nuevo en vivo. Actualizamos tus pedidos."
+    [state]="live.state()"
+  />
 
   @if (problem(); as problem) {
     <app-load-error

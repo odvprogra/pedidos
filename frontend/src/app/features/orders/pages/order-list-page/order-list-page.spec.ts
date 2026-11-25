@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Page } from '@core/http/page';
+import { FakeEventSources } from '@core/live/fake-event-sources';
+import { OPEN_EVENT_SOURCE } from '@core/live/server-events';
 import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
 import { OrderListPage } from './order-list-page';
@@ -37,10 +39,17 @@ function pageOf(
 describe('OrderListPage', () => {
   let fixture: ComponentFixture<OrderListPage>;
   let httpTesting: HttpTestingController;
+  let events: FakeEventSources;
 
   beforeEach(async () => {
+    events = new FakeEventSources();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: OPEN_EVENT_SOURCE, useValue: events.open },
+      ],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(OrderListPage);
@@ -251,6 +260,60 @@ describe('OrderListPage', () => {
 
       expect(titles()).toEqual(['Pedido #42 · La Casona']);
       expect(text()).toContain('Página 2 de 2');
+    });
+  });
+  describe('live', () => {
+    const EVENTS_URL = '/api/v1/orders/events';
+
+    function source() {
+      return events.latest(EVENTS_URL);
+    }
+
+    async function hear(orderId: number, status: Order['status']): Promise<void> {
+      source().emit('order', { orderId, status });
+      await fixture.whenStable();
+    }
+
+    it('changes the status of an order in the list and announces it', async () => {
+      await respond(pageOf([NEWEST, OLDER]));
+
+      await hear(43, 'ACCEPTED');
+      expect(list()?.getAttribute('aria-busy')).not.toBe('true');
+      await respond(pageOf([{ ...NEWEST, status: 'ACCEPTED' }, OLDER]));
+
+      expect(page().querySelector('li [data-status]')?.textContent?.trim()).toBe('Aceptado');
+      expect(announced()).toEqual(['El Fogón aceptó tu pedido #43.']);
+    });
+
+    it('ignores the news of an order it already shows that way', async () => {
+      await respond(pageOf([NEWEST, OLDER]));
+
+      await hear(43, 'PLACED');
+
+      httpTesting.expectNone((candidate) => candidate.url === LIST_URL);
+    });
+
+    it('ignores the news of an order on another page', async () => {
+      await respond(pageOf([NEWEST], 0, 11));
+      button('Siguiente').click();
+      await fixture.whenStable();
+      await respond(pageOf([OLDER], 1, 11));
+
+      await hear(43, 'ACCEPTED');
+
+      httpTesting.expectNone((candidate) => candidate.url === LIST_URL);
+    });
+
+    it('loads the list again when it reconnects', async () => {
+      await respond(pageOf([NEWEST]));
+      source().connect();
+
+      source().drop();
+      source().connect();
+      await fixture.whenStable();
+      await respond(pageOf([{ ...NEWEST, status: 'READY' }]));
+
+      expect(page().querySelector('li [data-status]')?.textContent?.trim()).toBe('Listo');
     });
   });
 });

@@ -1,5 +1,5 @@
 import { describeUnits } from '@shared/utils/describe-units';
-import { OrderStatus } from '@shared/utils/order-status';
+import { ORDER_STATUS_LABELS, OrderStatus } from '@shared/utils/order-status';
 
 export interface OrderItem {
   productId: number;
@@ -56,4 +56,47 @@ export function statusHint(order: Order): string {
 
 export function countOrders(total: number): string {
   return total === 1 ? '1 pedido' : `${total} pedidos`;
+}
+
+export function liveChangeMessage(order: Order): string {
+  const restaurant = order.restaurantName;
+  switch (order.status) {
+    case 'PLACED':
+      return `Confirmaste el pedido #${order.id}.`;
+    case 'ACCEPTED':
+      return `${restaurant} aceptó tu pedido #${order.id}.`;
+    case 'IN_PREPARATION':
+      return `${restaurant} está preparando tu pedido #${order.id}.`;
+    case 'READY':
+      return `¡Tu pedido #${order.id} está listo! Retíralo en ${restaurant}.`;
+    case 'PICKED_UP':
+      return `Pedido #${order.id} completado. ¡Buen provecho!`;
+    case 'REJECTED':
+      return `${restaurant} no pudo tomar tu pedido #${order.id}.`;
+    case 'CANCELLED':
+      return `Cancelaste el pedido #${order.id}.`;
+  }
+}
+
+export interface ProgressStep {
+  status: OrderStatus;
+  label: string;
+  done: boolean;
+  current: boolean;
+}
+
+const PROGRESS: OrderStatus[] = ['PLACED', 'ACCEPTED', 'IN_PREPARATION', 'READY', 'PICKED_UP'];
+
+export function progressOf(status: OrderStatus): ProgressStep[] | null {
+  const position = PROGRESS.indexOf(status);
+  if (position < 0) {
+    return null;
+  }
+  const finished = status === 'PICKED_UP';
+  return PROGRESS.map((step, index) => ({
+    status: step,
+    label: ORDER_STATUS_LABELS[step],
+    done: index < position || finished,
+    current: index === position && !finished,
+  }));
 }

@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { FakeEventSources } from '@core/live/fake-event-sources';
+import { OPEN_EVENT_SOURCE } from '@core/live/server-events';
 import { formatDateTime } from '@shared/utils/format-date-time';
 import { Announcer } from '@shared/ui/live-region/announcer';
 import { Order } from '../../models/order';
@@ -29,10 +31,17 @@ const ACCEPTED: Order = { ...PENDING, status: 'ACCEPTED', updatedAt: '2026-11-08
 describe('OrderDetailPage', () => {
   let fixture: ComponentFixture<OrderDetailPage>;
   let httpTesting: HttpTestingController;
+  let events: FakeEventSources;
 
   beforeEach(() => {
+    events = new FakeEventSources();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: OPEN_EVENT_SOURCE, useValue: events.open },
+      ],
     });
     httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(OrderDetailPage);
@@ -416,6 +425,123 @@ describe('OrderDetailPage', () => {
       expect(notice()?.textContent).toContain('Detalle del servidor');
       expect(status()).toBe('Pendiente');
       expect(requireButton('Cancelar pedido').getAttribute('aria-disabled')).toBe('false');
+    });
+  });
+  describe('live', () => {
+    const EVENTS_URL = '/api/v1/orders/events';
+
+    function source() {
+      return events.latest(EVENTS_URL);
+    }
+
+    async function hear(orderId: number, status: Order['status']): Promise<void> {
+      source().emit('order', { orderId, status });
+      await fixture.whenStable();
+    }
+
+    async function followUpWith(order: Order): Promise<void> {
+      httpTesting.expectOne(ORDER_URL).flush(order);
+      await fixture.whenStable();
+    }
+
+    it('shows the progress of an order that is moving forward', async () => {
+      await openWith(ACCEPTED);
+
+      const steps = Array.from(page().querySelectorAll('ol[aria-label="Progreso del pedido"] li'));
+      expect(steps.map((step) => step.querySelector('.sr-only')?.textContent?.trim())).toEqual([
+        'Pendiente: hecho',
+        'Aceptado: paso actual',
+        'En preparación: pendiente',
+        'Listo: pendiente',
+        'Completado: pendiente',
+      ]);
+      expect(steps[1].getAttribute('aria-current')).toBe('step');
+      expect(
+        page().querySelector('[data-progress-summary]')?.textContent?.replace(/\s+/g, ' ').trim(),
+      ).toBe('Paso 2 de 5 · Aceptado');
+    });
+
+    it('shows the order as soon as the restaurant changes it and announces it', async () => {
+      await openWith(PENDING);
+      source().connect();
+      const heading = page().querySelector<HTMLElement>('h1');
+      heading?.focus();
+
+      await hear(42, 'ACCEPTED');
+      await followUpWith(ACCEPTED);
+
+      expect(status()).toBe('Aceptado');
+      expect(button('Cancelar pedido')).toBeUndefined();
+      expect(announced()).toEqual(['La Casona aceptó tu pedido #42.']);
+      expect(document.activeElement).toBe(heading);
+    });
+
+    it('highlights an order that is ready to pick up, also in the tab', async () => {
+      await openWith({ ...PENDING, status: 'IN_PREPARATION' });
+
+      await hear(42, 'READY');
+      await followUpWith({ ...PENDING, status: 'READY' });
+
+      expect(
+        page().querySelector('[data-ready-panel]')?.textContent?.replace(/\s+/g, ' '),
+      ).toContain('¡Tu pedido está listo! Retíralo en La Casona y págalo en el local.');
+      expect(page().querySelector('[data-hint]')).toBeNull();
+      expect(announced()).toEqual(['¡Tu pedido #42 está listo! Retíralo en La Casona.']);
+      expect(TestBed.inject(Title).getTitle()).toBe('¡Listo! Pedido #42 | Pedidos');
+    });
+
+    it('explains a rejection and offers other restaurants', async () => {
+      await openWith(PENDING);
+
+      await hear(42, 'REJECTED');
+      await followUpWith({ ...PENDING, status: 'REJECTED' });
+
+      const panel = page().querySelector('[data-rejected-panel]');
+      expect(panel?.textContent).toContain('La Casona no pudo tomar tu pedido');
+      expect(panel?.querySelector('a')?.getAttribute('href')).toBe('/restaurantes');
+      expect(page().querySelector('ol[aria-label="Progreso del pedido"]')).toBeNull();
+    });
+
+    it('closes the question to cancel when the restaurant accepts meanwhile', async () => {
+      await openWith(PENDING);
+      requireButton('Cancelar pedido').click();
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(requireButton('Mantener pedido'));
+
+      await hear(42, 'ACCEPTED');
+      await followUpWith(ACCEPTED);
+
+      expect(page().querySelector('app-confirm-panel')).toBeNull();
+      expect(notice()?.textContent).toContain(
+        'La Casona ya aceptó tu pedido. Ya no se puede cancelar.',
+      );
+      expect(document.activeElement).toBe(page().querySelector('h1'));
+    });
+
+    it('ignores the news of other orders and of its own cancellation', async () => {
+      await openWith(PENDING);
+
+      await hear(43, 'ACCEPTED');
+      httpTesting.expectNone(ORDER_URL);
+      await confirmCancellation();
+      httpTesting.expectOne(CANCEL_URL).flush(CANCELLED);
+      await fixture.whenStable();
+      await hear(42, 'CANCELLED');
+
+      httpTesting.expectNone(ORDER_URL);
+    });
+
+    it('loads the order again when it reconnects', async () => {
+      await openWith(PENDING);
+      source().connect();
+
+      source().drop();
+      source().connect();
+      await fixture.whenStable();
+      await followUpWith(PENDING);
+
+      expect(status()).toBe('Pendiente');
+      expect(announced()).toEqual([]);
     });
   });
 });

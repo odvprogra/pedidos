@@ -4,7 +4,8 @@ Recorre el checklist de evaluación del enunciado ("Proyecto Final · Plataforma
 sección 13). Para cada punto dice dónde está en la app y qué test lo prueba, con el comando para
 correrlo en la defensa. La estrategia general está en
 [convenciones/testing.md](convenciones/testing.md); lo que queda fuera, en
-[pendientes.md](pendientes.md).
+[pendientes.md](pendientes.md). Para abrir cada test en su línea, en el mismo orden:
+[mapa-de-tests.md](mapa-de-tests.md).
 
 ## Cómo correr las pruebas
 

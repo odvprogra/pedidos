@@ -85,6 +85,7 @@ Detalle en [docs/arquitectura.md](docs/arquitectura.md).
 | Git, PRs y Definition of Done | [docs/convenciones/git.md](docs/convenciones/git.md)           |
 | Decisiones (ADRs)             | [docs/adr/README.md](docs/adr/README.md)                       |
 | Rúbrica y sus tests           | [docs/rubrica.md](docs/rubrica.md)                             |
+| Enlace a cada test            | [docs/mapa-de-tests.md](docs/mapa-de-tests.md)                 |
 | Limitaciones y mejoras        | [docs/pendientes.md](docs/pendientes.md)                       |
 
 ## Flujo de trabajo

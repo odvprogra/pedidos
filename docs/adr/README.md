@@ -19,6 +19,7 @@ Las nuevas parten de [la plantilla](template.md).
 | 0012 | [Lo que se anuncia sin mover el foco va a una región fija](0012-region-fija-para-anunciar.md)                             | Propuesta |
 | 0013 | [Las pruebas E2E usan Playwright desde una carpeta propia](0013-pruebas-e2e-con-playwright.md)                            | Propuesta |
 | 0014 | [Las imágenes de restaurantes y productos son direcciones web](0014-imagenes-como-direcciones-web.md)                     | Propuesta |
+| 0015 | [Los cambios de los pedidos llegan en vivo con Server-Sent Events](0015-pedidos-en-vivo-con-server-sent-events.md)        | Propuesta |
 
 ## Pendientes
 

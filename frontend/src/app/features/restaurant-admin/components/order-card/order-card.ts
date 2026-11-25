@@ -12,6 +12,7 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
+import { Badge } from '@shared/ui/badge/badge';
 import { Button } from '@shared/ui/button/button';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmPanel } from '@shared/ui/confirm-panel/confirm-panel';
@@ -23,7 +24,7 @@ import { Order, OrderAction, actionsFor, copyFor } from '../../models/order';
 
 @Component({
   selector: 'app-order-card',
-  imports: [Button, ConfirmPanel, OrderStatusBadge, SecondaryButton, Spinner],
+  imports: [Badge, Button, ConfirmPanel, OrderStatusBadge, SecondaryButton, Spinner],
   templateUrl: './order-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,6 +37,7 @@ export class OrderCard {
   readonly order = input.required<Order>();
   readonly working = input<OrderAction | null>(null);
   readonly locked = input(false);
+  readonly fresh = input(false);
   readonly confirming = model(false);
   readonly acted = output<OrderAction>();
 

@@ -10,3 +10,8 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   REJECTED: 'Rechazado',
   CANCELLED: 'Cancelado',
 };
+
+export interface OrderChange {
+  orderId: number;
+  status: OrderStatus;
+}

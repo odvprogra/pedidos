@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-export type BadgeTone = 'success' | 'neutral' | 'danger' | 'warning' | 'info';
+export type BadgeTone = 'success' | 'neutral' | 'danger' | 'warning' | 'info' | 'brand';
 export type BadgeSize = 'sm' | 'md';
 
 const TONES: Record<BadgeTone, string> = {
@@ -9,6 +9,7 @@ const TONES: Record<BadgeTone, string> = {
   danger: 'bg-danger-soft text-danger',
   warning: 'bg-warning-soft text-warning',
   info: 'bg-info-soft text-info',
+  brand: 'bg-brand text-white',
 };
 
 const SIZES: Record<BadgeSize, { badge: string; dot: string }> = {

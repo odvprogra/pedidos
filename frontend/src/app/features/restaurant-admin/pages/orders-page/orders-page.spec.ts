@@ -2,11 +2,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Title } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Page } from '@core/http/page';
+import { FakeEventSources } from '@core/live/fake-event-sources';
+import { INTERRUPTION_GRACE_MS } from '@core/live/live-connection';
+import { OPEN_EVENT_SOURCE } from '@core/live/server-events';
 import { OrderStatus } from '@shared/utils/order-status';
 import { Announcer } from '@shared/ui/live-region/announcer';
+import { NewOrderChime } from '../../data-access/new-order-chime';
 import { Order } from '../../models/order';
 import { OrdersPage } from './orders-page';
 
@@ -14,18 +19,37 @@ import { OrdersPage } from './orders-page';
 class RestaurantStub {}
 
 const ORDERS_URL = '/api/v1/restaurants/mine/orders';
+const EVENTS_URL = '/api/v1/restaurants/mine/orders/events';
+const ACTIVE_URL = `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=100`;
+const TITLE = 'Pedidos del restaurante | Pedidos';
 const IN_PROGRESS = ['PLACED', 'ACCEPTED', 'IN_PREPARATION', 'READY'];
 const FINISHED = ['PICKED_UP', 'REJECTED', 'CANCELLED'];
 
-function order(id: number, status: OrderStatus): Order {
+class FakeChime {
+  plays = 0;
+  unlocks = 0;
+  playable = true;
+
+  play(): Promise<boolean> {
+    this.plays += 1;
+    return Promise.resolve(this.playable);
+  }
+
+  unlock(): Promise<boolean> {
+    this.unlocks += 1;
+    return Promise.resolve(this.playable);
+  }
+}
+
+function order(id: number, status: OrderStatus, placedAt = '2026-11-08T15:00:00Z'): Order {
   return {
     id,
     restaurantId: 4,
     restaurantName: 'La Casona',
     status,
     total: 90,
-    placedAt: '2026-11-08T15:00:00Z',
-    updatedAt: '2026-11-08T15:00:00Z',
+    placedAt,
+    updatedAt: placedAt,
     items: [{ productId: 10, productName: 'Silpancho', unitPrice: 45, quantity: 2, subtotal: 90 }],
   };
 }
@@ -42,10 +66,16 @@ function pageOf(
 describe('OrdersPage', () => {
   let harness: RouterTestingHarness;
   let httpTesting: HttpTestingController;
+  let events: FakeEventSources;
+  let chime: FakeChime;
 
   beforeEach(async () => {
+    events = new FakeEventSources();
+    chime = new FakeChime();
     TestBed.configureTestingModule({
       providers: [
+        { provide: OPEN_EVENT_SOURCE, useValue: events.open },
+        { provide: NewOrderChime, useValue: chime },
         provideRouter([
           {
             path: 'mi-restaurante',
@@ -84,7 +114,7 @@ describe('OrdersPage', () => {
   }
 
   function titles(): string[] {
-    return Array.from(page().querySelectorAll('li h2'), (title) => title.textContent?.trim() ?? '');
+    return Array.from(page().querySelectorAll('li h3'), (title) => title.textContent?.trim() ?? '');
   }
 
   function button(label: string, within: Element = page()): HTMLButtonElement {
@@ -99,7 +129,7 @@ describe('OrdersPage', () => {
 
   function card(id: number): HTMLElement {
     const found = Array.from(page().querySelectorAll('article')).find(
-      (candidate) => candidate.querySelector('h2')?.textContent?.trim() === `Pedido #${id}`,
+      (candidate) => candidate.querySelector('h3')?.textContent?.trim() === `Pedido #${id}`,
     );
     if (!found) {
       throw new Error(`No card for order ${id}`);
@@ -118,7 +148,7 @@ describe('OrdersPage', () => {
         candidate.params.get('page') === `${pageNumber}` &&
         JSON.stringify(candidate.params.getAll('status')) === JSON.stringify(statuses),
     );
-    expect(request.request.params.get('size')).toBe('20');
+    expect(request.request.params.get('size')).toBe(statuses === IN_PROGRESS ? '100' : '20');
     return request;
   }
 
@@ -191,7 +221,7 @@ describe('OrdersPage', () => {
       expect(refresh.getAttribute('aria-disabled')).toBe('true');
       await respond(pageOf([order(44, 'PLACED'), order(43, 'PLACED')]));
 
-      expect(titles()).toEqual(['Pedido #44', 'Pedido #43']);
+      expect(titles()).toEqual(['Pedido #43', 'Pedido #44']);
       expect(refresh.textContent).toContain('Actualizar');
       expect(page().querySelector('[data-refresh-announcement]')?.textContent?.trim()).toBe(
         'Lista actualizada: 2 pedidos en curso.',
@@ -208,10 +238,7 @@ describe('OrdersPage', () => {
     });
 
     it('explains that the orders could not load and loads them again', async () => {
-      fail(
-        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
-        500,
-      );
+      fail(ACTIVE_URL, 500);
       await stable();
 
       expect(page().querySelector('[role="alert"]')?.textContent).toContain(
@@ -227,10 +254,7 @@ describe('OrdersPage', () => {
     });
 
     it('keeps the error in view while it loads again and asks only once', async () => {
-      fail(
-        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
-        500,
-      );
+      fail(ACTIVE_URL, 500);
       await stable();
       const retry = button('Reintentar');
       retry.focus();
@@ -251,12 +275,44 @@ describe('OrdersPage', () => {
       expect(titles()).toEqual(['Pedido #43']);
     });
 
+    async function showFinished(result: Page<Order>): Promise<void> {
+      await respond(pageOf([]));
+      button('Terminados').click();
+      await stable();
+      await respond(result, FINISHED);
+    }
+
+    it('groups the orders in progress by status, the oldest first', async () => {
+      await respond(
+        pageOf([
+          order(46, 'READY', '2026-11-08T15:20:00Z'),
+          order(45, 'PLACED', '2026-11-08T15:10:00Z'),
+          order(44, 'PLACED', '2026-11-08T15:05:00Z'),
+          order(43, 'IN_PREPARATION', '2026-11-08T15:00:00Z'),
+        ]),
+      );
+
+      const columns = Array.from(page().querySelectorAll('[data-column]'), (column) => ({
+        heading: column.querySelector('h2')?.firstChild?.textContent?.trim(),
+        count: column.querySelector('[data-column-count]')?.textContent?.trim(),
+        orders: Array.from(column.querySelectorAll('h3'), (title) => title.textContent?.trim()),
+      }));
+      expect(columns).toEqual([
+        { heading: 'Pendientes', count: '2', orders: ['Pedido #44', 'Pedido #45'] },
+        { heading: 'Aceptados', count: '0', orders: [] },
+        { heading: 'En preparación', count: '1', orders: ['Pedido #43'] },
+        { heading: 'Listos', count: '1', orders: ['Pedido #46'] },
+      ]);
+      expect(text()).toContain('Ninguno por ahora');
+      expect(page().querySelector('app-pagination')).toBeNull();
+    });
+
     it('keeps retrying in view when the page it retries is empty now', async () => {
-      const first = Array.from({ length: 20 }, (_, index) => order(100 + index, 'PLACED'));
-      await respond(pageOf(first, 0, 25));
+      const first = Array.from({ length: 20 }, (_, index) => order(100 + index, 'PICKED_UP'));
+      await showFinished(pageOf(first, 0, 25));
       button('Siguiente').click();
       await stable();
-      expectList(IN_PROGRESS, 1).flush(
+      expectList(FINISHED, 1).flush(
         { status: 500, detail: 'Detalle del servidor' },
         { status: 500, statusText: 'Error' },
       );
@@ -266,37 +322,33 @@ describe('OrdersPage', () => {
 
       retry.click();
       await stable();
-      expectList(IN_PROGRESS, 1).flush(pageOf([], 1, 5, 1));
+      expectList(FINISHED, 1).flush(pageOf([], 1, 5, 1));
       await stable();
 
       expect(retry.textContent).toContain('Reintentando…');
       expect(document.activeElement).toBe(retry);
-      await respond(pageOf([order(43, 'PLACED')]));
+      await respond(pageOf([order(43, 'PICKED_UP')]), FINISHED);
 
       expect(page().querySelector('app-load-error')).toBeNull();
       expect(titles()).toEqual(['Pedido #43']);
     });
 
     it('sends an owner without a restaurant to register it', async () => {
-      fail(
-        `${ORDERS_URL}?status=PLACED&status=ACCEPTED&status=IN_PREPARATION&status=READY&page=0&size=20`,
-        404,
-        'restaurant.not_found',
-      );
+      fail(ACTIVE_URL, 404, 'restaurant.not_found');
       await stable();
 
       expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
     });
 
-    it('goes to another page keeping the current one in view meanwhile', async () => {
-      await respond(pageOf([order(43, 'PLACED')], 0, 30));
+    it('goes to another page of the finished orders keeping the current one in view', async () => {
+      await showFinished(pageOf([order(43, 'PICKED_UP')], 0, 30));
 
       button('Siguiente').click();
       await stable();
 
-      const request = expectList(IN_PROGRESS, 1);
+      const request = expectList(FINISHED, 1);
       expect(page().querySelector('ul')?.getAttribute('aria-busy')).toBe('true');
-      request.flush(pageOf([order(20, 'READY')], 1, 30));
+      request.flush(pageOf([order(20, 'REJECTED')], 1, 30));
       await stable();
 
       expect(titles()).toEqual(['Pedido #20']);
@@ -334,10 +386,9 @@ describe('OrdersPage', () => {
       httpTesting.expectOne(`${ORDERS_URL}/43/reject`).flush(order(43, 'REJECTED'));
       await stable();
 
-      expect(card(43).querySelector('[data-status]')?.textContent?.trim()).toBe('Rechazado');
-      expect(card(43).querySelectorAll('button[data-action]')).toHaveLength(0);
+      expect(titles()).toEqual([]);
       expect(notice()?.textContent).toContain('Rechazaste el pedido #43.');
-      expect(document.activeElement).toBe(card(43).querySelector('h2'));
+      expect(document.activeElement).toBe(page().querySelector('h1'));
     });
 
     it.each([
@@ -367,6 +418,7 @@ describe('OrdersPage', () => {
         await stable();
 
         expect(notice()?.textContent).toContain(announcement);
+        expect(titles()).toEqual(next === 'PICKED_UP' ? [] : ['Pedido #43']);
       },
     );
 
@@ -437,6 +489,178 @@ describe('OrdersPage', () => {
       await stable();
 
       expect(TestBed.inject(Router).url).toBe('/mi-restaurante');
+    });
+  });
+  describe('live', () => {
+    function source() {
+      return events.latest(EVENTS_URL);
+    }
+
+    async function hear(orderId: number, status: OrderStatus): Promise<void> {
+      source().emit('order', { orderId, status });
+      await stable();
+    }
+
+    function switchOfSound(): HTMLButtonElement {
+      const found = page().querySelector<HTMLButtonElement>('[data-chime-switch]');
+      if (!found) {
+        throw new Error('No sound switch');
+      }
+      return found;
+    }
+
+    it('follows the orders of the restaurant and says it is live', async () => {
+      await respond(pageOf([order(42, 'ACCEPTED')]));
+
+      source().connect();
+      await stable();
+
+      expect(page().querySelector('[data-live]')?.textContent?.trim()).toBe('En vivo');
+    });
+
+    it('shows a new order as it arrives, rings, announces it and counts it in the tab', async () => {
+      await respond(pageOf([order(42, 'ACCEPTED')]));
+      source().connect();
+      const accepted = button('Empezar a preparar', card(42));
+      accepted.focus();
+
+      await hear(43, 'PLACED');
+      expect(page().querySelector('[appskeleton]')).toBeNull();
+      expect(page().querySelector('[aria-busy="true"]')).toBeNull();
+      await respond(pageOf([order(43, 'PLACED'), order(42, 'ACCEPTED')]));
+
+      expect(titles()).toEqual(['Pedido #43', 'Pedido #42']);
+      expect(card(43).querySelector('[data-fresh]')?.textContent?.trim()).toBe('Nuevo');
+      expect(card(42).querySelector('[data-fresh]')).toBeNull();
+      expect(chime.plays).toBe(1);
+      expect(announced()).toEqual(['Nuevo pedido #43. Tienes 1 pendiente.']);
+      expect(TestBed.inject(Title).getTitle()).toBe(`(1) ${TITLE}`);
+      expect(document.activeElement).toBe(accepted);
+    });
+
+    it('stops marking an order as new once the owner accepts it', async () => {
+      await respond(pageOf([]));
+      await hear(43, 'PLACED');
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      button('Aceptar', card(43)).click();
+      await stable();
+      httpTesting.expectOne(`${ORDERS_URL}/43/accept`).flush(order(43, 'ACCEPTED'));
+      await stable();
+
+      expect(card(43).querySelector('[data-fresh]')).toBeNull();
+      expect(TestBed.inject(Title).getTitle()).toBe(TITLE);
+    });
+
+    it('ignores the news of a step the owner just took', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      button('Aceptar', card(43)).click();
+      await stable();
+      httpTesting.expectOne(`${ORDERS_URL}/43/accept`).flush(order(43, 'ACCEPTED'));
+      await stable();
+
+      await hear(43, 'ACCEPTED');
+
+      httpTesting.expectNone(ACTIVE_URL);
+    });
+
+    it('waits for a step in progress before it loads the news', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      button('Aceptar', card(43)).click();
+      await stable();
+
+      await hear(44, 'PLACED');
+      httpTesting.expectNone(ACTIVE_URL);
+      httpTesting.expectOne(`${ORDERS_URL}/43/accept`).flush(order(43, 'ACCEPTED'));
+      await stable();
+      await respond(pageOf([order(44, 'PLACED'), order(43, 'ACCEPTED')]));
+
+      expect(titles()).toEqual(['Pedido #44', 'Pedido #43']);
+    });
+
+    it('warns when the customer cancels a pending order', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      await hear(43, 'CANCELLED');
+      await respond(pageOf([]));
+
+      expect(notice()?.querySelector('[role="alert"]')?.textContent).toContain(
+        'El cliente canceló el pedido #43.',
+      );
+      expect(text()).toContain('No tienes pedidos en curso');
+      expect(TestBed.inject(Title).getTitle()).toBe(TITLE);
+    });
+
+    it('moves the focus to the title when the order it was on goes away', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      button('Aceptar', card(43)).focus();
+
+      await hear(43, 'CANCELLED');
+      await respond(pageOf([]));
+
+      expect(document.activeElement).toBe(page().querySelector('h1'));
+    });
+
+    it('does not ring with the sound turned off', async () => {
+      await respond(pageOf([]));
+      switchOfSound().click();
+      await stable();
+
+      await hear(43, 'PLACED');
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(switchOfSound().getAttribute('aria-checked')).toBe('false');
+      expect(chime.plays).toBe(0);
+    });
+
+    it('turns the sound off when the browser blocks it and lets the owner turn it on', async () => {
+      chime.playable = false;
+      await respond(pageOf([]));
+
+      await hear(43, 'PLACED');
+      await respond(pageOf([order(43, 'PLACED')]));
+
+      expect(switchOfSound().getAttribute('aria-checked')).toBe('false');
+      expect(page().querySelector('[data-chime-blocked]')?.textContent?.trim()).toBe(
+        'Tu navegador silenció el sonido. Actívalo de nuevo.',
+      );
+
+      chime.playable = true;
+      switchOfSound().click();
+      await stable();
+
+      expect(chime.unlocks).toBe(1);
+      expect(switchOfSound().getAttribute('aria-checked')).toBe('true');
+      expect(page().querySelector('[data-chime-blocked]')).toBeNull();
+    });
+
+    it('loads the board again when it reconnects', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      source().connect();
+
+      source().drop();
+      source().connect();
+      await stable();
+      await respond(pageOf([order(44, 'PLACED'), order(43, 'PLACED')]));
+
+      expect(titles()).toEqual(['Pedido #43', 'Pedido #44']);
+    });
+
+    it('shows that it is reconnecting after a few seconds without connection', async () => {
+      await respond(pageOf([]));
+      source().connect();
+      vi.useFakeTimers();
+      try {
+        source().drop();
+        vi.advanceTimersByTime(INTERRUPTION_GRACE_MS);
+        harness.fixture.detectChanges();
+
+        expect(page().querySelector('[data-reconnecting]')?.textContent?.trim()).toBe(
+          'Reconectando…',
+        );
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

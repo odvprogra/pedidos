@@ -84,7 +84,8 @@ export function emptyCopyFor(filter: OrderFilter): { heading: string; message: s
   return filter === 'active'
     ? {
         heading: 'No tienes pedidos en curso',
-        message: 'Los pedidos nuevos aparecen aquí. Toca «Actualizar» para ver si llegó alguno.',
+        message:
+          'Los pedidos nuevos aparecen aquí apenas llegan, con un sonido para que no se te pasen.',
       }
     : {
         heading: 'Todavía no hay pedidos terminados',
@@ -97,4 +98,37 @@ export function countOrdersIn(filter: OrderFilter, total: number): string {
   return filter === 'active'
     ? `${orders} en curso`
     : `${orders} ${total === 1 ? 'terminado' : 'terminados'}`;
+}
+
+export interface BoardColumn {
+  status: OrderStatus;
+  heading: string;
+  orders: Order[];
+}
+
+const BOARD_COLUMNS: { status: OrderStatus; heading: string }[] = [
+  { status: 'PLACED', heading: 'Pendientes' },
+  { status: 'ACCEPTED', heading: 'Aceptados' },
+  { status: 'IN_PREPARATION', heading: 'En preparación' },
+  { status: 'READY', heading: 'Listos' },
+];
+
+function oldestFirst(first: Order, second: Order): number {
+  return first.placedAt.localeCompare(second.placedAt) || first.id - second.id;
+}
+
+export function boardOf(orders: Order[]): BoardColumn[] {
+  return BOARD_COLUMNS.map((column) => ({
+    ...column,
+    orders: orders.filter((order) => order.status === column.status).sort(oldestFirst),
+  }));
+}
+
+export function newOrderMessage(id: number, pending: number): string {
+  const count = pending === 1 ? 'Tienes 1 pendiente.' : `Tienes ${pending} pendientes.`;
+  return `Nuevo pedido #${id}. ${count}`;
+}
+
+export function cancelledByCustomerMessage(id: number): string {
+  return `El cliente canceló el pedido #${id}.`;
 }

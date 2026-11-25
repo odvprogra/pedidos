@@ -29,8 +29,9 @@ class PlaceOrderUseCaseTest {
     private final InMemoryRestaurantDirectory restaurantDirectory = new InMemoryRestaurantDirectory();
     private final InMemoryProductCatalog productCatalog = new InMemoryProductCatalog();
     private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+    private final RecordingOrderChangePublisher orderChanges = new RecordingOrderChangePublisher();
     private final PlaceOrderUseCase placeOrder = new PlaceOrderUseCase(
-            restaurantDirectory, productCatalog, orderRepository, Clock.fixed(NOW, ZoneOffset.UTC));
+            restaurantDirectory, productCatalog, orderRepository, orderChanges, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @BeforeEach
     void openRestaurants() {

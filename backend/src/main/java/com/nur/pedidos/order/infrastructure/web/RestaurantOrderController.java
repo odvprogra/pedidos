@@ -1,6 +1,7 @@
 package com.nur.pedidos.order.infrastructure.web;
 
 import com.nur.pedidos.order.application.AcceptOrderUseCase;
+import com.nur.pedidos.order.application.GetOwnRestaurantIdUseCase;
 import com.nur.pedidos.order.application.ListRestaurantOrdersUseCase;
 import com.nur.pedidos.order.application.MarkOrderPickedUpUseCase;
 import com.nur.pedidos.order.application.MarkOrderReadyUseCase;
@@ -13,6 +14,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/restaurants/mine/orders")
@@ -33,6 +36,8 @@ class RestaurantOrderController {
     private final StartPreparingOrderUseCase startPreparingOrder;
     private final MarkOrderReadyUseCase markOrderReady;
     private final MarkOrderPickedUpUseCase markOrderPickedUp;
+    private final GetOwnRestaurantIdUseCase getOwnRestaurantId;
+    private final OrderChangeStreams orderChangeStreams;
 
     @GetMapping
     @PreAuthorize("hasRole('OWNER')")
@@ -42,6 +47,12 @@ class RestaurantOrderController {
             @RequestParam(defaultValue = "0") @Min(0) @Max(1_000_000) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return PageResponse.from(listRestaurantOrders.execute(owner.id(), statuses, page, size), OrderResponse::from);
+    }
+
+    @GetMapping(path = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('OWNER')")
+    SseEmitter events(@AuthenticationPrincipal CurrentUser owner) {
+        return orderChangeStreams.openForRestaurant(getOwnRestaurantId.execute(owner.id()));
     }
 
     @PostMapping("/{id}/accept")

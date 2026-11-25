@@ -3,6 +3,8 @@ package com.nur.pedidos.order.application;
 import com.nur.pedidos.order.domain.exception.OrderNotFoundException;
 import com.nur.pedidos.order.domain.exception.OrderNotOwnerException;
 import com.nur.pedidos.order.domain.model.Order;
+import com.nur.pedidos.order.domain.model.OrderChange;
+import com.nur.pedidos.order.domain.port.OrderChangePublisher;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CancelOrderUseCase {
 
     private final OrderRepository orderRepository;
+    private final OrderChangePublisher orderChangePublisher;
     private final Clock clock;
 
     @Transactional
@@ -23,6 +26,8 @@ public class CancelOrderUseCase {
             throw new OrderNotOwnerException();
         }
         order.cancel(clock.instant());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        orderChangePublisher.publish(OrderChange.of(saved));
+        return saved;
     }
 }

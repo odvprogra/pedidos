@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping(OrderController.ORDERS)
@@ -34,6 +36,7 @@ class OrderController {
     private final ListCustomerOrdersUseCase listCustomerOrders;
     private final GetCustomerOrderUseCase getCustomerOrder;
     private final CancelOrderUseCase cancelOrder;
+    private final OrderChangeStreams orderChangeStreams;
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
@@ -50,6 +53,12 @@ class OrderController {
             @RequestParam(defaultValue = "0") @Min(0) @Max(1_000_000) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return PageResponse.from(listCustomerOrders.execute(customer.id(), page, size), OrderResponse::from);
+    }
+
+    @GetMapping(path = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('CUSTOMER')")
+    SseEmitter events(@AuthenticationPrincipal CurrentUser customer) {
+        return orderChangeStreams.openForCustomer(customer.id());
     }
 
     @GetMapping("/{id}")

@@ -68,6 +68,9 @@ class OrderControllerTest {
     @MockitoBean
     private CancelOrderUseCase cancelOrder;
 
+    @MockitoBean
+    private OrderChangeStreams orderChangeStreams;
+
     @Test
     void placesAnOrderForTheCustomerInSession() {
         when(placeOrder.execute(any())).thenReturn(placedOrder());

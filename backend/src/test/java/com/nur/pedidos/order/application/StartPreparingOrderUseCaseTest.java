@@ -26,8 +26,9 @@ class StartPreparingOrderUseCaseTest {
 
     private final InMemoryRestaurantDirectory restaurantDirectory = new InMemoryRestaurantDirectory();
     private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
-    private final StartPreparingOrderUseCase startPreparingOrder =
-            new StartPreparingOrderUseCase(restaurantDirectory, orderRepository, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final RecordingOrderChangePublisher orderChanges = new RecordingOrderChangePublisher();
+    private final StartPreparingOrderUseCase startPreparingOrder = new StartPreparingOrderUseCase(
+            restaurantDirectory, orderRepository, orderChanges, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @BeforeEach
     void registerRestaurant() {

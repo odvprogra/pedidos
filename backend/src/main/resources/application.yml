@@ -16,6 +16,9 @@ spring:
   session:
     jdbc:
       initialize-schema: never
+  threads:
+    virtual:
+      enabled: true
 
 pedidos:
   admin:

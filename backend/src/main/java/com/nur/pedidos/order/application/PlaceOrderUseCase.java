@@ -1,8 +1,10 @@
 package com.nur.pedidos.order.application;
 
 import com.nur.pedidos.order.domain.model.Order;
+import com.nur.pedidos.order.domain.model.OrderChange;
 import com.nur.pedidos.order.domain.model.OrderLines;
 import com.nur.pedidos.order.domain.model.RestaurantSnapshot;
+import com.nur.pedidos.order.domain.port.OrderChangePublisher;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.order.domain.port.ProductCatalog;
 import com.nur.pedidos.order.domain.port.RestaurantDirectory;
@@ -18,6 +20,7 @@ public class PlaceOrderUseCase {
     private final RestaurantDirectory restaurantDirectory;
     private final ProductCatalog productCatalog;
     private final OrderRepository orderRepository;
+    private final OrderChangePublisher orderChangePublisher;
     private final Clock clock;
 
     @Transactional
@@ -26,6 +29,8 @@ public class PlaceOrderUseCase {
         RestaurantSnapshot restaurant = restaurantDirectory.restaurantTakingOrders(command.restaurantId());
         Order order = Order.place(
                 command.customerId(), restaurant, lines, productCatalog.productsOf(restaurant.id()), clock.instant());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        orderChangePublisher.publish(OrderChange.of(saved));
+        return saved;
     }
 }

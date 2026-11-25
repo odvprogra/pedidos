@@ -369,6 +369,7 @@ lo retira en el local. Después sigue sus pedidos y puede cancelar uno mientras 
 | Listar los propios  | `GET /api/v1/orders?page=0&size=20` | Cliente | `200` + una página de pedidos                       |
 | Ver uno propio      | `GET /api/v1/orders/{id}`           | Cliente | `200` + el pedido                                   |
 | Cancelar uno propio | `POST /api/v1/orders/{id}/cancel`   | Cliente | `200` + el pedido cancelado                         |
+| Seguir los cambios  | `GET /api/v1/orders/events`         | Cliente | `200` + un stream `text/event-stream`               |
 
 ```json
 { "restaurantId": 4, "items": [{ "productId": 10, "quantity": 2 }, { "productId": 12, "quantity": 1 }] }
@@ -442,6 +443,7 @@ El dueño recibe los pedidos de su restaurante y los lleva hasta que el cliente 
 | Empezar a preparar | `POST /api/v1/restaurants/mine/orders/{id}/start-preparing` | Dueño  | `200` + el pedido             |
 | Marcar listo       | `POST /api/v1/restaurants/mine/orders/{id}/mark-ready`      | Dueño  | `200` + el pedido             |
 | Entregar           | `POST /api/v1/restaurants/mine/orders/{id}/mark-picked-up`  | Dueño  | `200` + el pedido             |
+| Seguir los cambios | `GET /api/v1/restaurants/mine/orders/events`                | Dueño  | `200` + un stream             |
 
 - La lista trae los pedidos del restaurante del dueño con la forma del pedido del cliente, ítems
   incluidos, y en el mismo orden: los más nuevos primero. `status` es opcional y se puede repetir
@@ -458,6 +460,37 @@ El dueño recibe los pedidos de su restaurante y los lleva hasta que el cliente 
 - Un cliente o un admin reciben `403` con `access_denied`.
 - Si el cliente cancela mientras el dueño acepta, uno de los dos recibe `409`
   ([ADR-0010](../adr/0010-cambios-de-estado-del-pedido-con-bloqueo-de-fila.md)).
+
+## Pedidos en vivo
+
+Los dos canales `.../events` avisan cuando se confirma o cambia un pedido, sin que la interfaz
+recargue ([ADR-0015](../adr/0015-pedidos-en-vivo-con-server-sent-events.md)). Son Server-Sent
+Events: la respuesta es `text/event-stream` y queda abierta.
+
+```text
+event:ready
+retry:3000
+data:
+
+event:order
+data:{"orderId":42,"status":"ACCEPTED"}
+
+:keep-alive
+```
+
+- Al conectarse llega `ready`, que también le dice al navegador que espere 3 segundos antes de
+  reconectarse si se corta.
+- Cada `order` trae solo el id y el estado nuevo. La interfaz vuelve a pedir el pedido o la lista
+  por la ruta de siempre.
+- El dueño recibe los pedidos de su restaurante: los nuevos, cada paso y las cancelaciones del
+  cliente. El cliente recibe los suyos. Un pedido llega a todas las pestañas abiertas de esa cuenta.
+- Solo se avisa lo que ya se guardó: un cambio que se deshace no llega.
+- No se guardan avisos. Lo que pasa mientras el navegador está desconectado se recupera recargando
+  la lista al reconectarse.
+- Cada 25 segundos llega un comentario (`:keep-alive`) para que ningún proxy corte la conexión por
+  inactividad. La conexión dura hasta 30 minutos y el navegador se reconecta solo.
+- Los permisos son los de las otras rutas de cada tabla: sin sesión `401`, otro rol `403` con
+  `access_denied`, y un dueño sin restaurante `404` con `restaurant.not_found`.
 
 ## Pedidos de la plataforma
 

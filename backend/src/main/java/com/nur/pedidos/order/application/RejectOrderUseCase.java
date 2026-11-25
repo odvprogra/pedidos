@@ -3,6 +3,8 @@ package com.nur.pedidos.order.application;
 import com.nur.pedidos.order.domain.exception.OrderNotFoundException;
 import com.nur.pedidos.order.domain.exception.OrderNotOwnerException;
 import com.nur.pedidos.order.domain.model.Order;
+import com.nur.pedidos.order.domain.model.OrderChange;
+import com.nur.pedidos.order.domain.port.OrderChangePublisher;
 import com.nur.pedidos.order.domain.port.OrderRepository;
 import com.nur.pedidos.order.domain.port.RestaurantDirectory;
 import java.time.Clock;
@@ -16,6 +18,7 @@ public class RejectOrderUseCase {
 
     private final RestaurantDirectory restaurantDirectory;
     private final OrderRepository orderRepository;
+    private final OrderChangePublisher orderChangePublisher;
     private final Clock clock;
 
     @Transactional
@@ -26,6 +29,8 @@ public class RejectOrderUseCase {
             throw new OrderNotOwnerException();
         }
         order.reject(clock.instant());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        orderChangePublisher.publish(OrderChange.of(saved));
+        return saved;
     }
 }

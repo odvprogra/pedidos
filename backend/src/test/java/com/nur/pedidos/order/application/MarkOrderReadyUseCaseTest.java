@@ -28,8 +28,9 @@ class MarkOrderReadyUseCaseTest {
 
     private final InMemoryRestaurantDirectory restaurantDirectory = new InMemoryRestaurantDirectory();
     private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
-    private final MarkOrderReadyUseCase markOrderReady =
-            new MarkOrderReadyUseCase(restaurantDirectory, orderRepository, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final RecordingOrderChangePublisher orderChanges = new RecordingOrderChangePublisher();
+    private final MarkOrderReadyUseCase markOrderReady = new MarkOrderReadyUseCase(
+            restaurantDirectory, orderRepository, orderChanges, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @BeforeEach
     void registerRestaurant() {

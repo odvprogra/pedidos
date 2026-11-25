@@ -23,18 +23,19 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JsonMapper jsonMapper) throws Exception {
         ProblemDetailsSecurityHandler problemDetails = new ProblemDetailsSecurityHandler(jsonMapper);
-        http.authorizeHttpRequests(requests -> requests.dispatcherTypeMatchers(DispatcherType.ERROR)
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/health")
-                        .permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login")
-                        .permitAll()
-                        .requestMatchers(OWN_RESTAURANT)
-                        .authenticated()
-                        .requestMatchers(HttpMethod.GET, PUBLIC_RESTAURANTS)
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
+        http.authorizeHttpRequests(
+                        requests -> requests.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/health")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login")
+                                .permitAll()
+                                .requestMatchers(OWN_RESTAURANT)
+                                .authenticated()
+                                .requestMatchers(HttpMethod.GET, PUBLIC_RESTAURANTS)
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated())
                 .csrf(csrf -> csrf.spa())
                 .exceptionHandling(exceptions ->
                         exceptions.authenticationEntryPoint(problemDetails).accessDeniedHandler(problemDetails))

@@ -26,8 +26,9 @@ class MarkOrderPickedUpUseCaseTest {
 
     private final InMemoryRestaurantDirectory restaurantDirectory = new InMemoryRestaurantDirectory();
     private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
-    private final MarkOrderPickedUpUseCase markOrderPickedUp =
-            new MarkOrderPickedUpUseCase(restaurantDirectory, orderRepository, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final RecordingOrderChangePublisher orderChanges = new RecordingOrderChangePublisher();
+    private final MarkOrderPickedUpUseCase markOrderPickedUp = new MarkOrderPickedUpUseCase(
+            restaurantDirectory, orderRepository, orderChanges, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @BeforeEach
     void registerRestaurant() {

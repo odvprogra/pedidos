@@ -44,6 +44,7 @@ com.nur.pedidos
     └── infrastructure/
         ├── web/            GlobalExceptionHandler, HealthController, PageResponse
         ├── security/       SecurityConfig, CurrentUser, SecuritySessions, SessionRevoker, 401 y 403
+        ├── scheduling/     Activa las tareas periódicas (@Scheduled)
         └── time/           El Clock del que sale la hora actual
 ```
 
@@ -132,6 +133,18 @@ se llama `OrderRestaurantDirectoryAdapter` y no `RestaurantDirectoryAdapter`, qu
 En la base pasa lo mismo: cada tabla es de un módulo, y entre tablas de módulos distintos solo se
 guarda el id, sin clave foránea. Las tablas y las referencias están en
 [modelo-de-datos.md](modelo-de-datos.md).
+
+### Pedidos en vivo
+
+Cada caso de uso que confirma o cambia un pedido publica un `OrderChange` por el puerto
+`OrderChangePublisher` (`order/domain/port`), después de guardarlo. Su adaptador,
+`SpringOrderChangePublisher` en `order/infrastructure/events`, lo pasa al `ApplicationEventPublisher`
+de Spring. `OrderChangeStreams`, en `order/infrastructure/web`, guarda las conexiones Server-Sent
+Events abiertas por restaurante y por cliente, y escucha el evento después del commit
+(`@TransactionalEventListener(phase = AFTER_COMMIT)`): un cambio que se deshace no se anuncia. Los
+casos de uso se prueban con un fake que registra lo publicado, y los canales con `MockMvc`
+leyendo el stream mientras sigue abierto. La decisión y sus límites están en
+[ADR-0015](adr/0015-pedidos-en-vivo-con-server-sent-events.md).
 
 ### Autenticación y permisos
 

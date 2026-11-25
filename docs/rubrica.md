@@ -10,11 +10,14 @@ correrlo en la defensa. La estrategia general está en
 
 Con Docker encendido. Ningún bloque depende de datos cargados a mano.
 
-| Qué                               | Dónde       | Comando                     | Cantidad   |
-| --------------------------------- | ----------- | --------------------------- | ---------- |
-| Unitarios e integración (backend) | `backend/`  | `./mvnw verify`             | 916 tests  |
-| Unitarios y páginas (frontend)    | `frontend/` | `npm test -- --watch=false` | 1006 specs |
-| E2E en Chrome                     | `e2e/`      | `npm test`                  | 17 tests   |
+El proyecto conserva solo los tests que nombra esta página, más `ArchitectureTest`, que verifica las
+capas del backend.
+
+| Qué                               | Dónde       | Comando                     | Cantidad  |
+| --------------------------------- | ----------- | --------------------------- | --------- |
+| Unitarios e integración (backend) | `backend/`  | `./mvnw verify`             | 632 tests |
+| Unitarios y páginas (frontend)    | `frontend/` | `npm test -- --watch=false` | 266 specs |
+| E2E en Chrome                     | `e2e/`      | `npm test`                  | 17 tests  |
 
 En Windows con PowerShell, `.\mvnw.cmd` en lugar de `./mvnw`.
 
@@ -97,7 +100,7 @@ Lo que el enunciado pide fuera del checklist:
 
 | #   | Punto del checklist                                      | Cómo se cumple                                                                                                                                                                                                                                                                      |
 | --- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | El proyecto contiene tests unitarios                     | Backend: los `*Test` de `domain/model` y `application` de cada módulo, sin Spring. Frontend: `core/cart/cart.spec.ts`, `shared/utils/*.spec.ts` y los `models/*.spec.ts` de cada feature                                                                                            |
+| 1   | El proyecto contiene tests unitarios                     | Backend: los `*Test` de `domain/model` y `application` de cada módulo, sin Spring. Frontend: `core/cart/cart.spec.ts` y `core/cart/cart-store.spec.ts`                                                                                                                              |
 | 2   | Los tests unitarios se ejecutan correctamente            | `./mvnw verify` y `npm test -- --watch=false` terminan sin fallas ni tests salteados; la CI corre lo mismo en cada pull request                                                                                                                                                     |
 | 3   | Se prueba lógica real del negocio, no getters y setters  | `OrderTest` (total, precio copiado, transiciones), `OrderLinesTest` (cantidades de 1 a 99, producto repetido), `ProductTest`, `AccountTest`, `RestaurantTest`, `cart.spec.ts`                                                                                                       |
 | 4   | Se utilizan asserts correctamente                        | AssertJ en el backend (`assertThat`, `assertThatThrownBy` con el código del error) y `expect` de Vitest en el frontend. Una conducta por test, con preparación, acción y verificación separadas                                                                                     |
@@ -106,7 +109,7 @@ Lo que el enunciado pide fuera del checklist:
 | 7   | Existen tests de integración                             | `AuthFlowTest`, `CatalogFlowTest`, `OrderFlowTest`, `RestaurantSuspensionFlowTest`, `OrderLockingTest`, `RestaurantLockingTest` (aplicación completa por HTTP) y los `*PersistenceAdapterTest`                                                                                      |
 | 8   | Los tests de integración usan un entorno controlado      | Testcontainers levanta un PostgreSQL 17 vacío y Flyway crea el esquema (`TestcontainersConfiguration`). Cada test registra sus cuentas y arma sus datos por la API o por el adaptador                                                                                               |
 | 9   | Se prueba persistencia de información                    | Los cinco `*PersistenceAdapterTest`, más `AuthFlowTest#storesTheRegisteredAccountWithItsPasswordHashed`, que lee la fila de `accounts`, y `SecuritySessionsTest` para las sesiones                                                                                                  |
-| 10  | Se prueban endpoints de la API                           | Un `*ControllerTest` por controller (estados HTTP, validación, permisos y Problem Details) y los `*FlowTest`, que llaman a la API real con cookie de sesión y CSRF                                                                                                                  |
+| 10  | Se prueban endpoints de la API                           | Los `*ControllerTest` de la rúbrica (estados HTTP, validación, permisos y Problem Details) y los `*FlowTest`, que llaman a la API real con cookie de sesión y CSRF                                                                                                                 |
 | 11  | Se prueba autenticación y autorización                   | `AuthFlowTest`, `SecurityConfigTest`, `OrderFlowTest#aVisitorWithoutSessionCannotOrderNorReadOrders`, `OrderFlowTest#aCustomerCannotChangeTheStatusOfTheirOwnOrder`, `auth-guards.spec.ts`, `unauthorized-interceptor.spec.ts`                                                      |
 | 12  | Existen pruebas E2E automatizadas                        | 17 tests de Playwright en `e2e/tests/` ([ADR-0013](adr/0013-pruebas-e2e-con-playwright.md))                                                                                                                                                                                         |
 | 13  | Existe E2E de creación de pedido                         | `01-place-order.spec.ts`: "a customer places an order from the menu to the confirmation"                                                                                                                                                                                            |

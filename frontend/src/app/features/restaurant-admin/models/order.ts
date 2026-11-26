@@ -132,3 +132,11 @@ export function newOrderMessage(id: number, pending: number): string {
 export function cancelledByCustomerMessage(id: number): string {
   return `El cliente canceló el pedido #${id}.`;
 }
+
+export function newOrdersMessage(ids: number[], pending: number): string {
+  if (ids.length === 1) {
+    return newOrderMessage(ids[0], pending);
+  }
+  const count = pending === 1 ? 'Tienes 1 pendiente.' : `Tienes ${pending} pendientes.`;
+  return `Llegaron ${ids.length} pedidos nuevos. ${count}`;
+}

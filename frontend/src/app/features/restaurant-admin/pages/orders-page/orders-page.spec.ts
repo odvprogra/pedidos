@@ -388,7 +388,19 @@ describe('OrdersPage', () => {
 
       expect(titles()).toEqual([]);
       expect(notice()?.textContent).toContain('Rechazaste el pedido #43.');
-      expect(document.activeElement).toBe(page().querySelector('h1'));
+      expect(document.activeElement).toBe(page().querySelector('#column-PLACED'));
+    });
+
+    it('takes the focus to the next order of the column when one leaves the board', async () => {
+      await respond(pageOf([order(43, 'READY'), order(44, 'READY')]));
+
+      button('Entregar', card(43)).click();
+      await stable();
+      httpTesting.expectOne(`${ORDERS_URL}/43/mark-picked-up`).flush(order(43, 'PICKED_UP'));
+      await stable();
+
+      expect(titles()).toEqual(['Pedido #44']);
+      expect(document.activeElement).toBe(button('Entregar', card(44)));
     });
 
     it.each([
@@ -591,14 +603,30 @@ describe('OrdersPage', () => {
       expect(TestBed.inject(Title).getTitle()).toBe(TITLE);
     });
 
-    it('moves the focus to the title when the order it was on goes away', async () => {
-      await respond(pageOf([order(43, 'PLACED')]));
+    it('moves the focus to the next order of the column when the one it was on goes away', async () => {
+      await respond(pageOf([order(43, 'PLACED'), order(44, 'PLACED'), order(45, 'ACCEPTED')]));
       button('Aceptar', card(43)).focus();
 
       await hear(43, 'CANCELLED');
-      await respond(pageOf([]));
+      await respond(pageOf([order(44, 'PLACED'), order(45, 'ACCEPTED')]));
 
-      expect(document.activeElement).toBe(page().querySelector('h1'));
+      expect(document.activeElement).toBe(button('Rechazar', card(44)));
+    });
+
+    it('marks, rings and announces the orders that arrived while it was disconnected', async () => {
+      await respond(pageOf([order(43, 'PLACED')]));
+      source().connect();
+
+      source().drop();
+      source().connect();
+      await stable();
+      await respond(pageOf([order(43, 'PLACED'), order(44, 'PLACED'), order(45, 'PLACED')]));
+
+      expect(card(43).querySelector('[data-fresh]')).toBeNull();
+      expect(card(44).querySelector('[data-fresh]')).toBeTruthy();
+      expect(card(45).querySelector('[data-fresh]')).toBeTruthy();
+      expect(chime.plays).toBe(1);
+      expect(announced()).toEqual(['Llegaron 2 pedidos nuevos. Tienes 3 pendientes.']);
     });
 
     it('does not ring with the sound turned off', async () => {
@@ -629,7 +657,7 @@ describe('OrdersPage', () => {
       switchOfSound().click();
       await stable();
 
-      expect(chime.unlocks).toBe(1);
+      expect(chime.unlocks).toBe(2);
       expect(switchOfSound().getAttribute('aria-checked')).toBe('true');
       expect(page().querySelector('[data-chime-blocked]')).toBeNull();
     });
@@ -661,6 +689,33 @@ describe('OrdersPage', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+  describe('the sound when the page opens', () => {
+    it('starts turned off and says how to turn it on when the browser does not let it play yet', async () => {
+      TestBed.resetTestingModule();
+      events = new FakeEventSources();
+      chime = new FakeChime();
+      chime.playable = false;
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: OPEN_EVENT_SOURCE, useValue: events.open },
+          { provide: NewOrderChime, useValue: chime },
+          provideRouter([{ path: 'mi-restaurante/pedidos', component: OrdersPage }]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+        ],
+      });
+      httpTesting = TestBed.inject(HttpTestingController);
+      harness = await RouterTestingHarness.create('/mi-restaurante/pedidos');
+      await respond(pageOf([]));
+
+      const sound = page().querySelector('[data-chime-switch]');
+      expect(sound?.getAttribute('aria-checked')).toBe('false');
+      expect(page().querySelector('[data-chime-blocked] [role="alert"]')?.textContent?.trim()).toBe(
+        'Toca el interruptor para activar el sonido.',
+      );
+      expect(sound?.getAttribute('aria-describedby')).toBe('chime-warning');
     });
   });
 });

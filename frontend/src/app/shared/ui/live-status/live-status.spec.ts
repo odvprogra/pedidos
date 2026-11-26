@@ -59,6 +59,13 @@ describe('LiveStatus', () => {
     expect(text()).toBe('');
   });
 
+  it('keeps saying it is live during a short cut', async () => {
+    await becomes('live');
+    await becomes('connecting');
+
+    expect(text()).toBe('En vivo');
+  });
+
   it('shows and announces that it is reconnecting', async () => {
     await becomes('live');
     await becomes('interrupted');

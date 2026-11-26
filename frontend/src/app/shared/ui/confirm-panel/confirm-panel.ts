@@ -32,6 +32,7 @@ const STYLES: Record<ConfirmTone, { panel: string; confirm: string }> = {
 
 @Component({
   selector: 'app-confirm-panel',
+  host: { class: '@container block' },
   imports: [SecondaryButton],
   templateUrl: './confirm-panel.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

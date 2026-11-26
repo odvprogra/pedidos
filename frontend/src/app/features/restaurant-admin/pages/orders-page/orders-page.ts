@@ -19,6 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '@core/http/page';
 import { toProblemDetails } from '@core/http/problem-details';
 import { ServerEvents } from '@core/live/server-events';
+import { Alert } from '@shared/ui/alert/alert';
 import { BackLink } from '@shared/ui/back-link/back-link';
 import { SecondaryButton } from '@shared/ui/button/secondary-button';
 import { ConfirmationSlot } from '@shared/ui/confirm-panel/confirmation-slot';
@@ -33,7 +34,7 @@ import { Skeleton } from '@shared/ui/skeleton/skeleton';
 import { Spinner } from '@shared/ui/spinner/spinner';
 import { NoticeSlot } from '@shared/ui/sticky-notice/notice-slot';
 import { StickyNotice } from '@shared/ui/sticky-notice/sticky-notice';
-import { OrderChange } from '@shared/utils/order-status';
+import { OrderChange, OrderStatus } from '@shared/utils/order-status';
 import { Observable, Subscription } from 'rxjs';
 import { OrderCard } from '../../components/order-card/order-card';
 import { NewOrderChime } from '../../data-access/new-order-chime';
@@ -49,6 +50,7 @@ import {
   countOrdersIn,
   emptyCopyFor,
   newOrderMessage,
+  newOrdersMessage,
 } from '../../models/order';
 import { describeOrderError, isOrderChanged } from '../../models/order-error';
 import { isNotRegistered } from '../../models/restaurant-error';
@@ -56,10 +58,17 @@ import { isNotRegistered } from '../../models/restaurant-error';
 const PAGE_SIZE = 20;
 const BOARD_SIZE = 100;
 const DEFAULT_TITLE = 'Pedidos del restaurante | Pedidos';
+const SOUND_LOCKED = 'Toca el interruptor para activar el sonido.';
+const SOUND_BLOCKED = 'Tu navegador silenció el sonido. Actívalo de nuevo.';
 
 interface PendingAction {
   orderId: number;
   action: OrderAction;
+}
+
+interface Place {
+  status: OrderStatus;
+  index: number;
 }
 
 function withId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
@@ -75,6 +84,7 @@ function withoutId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
 @Component({
   selector: 'app-orders-page',
   imports: [
+    Alert,
     Announce,
     BackLink,
     EmptyState,
@@ -99,6 +109,7 @@ export class OrdersPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly injector = inject(Injector);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly baseTitle = this.route.snapshot.title ?? DEFAULT_TITLE;
   private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
@@ -111,6 +122,7 @@ export class OrdersPage implements OnInit {
   private quietRequest: Subscription | null = null;
   private requestedPage = 0;
   private staleWhileBusy = false;
+  private boardShown = false;
   private readonly shownFilter = signal<OrderFilter>('active');
 
   protected readonly live = inject(ServerEvents).follow<OrderChange>(
@@ -121,7 +133,7 @@ export class OrdersPage implements OnInit {
     filter,
     label: ORDER_FILTERS[filter].label,
   }));
-  protected readonly placeholders = [1, 2, 3];
+  protected readonly placeholders = [1, 2, 3, 4];
   protected readonly filter = signal<OrderFilter>('active');
   protected readonly result = signal<Page<Order> | null>(null);
   protected readonly loading = signal(true);
@@ -130,7 +142,7 @@ export class OrdersPage implements OnInit {
   protected readonly pendingIds = signal<ReadonlySet<number>>(new Set());
   protected readonly freshIds = signal<ReadonlySet<number>>(new Set());
   protected readonly soundOn = signal(true);
-  protected readonly soundBlocked = signal(false);
+  protected readonly soundWarning = signal<string | null>(null);
   protected readonly notice = new NoticeSlot();
   protected readonly confirmation = new ConfirmationSlot();
   protected readonly busy = computed(() => this.loading() || this.pending() !== null);
@@ -167,6 +179,11 @@ export class OrdersPage implements OnInit {
 
   ngOnInit(): void {
     this.load(0, this.arrivedFromAnotherPage);
+    this.chime.unlock().then((unlocked) => {
+      if (!unlocked) {
+        this.silence(SOUND_LOCKED);
+      }
+    });
   }
 
   protected show(filter: OrderFilter): void {
@@ -201,16 +218,15 @@ export class OrdersPage implements OnInit {
   }
 
   protected toggleSound(): void {
+    this.soundWarning.set(null);
     if (this.soundOn()) {
       this.soundOn.set(false);
-      this.soundBlocked.set(false);
       return;
     }
     this.soundOn.set(true);
-    this.soundBlocked.set(false);
     this.chime.unlock().then((unlocked) => {
       if (!unlocked) {
-        this.silence();
+        this.silence(SOUND_BLOCKED);
       }
     });
   }
@@ -224,6 +240,7 @@ export class OrdersPage implements OnInit {
     if (this.busy()) {
       return;
     }
+    const place = this.placeOf(order.id);
     this.pending.set({ orderId: order.id, action });
     this.notice.clear();
     this.request = this.orderApi.apply(action, order.id).subscribe({
@@ -231,7 +248,7 @@ export class OrdersPage implements OnInit {
         this.pending.set(null);
         this.replace(changed);
         this.notice.show('success', copyFor(action).done(changed.id));
-        this.focusCard(changed.id);
+        this.focusAfterRender(() => this.focusAround(changed.id, place));
         this.catchUp();
       },
       error: (error: unknown) => {
@@ -280,14 +297,14 @@ export class OrdersPage implements OnInit {
     }
     this.chime.play().then((played) => {
       if (!played) {
-        this.silence();
+        this.silence(SOUND_BLOCKED);
       }
     });
   }
 
-  private silence(): void {
+  private silence(warning: string): void {
     this.soundOn.set(false);
-    this.soundBlocked.set(true);
+    this.soundWarning.set(warning);
   }
 
   private reloadQuietly(): void {
@@ -298,6 +315,10 @@ export class OrdersPage implements OnInit {
     this.staleWhileBusy = false;
     const filter = this.filter();
     const focusWasInList = this.focusIsInList();
+    const focusedId = this.cards()
+      .find((card) => card.hasFocus())
+      ?.order().id;
+    const place = focusedId === undefined ? null : this.placeOf(focusedId);
     this.quietRequest?.unsubscribe();
     this.quietRequest = this.listOf(filter, this.requestedPage).subscribe({
       next: (result) => {
@@ -308,7 +329,7 @@ export class OrdersPage implements OnInit {
         if (focusWasInList) {
           this.focusAfterRender(() => {
             if (!this.focusIsInList()) {
-              this.header()?.focus();
+              this.focusAround(focusedId ?? null, place);
             }
           });
         }
@@ -377,11 +398,19 @@ export class OrdersPage implements OnInit {
     this.shownFilter.set(filter);
     this.result.set(result);
     if (filter === 'active') {
-      const pendingIds = new Set(
-        result.items.filter((order) => order.status === 'PLACED').map((order) => order.id),
-      );
+      const placed = result.items.filter((order) => order.status === 'PLACED').map(({ id }) => id);
+      const known = this.pendingIds();
+      const arrived = this.boardShown ? placed.filter((id) => !known.has(id)) : [];
+      const pendingIds = new Set(placed);
+      this.boardShown = true;
       this.pendingIds.set(pendingIds);
-      this.freshIds.update((ids) => new Set([...ids].filter((id) => pendingIds.has(id))));
+      this.freshIds.update(
+        (ids) => new Set([...ids, ...arrived].filter((id) => pendingIds.has(id))),
+      );
+      if (arrived.length > 0) {
+        this.announcer.announce(newOrdersMessage(arrived, pendingIds.size));
+        this.ring();
+      }
     }
   }
 
@@ -411,15 +440,33 @@ export class OrdersPage implements OnInit {
     return Boolean(list && document.activeElement && list.contains(document.activeElement));
   }
 
-  private focusCard(orderId: number): void {
-    this.focusAfterRender(() => {
-      const card = this.cards().find((candidate) => candidate.order().id === orderId);
-      if (card) {
-        card.focus();
-      } else {
-        this.header()?.focus();
-      }
-    });
+  private placeOf(orderId: number): Place | null {
+    const column = this.board()?.find((candidate) =>
+      candidate.orders.some((order) => order.id === orderId),
+    );
+    return column
+      ? { status: column.status, index: column.orders.findIndex((order) => order.id === orderId) }
+      : null;
+  }
+
+  private focusAround(orderId: number | null, place: Place | null): void {
+    const card = this.cards().find((candidate) => candidate.order().id === orderId);
+    if (card) {
+      card.focus();
+      return;
+    }
+    const column = place && this.board()?.find((candidate) => candidate.status === place.status);
+    if (!place || !column) {
+      this.header()?.focus();
+      return;
+    }
+    const neighbour = column.orders[Math.min(place.index, column.orders.length - 1)];
+    const neighbourCard = this.cards().find((candidate) => candidate.order().id === neighbour?.id);
+    if (neighbourCard) {
+      neighbourCard.focus();
+    } else {
+      this.host.nativeElement.querySelector<HTMLElement>(`#column-${place.status}`)?.focus();
+    }
   }
 
   private focusAfterRender(focus: () => void): void {

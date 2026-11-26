@@ -15,7 +15,7 @@
         [class]="step.current ? 'font-extrabold text-ink' : 'font-semibold text-muted'"
         >{{ step.label }}</span
       >
-      <span class="sr-only">{{ step.label }}: {{ stateOf(step) }}</span>
+      <span class="sr-only">{{ readingOf(step) }}</span>
     </li>
   }
 </ol>

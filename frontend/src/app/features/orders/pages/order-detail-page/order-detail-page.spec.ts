@@ -450,7 +450,7 @@ describe('OrderDetailPage', () => {
       const steps = Array.from(page().querySelectorAll('ol[aria-label="Progreso del pedido"] li'));
       expect(steps.map((step) => step.querySelector('.sr-only')?.textContent?.trim())).toEqual([
         'Pendiente: hecho',
-        'Aceptado: paso actual',
+        'Aceptado',
         'En preparación: pendiente',
         'Listo: pendiente',
         'Completado: pendiente',

@@ -74,7 +74,7 @@
         aria-labelledby="chime-label"
         [class]="soundOn() ? 'bg-success' : 'bg-muted'"
         [attr.aria-checked]="soundOn()"
-        [attr.aria-describedby]="soundBlocked() ? 'chime-blocked' : null"
+        [attr.aria-describedby]="soundWarning() ? 'chime-warning' : null"
         (click)="toggleSound()"
         data-chime-switch
       >
@@ -85,10 +85,10 @@
         ></span>
       </button>
       <span id="chime-label" class="text-sm font-bold">Sonido de pedidos nuevos</span>
-      @if (soundBlocked()) {
-        <p id="chime-blocked" class="w-full text-sm font-semibold text-warning" data-chime-blocked>
-          Tu navegador silenció el sonido. Actívalo de nuevo.
-        </p>
+      @if (soundWarning(); as warning) {
+        <app-alert id="chime-warning" class="w-full" tone="warning" data-chime-blocked>
+          {{ warning }}
+        </app-alert>
       }
     </div>
     <p class="sr-only" aria-live="polite" data-refresh-announcement>{{ announcement() }}</p>
@@ -134,20 +134,25 @@
     } @else if (board(); as board) {
       <div
         #orderList
-        class="mt-6 grid gap-8 transition-opacity lg:grid-cols-4 lg:gap-4"
+        class="mt-6 grid gap-8 transition-opacity md:grid-cols-2 md:gap-4 lg:grid-cols-4"
         [class.opacity-60]="loading()"
         [attr.aria-busy]="loading()"
       >
         @for (column of board; track column.status) {
-          <section [attr.aria-labelledby]="'column-' + column.status" data-column>
+          <section data-column>
             <h2
-              class="flex items-center gap-2 text-sm font-extrabold tracking-wide text-muted uppercase"
+              tabindex="-1"
+              class="flex scroll-mt-44 items-center gap-2 text-sm font-extrabold tracking-wide text-muted uppercase outline-none"
               [id]="'column-' + column.status"
             >
               {{ column.heading }}
-              <span class="rounded-full bg-line px-2 py-0.5 text-xs text-ink" data-column-count>{{
-                column.orders.length
-              }}</span>
+              <span
+                aria-hidden="true"
+                class="rounded-full bg-line px-2 py-0.5 text-xs text-ink"
+                data-column-count
+                >{{ column.orders.length }}</span
+              >
+              <span class="sr-only">, {{ column.orders.length }}</span>
             </h2>
             @if (column.orders.length === 0) {
               <p
@@ -211,7 +216,10 @@
       </div>
     }
   } @else {
-    <div class="mt-6 grid max-w-3xl gap-4">
+    <div
+      class="mt-6 grid gap-4"
+      [class]="filter() === 'active' ? 'md:grid-cols-2 lg:grid-cols-4' : 'max-w-3xl'"
+    >
       <span class="sr-only" appAnnounce>Cargando los pedidos…</span>
       @for (placeholder of placeholders; track placeholder) {
         <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">

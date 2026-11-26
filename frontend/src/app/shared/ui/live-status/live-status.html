@@ -1,19 +1,16 @@
-@switch (state()) {
-  @case ('live') {
-    @if (showLive()) {
-      <span class="inline-flex items-center gap-1.5 text-sm font-bold text-success" data-live>
-        <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
-        En vivo
-      </span>
-    }
-  }
-  @case ('interrupted') {
-    <span
-      class="inline-flex items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-sm font-bold text-warning"
-      data-reconnecting
-    >
-      <app-spinner />
-      Reconectando…
+@if (looksLive()) {
+  @if (showLive()) {
+    <span class="inline-flex items-center gap-1.5 text-sm font-bold text-success" data-live>
+      <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
+      En vivo
     </span>
   }
+} @else if (state() === 'interrupted') {
+  <span
+    class="inline-flex items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-sm font-bold text-warning"
+    data-reconnecting
+  >
+    <app-spinner />
+    Reconectando…
+  </span>
 }

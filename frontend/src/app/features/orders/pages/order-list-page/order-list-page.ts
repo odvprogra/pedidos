@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -59,6 +60,7 @@ export class OrderListPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly header = viewChild(PageHeader);
   private readonly loadError = viewChild(LoadError);
+  private readonly orderList = viewChild<ElementRef<HTMLElement>>('orderList');
   private readonly arrivedFromAnotherPage = Boolean(
     inject(Router).currentNavigation()?.previousNavigation,
   );
@@ -111,6 +113,7 @@ export class OrderListPage implements OnInit {
     if (this.loading() || this.problem() !== null) {
       return;
     }
+    const focusWasInList = this.focusIsInList();
     this.quietRequest?.unsubscribe();
     this.quietRequest = this.orderApi.list(this.requestedPage, PAGE_SIZE).subscribe({
       next: (result) => {
@@ -118,6 +121,16 @@ export class OrderListPage implements OnInit {
           return;
         }
         this.result.set(result);
+        if (focusWasInList) {
+          afterNextRender(
+            () => {
+              if (!this.focusIsInList()) {
+                this.header()?.focus();
+              }
+            },
+            { injector: this.injector },
+          );
+        }
         const changed = change && result.items.find((order) => order.id === change.orderId);
         if (changed) {
           this.announcer.announce(liveChangeMessage(changed));
@@ -160,6 +173,11 @@ export class OrderListPage implements OnInit {
           }
         },
       });
+  }
+
+  private focusIsInList(): boolean {
+    const list = this.orderList()?.nativeElement;
+    return Boolean(list && document.activeElement && list.contains(document.activeElement));
   }
 
   private focusHeading(): void {

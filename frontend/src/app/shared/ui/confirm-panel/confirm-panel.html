@@ -1,6 +1,6 @@
 <div
   role="group"
-  class="rounded-xl p-4 sm:px-5"
+  class="rounded-xl p-4 @sm:px-5"
   [id]="panelId()"
   [attr.aria-labelledby]="panelId() + '-question'"
   [attr.aria-describedby]="panelId() + '-consequence'"
@@ -8,7 +8,7 @@
 >
   <p class="font-bold wrap-anywhere" [id]="panelId() + '-question'">{{ question() }}</p>
   <p class="mt-1 text-sm text-ink/80" [id]="panelId() + '-consequence'">{{ consequence() }}</p>
-  <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+  <div class="mt-4 flex flex-col gap-2 @sm:flex-row @sm:justify-end">
     <button
       #cancelButton
       appSecondaryButton

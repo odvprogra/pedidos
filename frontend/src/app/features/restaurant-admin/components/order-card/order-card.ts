@@ -30,6 +30,7 @@ import { Order, OrderAction, actionsFor, copyFor } from '../../models/order';
 })
 export class OrderCard {
   private readonly injector = inject(Injector);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly heading = viewChild.required<ElementRef<HTMLElement>>('heading');
   private readonly rejectButton = viewChild<ElementRef<HTMLButtonElement>>('rejectButton');
   private readonly actionButtons = viewChildren<ElementRef<HTMLButtonElement>>('actionButton');
@@ -56,6 +57,10 @@ export class OrderCard {
   protected readonly headingId = computed(() => `order-${this.order().id}-heading`);
   protected readonly confirmId = computed(() => `order-${this.order().id}-reject`);
   protected readonly rejectQuestion = computed(() => `¿Rechazar el pedido #${this.order().id}?`);
+
+  hasFocus(): boolean {
+    return this.element.nativeElement.contains(document.activeElement);
+  }
 
   focus(): void {
     const first = this.actionButtons()[0];

@@ -122,15 +122,27 @@ Selectores con prefijo `app-` en kebab-case. Las interfaces no llevan prefijo `I
   pero son enlaces dentro de un `nav` con nombre y la actual lleva `aria-current="page"`. Viven en
   una ruta contenedora con `<router-outlet>`, así la navegación no se repite y el enlace tocado no se
   destruye; la sección que se abre lleva el foco a su título cuando termina de cargar.
-- Una lista que otros cambian mientras se mira, como los pedidos del dueño, tiene un botón
-  "Actualizar" que la vuelve a pedir en la misma página y con el mismo filtro. No se consulta sola.
-  Mientras trabaja dice "Actualizando…", el foco se queda en el botón y el resultado se anuncia en
-  una región `aria-live="polite"` ("Lista actualizada: 4 pedidos en curso.").
+- Una lista que otros cambian mientras se mira, como los pedidos del dueño y los del cliente, se
+  actualiza sola con los eventos del servidor
+  ([ADR-0015](../adr/0015-pedidos-en-vivo-con-server-sent-events.md)). La página sigue el canal con
+  `ServerEvents.follow` (`@core/live`), que devuelve una `LiveConnection` con sus mensajes, sus
+  reconexiones y su estado, y la cierra sola al destruirse la página. Con cada mensaje que cambia
+  algo de lo que se ve, la página vuelve a pedir la lista en silencio: sin esqueleto, sin
+  `aria-busy` y sin mover el foco. Si en ese momento hay un paso en curso, espera a que termine. Al
+  reconectarse, recarga igual. `app-live-status` (`@shared/ui`) muestra "En vivo" (solo al dueño) y
+  "Reconectando…" recién a los 5 segundos sin conexión, y anuncia el corte y la vuelta. En los
+  tests, `OPEN_EVENT_SOURCE` se reemplaza por `FakeEventSources`.
+- La lista del dueño conserva el botón "Actualizar" como respaldo: la vuelve a pedir en la misma
+  página y con el mismo filtro. Mientras trabaja dice "Actualizando…", el foco se queda en el botón
+  y el resultado se anuncia en una región `aria-live="polite"` ("Lista actualizada: 4 pedidos en
+  curso.").
 - Un botón que hace un paso y deja en su lugar el botón del paso siguiente, como "Aceptar" y
   "Marcar listo", ignora el segundo clic de un doble clic (`MouseEvent.detail > 1`). Así un doble
   toque no hace dos pasos. Si el paso falla, el foco se queda en el botón que se tocó.
-  Después de un paso, la tarjeta queda con el pedido que devolvió la API, aunque ya no corresponda
-  al filtro, hasta la próxima carga: así no se pierden el foco ni lo que el dueño estaba mirando.
+  Después de un paso, la tarjeta se mueve a la columna de su estado nuevo del tablero "En curso" y
+  el foco va a su botón siguiente. Si el pedido terminó (entregado o rechazado) sale del tablero, y
+  el foco va a la tarjeta que quedó en su lugar en la misma columna o, si la columna quedó vacía, a
+  su título. Lo mismo pasa cuando un cambio en vivo saca la tarjeta que tenía el foco.
 - El resultado de una acción se anuncia en un `app-sticky-notice` (`@shared/ui`), un aviso
   `app-alert dismissible` fijo bajo el header, en `tone="success"` (su texto se anuncia en la región
   fija y el aviso no lleva rol) o en `warning` o `danger` (`role="alert"`). Su atributo

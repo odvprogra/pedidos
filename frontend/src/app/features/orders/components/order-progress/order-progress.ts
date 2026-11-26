@@ -19,10 +19,10 @@ export class OrderProgress {
   });
   protected readonly currentLabel = computed(() => this.steps()[this.position() - 1]?.label ?? '');
 
-  protected stateOf(step: ProgressStep): string {
+  protected readingOf(step: ProgressStep): string {
     if (step.current) {
-      return 'paso actual';
+      return step.label;
     }
-    return step.done ? 'hecho' : 'pendiente';
+    return `${step.label}: ${step.done ? 'hecho' : 'pendiente'}`;
   }
 }
